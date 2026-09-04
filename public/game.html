@@ -2,31 +2,22 @@
 <html lang="ar" dir="rtl">
 
 <head>
-
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
     <title>SAMI LIVE MAZE</title>
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
-
+    <link rel="stylesheet" href="style.css">
 </head>
-
 
 <body>
 
 <div class="game-container">
 
-
     <!-- =========================================
-         العنوان
+         HEADER
     ========================================== -->
 
     <header class="game-header">
@@ -36,100 +27,72 @@
         </div>
 
         <div class="game-title">
-            🎮 متاهة الكنز
+            🎮 SAMI LIVE MAZE
         </div>
 
-        <div
-            id="connectionStatus"
-            class="connection-status"
-        >
-            🔴 غير متصل
+        <div id="connectionStatus"
+             class="connection-status">
+            🟢 متصل
         </div>
 
     </header>
 
 
     <!-- =========================================
-         معلومات اللعبة
+         SCREEN 1 : REGISTRATION
     ========================================== -->
 
-    <section class="game-info">
+    <section id="registrationScreen"
+             class="game-screen">
 
-        <div class="info-box">
+        <div class="screen-title">
+            👥 تسجيل اللاعبين
+        </div>
 
-            <span>
-                👥 اللاعبين
-            </span>
+        <div class="registration-info">
 
-            <strong id="playerCount">
-                0
-            </strong>
+            <div class="join-box">
+
+                <div class="join-icon">
+                    💬
+                </div>
+
+                <h2>
+                    أرسل JOIN في التعليقات
+                </h2>
+
+                <p>
+                    للدخول إلى اللعبة
+                </p>
+
+            </div>
+
+
+            <div class="player-counter">
+
+                <span>
+                    اللاعبين
+                </span>
+
+                <strong id="playerCount">
+                    0 / 20
+                </strong>
+
+            </div>
 
         </div>
 
 
-        <div class="info-box">
+        <!-- قائمة اللاعبين -->
 
-            <span>
-                🎮 الحالة
-            </span>
+        <div class="players-registration">
 
-            <strong id="gameStatus">
-                التسجيل مفتوح
-            </strong>
+            <h3>
+                👤 اللاعبون المسجلون
+            </h3>
 
-        </div>
-
-
-        <div class="info-box">
-
-            <span>
-                🎁 الهدف
-            </span>
-
-            <strong>
-                الوصول للكنز
-            </strong>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================================
-         منطقة اللعبة
-    ========================================== -->
-
-    <main class="game-area">
-
-
-        <!-- المتاهة -->
-
-        <div class="maze-wrapper">
-
-            <svg
-                id="maze"
-                viewBox="0 0 300 300"
-                preserveAspectRatio="xMidYMid meet"
-            ></svg>
-
-        </div>
-
-
-        <!-- =====================================
-             لوحة اللاعبين
-        ====================================== -->
-
-        <aside class="players-panel">
-
-            <h2>
-                👥 اللاعبون
-            </h2>
-
-            <div
-                id="playersList"
-                class="players-list"
-            >
+            <div id="registrationPlayers"
+                 class="registration-player-list">
 
                 <div class="empty-players">
                     في انتظار اللاعبين...
@@ -137,80 +100,133 @@
 
             </div>
 
-        </aside>
-
-    </main>
+        </div>
 
 
-    <!-- =========================================
-         الرسائل
-    ========================================== -->
+        <!-- زر بدء اللعبة -->
 
-    <div
-        id="message"
-        class="message"
-    >
-        أرسل <strong>JOIN</strong> في الشات للدخول
-    </div>
+        <button id="startButton"
+                class="start-button">
 
+            ▶️ بدء اللعب
 
-    <!-- =========================================
-         أزرار المضيف
-    ========================================== -->
-
-    <section class="controls">
-
-        <button
-            id="startButton"
-            class="start-button"
-        >
-            ▶️ بدء اللعبة
         </button>
 
+        <div id="registrationMessage"
+             class="message">
 
-        <button
-            id="resetButton"
-            class="reset-button"
-        >
-            🔄 جولة جديدة
-        </button>
+            في انتظار تسجيل اللاعبين...
+
+        </div>
 
     </section>
 
 
+
     <!-- =========================================
-         تعليمات
+         SCREEN 2 : MAZE
     ========================================== -->
 
-    <div class="instructions">
+    <section id="mazeScreen"
+             class="game-screen hidden">
 
-        <div>
-            <span>U</span>
-            ⬆️
+        <div class="maze-header">
+
+            <div>
+                👥 اللاعبين:
+                <strong id="mazePlayerCount">
+                    0
+                </strong>
+            </div>
+
+            <div>
+                🏆 أول من يصل إلى الكنز يفوز
+            </div>
+
         </div>
 
-        <div>
-            <span>D</span>
-            ⬇️
+
+        <div class="maze-wrapper">
+
+            <svg id="maze"
+                 viewBox="0 0 300 300"
+                 preserveAspectRatio="xMidYMid meet">
+            </svg>
+
         </div>
 
-        <div>
-            <span>R</span>
-            ➡️
+
+        <div class="maze-instructions">
+
+            <div>
+                ⬆️ U = أعلى
+            </div>
+
+            <div>
+                ⬇️ D = أسفل
+            </div>
+
+            <div>
+                ➡️ R = يمين
+            </div>
+
+            <div>
+                ⬅️ L = يسار
+            </div>
+
         </div>
 
-        <div>
-            <span>L</span>
-            ⬅️
+
+        <div id="mazeMessage"
+             class="message">
+
+            🚀 اللعبة بدأت!
         </div>
 
-        <p>
-            تحكم بحركتك من خلال إرسال
-            U / D / R / L في الشات
-        </p>
+    </section>
 
-    </div>
 
+
+    <!-- =========================================
+         SCREEN 3 : WINNER
+    ========================================== -->
+
+    <section id="winnerScreen"
+             class="game-screen hidden">
+
+        <div class="winner-container">
+
+            <div class="winner-trophy">
+                🏆
+            </div>
+
+            <h1>
+                الفائز!
+            </h1>
+
+            <div id="winnerAvatar"
+                 class="winner-avatar">
+            </div>
+
+            <div id="winnerName"
+                 class="winner-name">
+                ---
+            </div>
+
+            <div class="winner-text">
+                🎉 وصل إلى الكنز أولاً!
+            </div>
+
+            <button id="resetButton"
+                    class="reset-button">
+
+                🔄 جولة جديدة
+
+            </button>
+
+        </div>
+
+    </section>
 
 </div>
 
@@ -219,10 +235,9 @@
 
 <script src="/socket.io/socket.io.js"></script>
 
-<!-- منطق اللعبة -->
+<!-- Game JavaScript -->
 
 <script src="game.js"></script>
-
 
 </body>
 
