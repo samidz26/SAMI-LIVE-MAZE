@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>تسجيل اللاعبين - لعبة المتاهة التفاعلية</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="registration-page">
+
+    <!-- =====================================
+         HEADER
+    ====================================== -->
+
+    <header class="registration-header">
+
+        <!-- اليمين -->
+
+        <div class="header-right">
+            SAMI LIVE
+        </div>
+
+
+        <!-- المنتصف -->
+
+        <div class="header-center">
+            لعبة المتاهة التفاعلية
+        </div>
+
+
+        <!-- اليسار -->
+
+        <div id="connectionStatus"
+             class="header-left">
+
+            🟢 متصل
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =====================================
+         محتوى التسجيل
+    ====================================== -->
+
+    <main class="registration-content">
+
+
+        <!-- رسالة الانضمام -->
+
+        <section class="join-section">
+
+            <div class="join-icon">
+                💬
+            </div>
+
+            <h1>
+                اكتب في الشات
+            </h1>
+
+            <div class="join-command">
+                JOIN
+            </div>
+
+            <p>
+                للانضمام إلى اللعبة
+            </p>
+
+        </section>
+
+
+
+        <!-- =====================================
+             قائمة اللاعبين
+        ====================================== -->
+
+        <section class="players-section">
+
+            <div class="section-title">
+
+                <span>
+                    👥 اللاعبون المشاركون
+                </span>
+
+                <span id="playerCount"
+                      class="player-count">
+
+                    0 / 20
+
+                </span>
+
+            </div>
+
+
+            <div id="registrationPlayers"
+                 class="registration-player-list">
+
+                <div class="empty-players">
+
+                    في انتظار اللاعبين...
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =====================================
+             طريقة الحركة
+        ====================================== -->
+
+        <section class="movement-section">
+
+            <h2>
+                🎮 طريقة الحركة
+            </h2>
+
+
+            <div class="movement-controls">
+
+                <!-- فوق -->
+
+                <div class="movement-row">
+
+                    <div class="direction">
+
+                        <span class="arrow">
+                            ⬆️
+                        </span>
+
+                        <strong>
+                            U
+                        </strong>
+
+                        <small>
+                            فوق
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- يسار / يمين -->
+
+                <div class="movement-row horizontal">
+
+                    <div class="direction">
+
+                        <span class="arrow">
+                            ⬅️
+                        </span>
+
+                        <strong>
+                            L
+                        </strong>
+
+                        <small>
+                            يسار
+                        </small>
+
+                    </div>
+
+
+                    <div class="direction">
+
+                        <span class="arrow">
+                            ➡️
+                        </span>
+
+                        <strong>
+                            R
+                        </strong>
+
+                        <small>
+                            يمين
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- تحت -->
+
+                <div class="movement-row">
+
+                    <div class="direction">
+
+                        <span class="arrow">
+                            ⬇️
+                        </span>
+
+                        <strong>
+                            D
+                        </strong>
+
+                        <small>
+                            تحت
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <p class="movement-note">
+
+                أرسل الحرف الإنجليزي في الشات للتحرك
+
+            </p>
+
+        </section>
+
+
+
+        <!-- =====================================
+             بدء اللعبة
+        ====================================== -->
+
+        <section class="start-section">
+
+            <button id="startButton"
+                    class="start-button">
+
+                ▶️ بدء اللعب
+
+            </button>
+
+
+            <div id="registrationMessage"
+                 class="registration-message">
+
+                في انتظار اللاعبين...
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+</div>
+
+
+<!-- Socket.IO -->
+
+<script src="/socket.io/socket.io.js"></script>
+
+
+<script src="registration.js"></script>
+
+</body>
+
+</html>
