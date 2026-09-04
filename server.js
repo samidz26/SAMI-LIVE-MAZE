@@ -645,7 +645,7 @@ function movePlayer(uniqueId, direction) {
             return;
         }
 
-        nx++;
+       
 
         nx--;
 
