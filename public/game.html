@@ -1,12 +1,229 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>SAMI LIVE MAZE</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
+
 
 <body>
 
+<div class="game-container">
+
+
+    <!-- =========================================
+         العنوان
+    ========================================== -->
+
+    <header class="game-header">
+
+        <div class="logo">
+            SAMI LIVE
+        </div>
+
+        <div class="game-title">
+            🎮 متاهة الكنز
+        </div>
+
+        <div
+            id="connectionStatus"
+            class="connection-status"
+        >
+            🔴 غير متصل
+        </div>
+
+    </header>
+
+
+    <!-- =========================================
+         معلومات اللعبة
+    ========================================== -->
+
+    <section class="game-info">
+
+        <div class="info-box">
+
+            <span>
+                👥 اللاعبين
+            </span>
+
+            <strong id="playerCount">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="info-box">
+
+            <span>
+                🎮 الحالة
+            </span>
+
+            <strong id="gameStatus">
+                التسجيل مفتوح
+            </strong>
+
+        </div>
+
+
+        <div class="info-box">
+
+            <span>
+                🎁 الهدف
+            </span>
+
+            <strong>
+                الوصول للكنز
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================
+         منطقة اللعبة
+    ========================================== -->
+
+    <main class="game-area">
+
+
+        <!-- المتاهة -->
+
+        <div class="maze-wrapper">
+
+            <svg
+                id="maze"
+                viewBox="0 0 300 300"
+                preserveAspectRatio="xMidYMid meet"
+            ></svg>
+
+        </div>
+
+
+        <!-- =====================================
+             لوحة اللاعبين
+        ====================================== -->
+
+        <aside class="players-panel">
+
+            <h2>
+                👥 اللاعبون
+            </h2>
+
+            <div
+                id="playersList"
+                class="players-list"
+            >
+
+                <div class="empty-players">
+                    في انتظار اللاعبين...
+                </div>
+
+            </div>
+
+        </aside>
+
+    </main>
+
+
+    <!-- =========================================
+         الرسائل
+    ========================================== -->
+
+    <div
+        id="message"
+        class="message"
+    >
+        أرسل <strong>JOIN</strong> في الشات للدخول
+    </div>
+
+
+    <!-- =========================================
+         أزرار المضيف
+    ========================================== -->
+
+    <section class="controls">
+
+        <button
+            id="startButton"
+            class="start-button"
+        >
+            ▶️ بدء اللعبة
+        </button>
+
+
+        <button
+            id="resetButton"
+            class="reset-button"
+        >
+            🔄 جولة جديدة
+        </button>
+
+    </section>
+
+
+    <!-- =========================================
+         تعليمات
+    ========================================== -->
+
+    <div class="instructions">
+
+        <div>
+            <span>U</span>
+            ⬆️
+        </div>
+
+        <div>
+            <span>D</span>
+            ⬇️
+        </div>
+
+        <div>
+            <span>R</span>
+            ➡️
+        </div>
+
+        <div>
+            <span>L</span>
+            ⬅️
+        </div>
+
+        <p>
+            تحكم بحركتك من خلال إرسال
+            U / D / R / L في الشات
+        </p>
+
+    </div>
+
+
+</div>
+
+
+<!-- Socket.IO -->
+
+<script src="/socket.io/socket.io.js"></script>
+
+<!-- منطق اللعبة -->
+
+<script src="game.js"></script>
+
+
 </body>
+
 </html>
