@@ -2,242 +2,88 @@
 <html lang="ar" dir="rtl">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>SAMI LIVE MAZE</title>
+    <title>لعبة المتاهة</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet"
+          href="style.css">
+
 </head>
 
 <body>
 
-<div class="game-container">
+    <main class="game-page">
 
-    <!-- =========================================
-         HEADER
-    ========================================== -->
+        <!-- المتاهة -->
 
-    <header class="game-header">
+        <div class="maze-container">
 
-        <div class="logo">
-            SAMI LIVE
-        </div>
-
-        <div class="game-title">
-            🎮 SAMI LIVE MAZE
-        </div>
-
-        <div id="connectionStatus"
-             class="connection-status">
-            🟢 متصل
-        </div>
-
-    </header>
-
-
-    <!-- =========================================
-         SCREEN 1 : REGISTRATION
-    ========================================== -->
-
-    <section id="registrationScreen"
-             class="game-screen">
-
-        <div class="screen-title">
-            👥 تسجيل اللاعبين
-        </div>
-
-        <div class="registration-info">
-
-            <div class="join-box">
-
-                <div class="join-icon">
-                    💬
-                </div>
-
-                <h2>
-                    أرسل JOIN في التعليقات
-                </h2>
-
-                <p>
-                    للدخول إلى اللعبة
-                </p>
-
-            </div>
-
-
-            <div class="player-counter">
-
-                <span>
-                    اللاعبين
-                </span>
-
-                <strong id="playerCount">
-                    0 / 20
-                </strong>
-
-            </div>
-
-        </div>
-
-
-        <!-- قائمة اللاعبين -->
-
-        <div class="players-registration">
-
-            <h3>
-                👤 اللاعبون المسجلون
-            </h3>
-
-            <div id="registrationPlayers"
-                 class="registration-player-list">
-
-                <div class="empty-players">
-                    في انتظار اللاعبين...
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- زر بدء اللعبة -->
-
-        <button id="startButton"
-                class="start-button">
-
-            ▶️ بدء اللعب
-
-        </button>
-
-        <div id="registrationMessage"
-             class="message">
-
-            في انتظار تسجيل اللاعبين...
-
-        </div>
-
-    </section>
-
-
-
-    <!-- =========================================
-         SCREEN 2 : MAZE
-    ========================================== -->
-
-    <section id="mazeScreen"
-             class="game-screen hidden">
-
-        <div class="maze-header">
-
-            <div>
-                👥 اللاعبين:
-                <strong id="mazePlayerCount">
-                    0
-                </strong>
-            </div>
-
-            <div>
-                🏆 أول من يصل إلى الكنز يفوز
-            </div>
-
-        </div>
-
-
-        <div class="maze-wrapper">
-
-            <svg id="maze"
-                 viewBox="0 0 300 300"
-                 preserveAspectRatio="xMidYMid meet">
+            <svg
+                id="maze"
+                viewBox="0 0 300 300"
+                preserveAspectRatio="xMidYMid meet">
             </svg>
 
         </div>
 
 
-        <div class="maze-instructions">
+        <!-- طبقة الفوز -->
 
-            <div>
-                ⬆️ U = أعلى
-            </div>
+        <div
+            id="winnerOverlay"
+            class="winner-overlay hidden">
 
-            <div>
-                ⬇️ D = أسفل
-            </div>
+            <div class="winner-box">
 
-            <div>
-                ➡️ R = يمين
-            </div>
+                <div class="winner-title">
+                    🏆
+                </div>
 
-            <div>
-                ⬅️ L = يسار
-            </div>
-
-        </div>
+                <div class="winner-subtitle">
+                    الفائز
+                </div>
 
 
-        <div id="mazeMessage"
-             class="message">
+                <div class="winner-avatar-wrapper">
 
-            🚀 اللعبة بدأت!
-        </div>
+                    <img
+                        id="winnerAvatar"
+                        class="winner-avatar"
+                        src=""
+                        alt="الفائز">
 
-    </section>
+                </div>
 
 
+                <div
+                    id="winnerName"
+                    class="winner-name">
+                </div>
 
-    <!-- =========================================
-         SCREEN 3 : WINNER
-    ========================================== -->
 
-    <section id="winnerScreen"
-             class="game-screen hidden">
-
-        <div class="winner-container">
-
-            <div class="winner-trophy">
-                🏆
-            </div>
-
-            <h1>
-                الفائز!
-            </h1>
-
-            <div id="winnerAvatar"
-                 class="winner-avatar">
-            </div>
-
-            <div id="winnerName"
-                 class="winner-name">
-                ---
-            </div>
-
-            <div class="winner-text">
-                🎉 وصل إلى الكنز أولاً!
-            </div>
-
-            <button id="resetButton"
+                <button
+                    id="resetButton"
                     class="reset-button">
 
-                🔄 جولة جديدة
+                    🔄 إعادة اللعب
 
-            </button>
+                </button>
+
+            </div>
 
         </div>
 
-    </section>
-
-</div>
+    </main>
 
 
-<!-- Socket.IO -->
+    <script src="/socket.io/socket.io.js"></script>
 
-<script src="/socket.io/socket.io.js"></script>
-
-<!-- Game JavaScript -->
-
-<script src="game.js"></script>
+    <script src="game.js"></script>
 
 </body>
 
