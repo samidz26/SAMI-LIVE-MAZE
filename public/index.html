@@ -2,23 +2,15 @@
 <html lang="ar" dir="rtl">
 
 <head>
-
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
     <title>SAMI LIVE MAZE</title>
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
-
+    <link rel="stylesheet" href="style.css">
 </head>
-
 
 <body>
 
@@ -39,7 +31,7 @@
 
         <div class="connect-box">
 
-            <label>
+            <label for="username">
                 اسم مستخدم TikTok LIVE
             </label>
 
@@ -50,16 +42,11 @@
                 autocomplete="off"
             >
 
-
             <button id="connectButton">
                 🔴 اتصال بالـ LIVE
             </button>
 
-
-            <div
-                id="status"
-                class="status"
-            >
+            <div id="status" class="status">
                 غير متصل
             </div>
 
@@ -68,109 +55,165 @@
     </main>
 
 
-<script>
+    <!-- Socket.IO -->
+    <script src="/socket.io/socket.io.js"></script>
 
-const usernameInput =
-    document.getElementById("username");
+    <script>
 
-const connectButton =
-    document.getElementById("connectButton");
+        const socket = io();
 
-const status =
-    document.getElementById("status");
+        const usernameInput =
+            document.getElementById("username");
 
+        const connectButton =
+            document.getElementById("connectButton");
 
-connectButton.addEventListener("click", async () => {
-
-    let username =
-        usernameInput.value.trim();
-
-
-    if (!username) {
-
-        status.textContent =
-            "⚠️ أدخل اسم المستخدم أولاً";
-
-        return;
-    }
+        const status =
+            document.getElementById("status");
 
 
-    username =
-        username.replace("@", "");
+        let username = "";
 
 
-    connectButton.disabled = true;
+        // =========================================
+        // زر الاتصال
+        // =========================================
 
-    connectButton.textContent =
-        "⏳ جاري الاتصال...";
+        connectButton.addEventListener("click", () => {
 
-
-    status.textContent =
-        `جاري الاتصال بـ @${username}`;
-
-
-    try {
-
-        const response =
-            await fetch("/api/connect", {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body: JSON.stringify({
-                    username
-                })
-
-            });
+            username = usernameInput.value.trim();
 
 
-        const data =
-            await response.json();
+            if (!username) {
+
+                status.textContent =
+                    "⚠️ أدخل اسم المستخدم أولاً";
+
+                return;
+            }
 
 
-        if (!response.ok || !data.success) {
+            // إزالة @ إذا كتبها المستخدم
 
-            throw new Error(
-                data.message ||
-                "فشل الاتصال"
+            username = username.replace("@", "");
+
+
+            connectButton.disabled = true;
+
+            connectButton.textContent =
+                "⏳ جاري الاتصال...";
+
+            status.textContent =
+                `جاري الاتصال بـ @${username}`;
+
+
+            // إرسال اسم المستخدم إلى السيرفر
+
+            socket.emit(
+                "connect_tiktok",
+                username
             );
 
-        }
+        });
 
 
-        status.textContent =
-            `🟢 متصل بـ @${username}`;
+        // =========================================
+        // نجاح الاتصال بـ TikTok
+        // =========================================
+
+        socket.on("tiktok_connected", (data) => {
+
+            if (data.success) {
+
+                status.textContent =
+                    `🟢 تم الاتصال بـ @${username}`;
 
 
-        setTimeout(() => {
+                // حفظ اسم الحساب للجلسة
 
-            window.location.href =
-                "/game.html";
+                sessionStorage.setItem(
+                    "tiktokUsername",
+                    username
+                );
 
-        }, 800);
+
+                // الانتقال إلى اللعبة
+
+                setTimeout(() => {
+
+                    window.location.href =
+                        "/game.html";
+
+                }, 800);
 
 
-    } catch (error) {
+            } else {
 
-        console.error(error);
+                status.textContent =
+                    "❌ فشل الاتصال: " +
+                    (data.error ||
+                     "تعذر الاتصال بـ TikTok LIVE");
 
-        status.textContent =
-            "❌ فشل الاتصال";
 
-        connectButton.disabled = false;
+                connectButton.disabled = false;
 
-        connectButton.textContent =
-            "🔴 اتصال بالـ LIVE";
+                connectButton.textContent =
+                    "🔴 اتصال بالـ LIVE";
 
-    }
+            }
 
-});
+        });
 
-</script>
+
+        // =========================================
+        // فشل اتصال Socket.IO
+        // =========================================
+
+        socket.on("connect_error", () => {
+
+            status.textContent =
+                "❌ تعذر الاتصال بالسيرفر";
+
+
+            connectButton.disabled = false;
+
+            connectButton.textContent =
+                "🔴 اتصال بالـ LIVE";
+
+        });
+
+
+        // =========================================
+        // انقطاع Socket
+        // =========================================
+
+        socket.on("disconnect", () => {
+
+            console.log(
+                "Socket disconnected"
+            );
+
+        });
+
+
+        // =========================================
+        // السماح بالضغط على Enter
+        // =========================================
+
+        usernameInput.addEventListener(
+            "keydown",
+            (event) => {
+
+                if (event.key === "Enter") {
+
+                    connectButton.click();
+
+                }
+
+            }
+        );
+
+    </script>
 
 </body>
 
