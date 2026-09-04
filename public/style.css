@@ -1,755 +1,914 @@
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 html,
 body {
-    margin: 0;
-    padding: 0;
+    width: 100%;
     min-height: 100%;
-}
-
-body {
-    font-family: Tahoma, Arial, sans-serif;
+    font-family: Arial, Tahoma, sans-serif;
     background:
-        radial-gradient(circle at top, #202a44, #080c16 70%);
-    color: white;
+        radial-gradient(circle at top, #30220b 0%, #0b0b0b 45%, #050505 100%);
+    color: #fff;
 }
 
 
 /* =========================================
-   صفحة الاتصال
+   CONNECTION PAGE
 ========================================= */
 
 .connect-page {
     min-height: 100vh;
-
     display: flex;
-    flex-direction: column;
-
     justify-content: center;
     align-items: center;
-
     padding: 20px;
 }
 
-
-.logo {
-    font-size: 32px;
-    font-weight: 900;
-    letter-spacing: 3px;
-
-    margin-bottom: 20px;
-
-    background:
-        linear-gradient(
-            90deg,
-            #f5d76e,
-            #fff4b0,
-            #d4af37
-        );
-
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-
-.connect-page h1 {
-    margin: 0;
-
-    font-size: 30px;
-
-    text-align: center;
-}
-
-
-.subtitle {
-    color: #aeb8cc;
-
-    margin: 10px 0 30px;
-}
-
-
 .connect-box {
-    width: min(420px, 100%);
+    width: min(440px, 100%);
+    padding: 35px 25px;
+    text-align: center;
 
-    padding: 28px;
-
-    border-radius: 20px;
-
-    background:
-        rgba(20, 27, 45, 0.92);
-
-    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(18, 18, 18, 0.96);
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    border-radius: 22px;
 
     box-shadow:
-        0 20px 60px rgba(0,0,0,0.45);
+        0 0 35px rgba(212, 175, 55, 0.12),
+        inset 0 0 30px rgba(255, 255, 255, 0.02);
 }
 
+.connect-box h1 {
+    color: #f5d76e;
+    font-size: 28px;
+    margin-bottom: 12px;
+}
+
+.subtitle {
+    color: #aaa;
+    margin-bottom: 30px;
+}
 
 .connect-box label {
     display: block;
-
-    margin-bottom: 10px;
-
-    color: #cbd4e5;
-
-    font-size: 14px;
+    text-align: right;
+    margin-bottom: 8px;
+    color: #ddd;
 }
-
 
 .connect-box input {
     width: 100%;
-
-    height: 52px;
-
-    border: 1px solid #303b55;
-
+    padding: 15px;
     border-radius: 12px;
+    border: 1px solid #555;
+    outline: none;
 
-    background: #0d1322;
-
-    color: white;
-
-    padding: 0 15px;
+    background: #111;
+    color: #fff;
 
     font-size: 16px;
-
-    outline: none;
+    text-align: left;
+    direction: ltr;
 }
-
 
 .connect-box input:focus {
     border-color: #d4af37;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
 }
-
 
 .connect-box button {
     width: 100%;
+    margin-top: 18px;
+    padding: 15px;
 
-    height: 52px;
-
-    margin-top: 15px;
-
-    border: none;
-
+    border: 0;
     border-radius: 12px;
 
-    cursor: pointer;
-
-    background:
-        linear-gradient(
-            135deg,
-            #d4af37,
-            #f5d76e
-        );
+    background: linear-gradient(
+        135deg,
+        #f5d76e,
+        #c79a24
+    );
 
     color: #111;
-
-    font-size: 16px;
-
+    font-size: 17px;
     font-weight: bold;
-}
 
+    cursor: pointer;
+}
 
 .connect-box button:disabled {
     opacity: 0.6;
-
     cursor: wait;
 }
 
-
 .status {
-    margin-top: 15px;
-
-    text-align: center;
-
-    font-size: 14px;
-
-    color: #aeb8cc;
+    margin-top: 18px;
+    color: #aaa;
 }
 
 
 /* =========================================
-   صفحة اللعبة
+   REGISTRATION PAGE
 ========================================= */
 
-.game-container {
-    width: min(1100px, 100%);
+.registration-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(212, 175, 55, 0.12),
+            transparent 35%
+        ),
+        #080808;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.registration-header {
+    height: 70px;
+
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    align-items: center;
+
+    padding: 0 22px;
+
+    border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+
+    background: rgba(10, 10, 10, 0.95);
+}
+
+.header-right {
+    text-align: right;
+
+    color: #f5d76e;
+    font-weight: 900;
+    font-size: 20px;
+
+    letter-spacing: 2px;
+}
+
+.header-center {
+    text-align: center;
+
+    color: #fff;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.header-left {
+    text-align: left;
+    color: #55d66b;
+    font-size: 14px;
+}
+
+
+/* =========================================
+   REGISTRATION CONTENT
+========================================= */
+
+.registration-content {
+    width: min(850px, 94%);
     margin: auto;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 18px;
+
+    padding: 25px 0;
+}
+
+
+/* =========================================
+   JOIN SECTION
+========================================= */
+
+.join-section {
+    text-align: center;
+
+    padding: 22px;
+
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(35, 28, 12, 0.9),
+            rgba(15, 15, 15, 0.95)
+        );
+}
+
+.join-icon {
+    font-size: 30px;
+    margin-bottom: 5px;
+}
+
+.join-section h1 {
+    font-size: 20px;
+    color: #ddd;
+}
+
+.join-command {
+    display: inline-block;
+
+    margin: 10px 0;
+    padding: 7px 25px;
+
+    border-radius: 10px;
+
+    background: #d4af37;
+    color: #111;
+
+    font-size: 25px;
+    font-weight: 900;
+
+    letter-spacing: 4px;
+}
+
+.join-section p {
+    color: #999;
+}
+
+
+/* =========================================
+   PLAYERS SECTION
+========================================= */
+
+.players-section {
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 18px;
+
+    background: rgba(15, 15, 15, 0.95);
 
     padding: 18px;
 }
 
-
-/* =========================================
-   الرأس
-========================================= */
-
-.game-header {
+.section-title {
     display: flex;
-
+    justify-content: space-between;
     align-items: center;
 
-    justify-content: space-between;
+    padding-bottom: 14px;
+    margin-bottom: 12px;
 
-    gap: 15px;
+    border-bottom: 1px solid #292929;
 
-    margin-bottom: 18px;
-
-    padding: 14px 18px;
-
-    background:
-        rgba(15, 21, 36, 0.95);
-
-    border:
-        1px solid rgba(255,255,255,0.08);
-
-    border-radius: 16px;
-}
-
-
-.game-header .logo {
-    margin: 0;
-
-    font-size: 22px;
-}
-
-
-.game-title {
-    font-size: 20px;
-
+    color: #f5d76e;
     font-weight: bold;
 }
 
-
-.connection-status {
-    font-size: 13px;
-
-    color: #b9c4d8;
+.player-count {
+    color: #aaa;
+    font-size: 14px;
 }
 
-
-/* =========================================
-   معلومات اللعبة
-========================================= */
-
-.game-info {
+.registration-player-list {
     display: grid;
 
     grid-template-columns:
-        repeat(3, 1fr);
+        repeat(auto-fill, minmax(230px, 1fr));
 
-    gap: 12px;
+    gap: 10px;
 
-    margin-bottom: 18px;
-}
-
-
-.info-box {
-    padding: 14px;
-
-    border-radius: 14px;
-
-    background:
-        rgba(15, 21, 36, 0.92);
-
-    border:
-        1px solid rgba(255,255,255,0.07);
-
-    text-align: center;
-}
-
-
-.info-box span {
-    display: block;
-
-    color: #909bb0;
-
-    font-size: 12px;
-
-    margin-bottom: 6px;
-}
-
-
-.info-box strong {
-    font-size: 17px;
-}
-
-
-/* =========================================
-   منطقة اللعبة
-========================================= */
-
-.game-area {
-    display: grid;
-
-    grid-template-columns:
-        minmax(0, 1fr)
-        260px;
-
-    gap: 18px;
-
-    align-items: start;
-}
-
-
-/* =========================================
-   المتاهة
-========================================= */
-
-.maze-wrapper {
-    width: 100%;
-
-    max-width: 700px;
-
-    margin: auto;
-
-    padding: 14px;
-
-    background:
-        #05080f;
-
-    border-radius: 18px;
-
-    border:
-        2px solid #d4af37;
-
-    box-shadow:
-        0 0 35px rgba(212,175,55,0.12);
-}
-
-
-#maze {
-    display: block;
-
-    width: 100%;
-
-    height: auto;
-
-    aspect-ratio: 1 / 1;
-
-    background:
-        #111827;
-
-    border-radius: 8px;
-}
-
-
-/* =========================================
-   جدران المتاهة
-========================================= */
-
-.maze-wall {
-    stroke: #e8edf5;
-
-    stroke-width: 2;
-
-    stroke-linecap: square;
-}
-
-
-/* =========================================
-   الكنز
-========================================= */
-
-.treasure-glow {
-    fill: #ffd700;
-
-    opacity: 0.35;
-
-    animation:
-        treasurePulse 1s infinite;
-}
-
-
-.treasure-icon {
-    font-size: 18px;
-
-    text-anchor: middle;
-
-    dominant-baseline: central;
-
-    pointer-events: none;
-}
-
-
-@keyframes treasurePulse {
-
-    0% {
-        opacity: 0.2;
-    }
-
-    50% {
-        opacity: 0.7;
-    }
-
-    100% {
-        opacity: 0.2;
-    }
-}
-
-
-/* =========================================
-   اللاعب
-========================================= */
-
-.player-circle {
-    fill: #111827;
-
-    stroke: #ffffff;
-
-    stroke-width: 1;
-}
-
-
-.player-avatar {
-    pointer-events: none;
-
-    clip-path: circle(50%);
-}
-
-
-.player-name {
-    fill: white;
-
-    font-size: 4px;
-
-    text-anchor: middle;
-
-    font-weight: bold;
-
-    paint-order: stroke;
-
-    stroke: #000;
-
-    stroke-width: 1.2px;
-
-    pointer-events: none;
-}
-
-
-.player {
-    transition:
-        transform 0.15s ease;
-}
-
-
-/* =========================================
-   قائمة اللاعبين
-========================================= */
-
-.players-panel {
-    background:
-        rgba(15, 21, 36, 0.95);
-
-    border:
-        1px solid rgba(255,255,255,0.08);
-
-    border-radius: 18px;
-
-    padding: 16px;
-
-    max-height: 500px;
-
+    max-height: 260px;
     overflow-y: auto;
+
+    padding-right: 3px;
 }
 
-
-.players-panel h2 {
-    margin: 0 0 14px;
-
-    font-size: 17px;
-
-    text-align: center;
+.registration-player-list::-webkit-scrollbar {
+    width: 5px;
 }
 
+.registration-player-list::-webkit-scrollbar-thumb {
+    background: #8e7225;
+    border-radius: 10px;
+}
 
-.players-list {
+.registration-player {
     display: flex;
-
-    flex-direction: column;
-
-    gap: 8px;
-}
-
-
-.empty-players {
-    text-align: center;
-
-    color: #7f8aa0;
-
-    padding: 20px 5px;
-
-    font-size: 13px;
-}
-
-
-.player-list-item {
-    display: flex;
-
     align-items: center;
 
     gap: 10px;
 
-    padding: 8px;
-
-    border-radius: 10px;
+    min-height: 60px;
+    padding: 8px 10px;
 
     background:
-        rgba(255,255,255,0.04);
+        linear-gradient(
+            135deg,
+            #181818,
+            #101010
+        );
+
+    border: 1px solid #292929;
+    border-radius: 13px;
+
+    transition: 0.2s;
 }
 
+.registration-player:hover {
+    border-color: rgba(212, 175, 55, 0.55);
+}
 
-.player-list-item img {
-    width: 40px;
+.registration-avatar {
+    width: 43px;
+    height: 43px;
 
-    height: 40px;
+    flex-shrink: 0;
 
     border-radius: 50%;
 
     object-fit: cover;
 
-    border:
-        2px solid #d4af37;
+    border: 2px solid #d4af37;
+
+    background: #222;
 }
 
-
-.player-list-info {
-    min-width: 0;
-
+.fallback-avatar {
     display: flex;
+    align-items: center;
+    justify-content: center;
 
-    flex-direction: column;
-
-    gap: 3px;
+    font-size: 21px;
 }
 
+.registration-player-info {
+    min-width: 0;
+    flex: 1;
+}
 
-.player-list-info strong {
-    overflow: hidden;
+.registration-player-name {
+    color: #fff;
 
-    text-overflow: ellipsis;
+    font-weight: bold;
 
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
+.registration-player-username {
+    margin-top: 3px;
+
+    color: #777;
+
+    font-size: 12px;
+
+    direction: ltr;
+    text-align: right;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.registration-player-number {
+    width: 27px;
+    height: 27px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #29220d;
+    border: 1px solid #725c1e;
+
+    color: #d4af37;
+    font-size: 12px;
+}
+
+.empty-players {
+    text-align: center;
+
+    padding: 30px;
+
+    color: #777;
+}
+
+
+/* =========================================
+   MOVEMENT
+========================================= */
+
+.movement-section {
+    text-align: center;
+
+    padding: 18px;
+
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 18px;
+
+    background: rgba(12, 12, 12, 0.95);
+}
+
+.movement-section h2 {
+    color: #ddd;
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+
+.movement-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 7px;
+}
+
+.movement-row {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+}
+
+.direction {
+    width: 65px;
+    height: 58px;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+
+    align-items: center;
+    justify-items: center;
+
+    border: 1px solid #55451b;
+    border-radius: 11px;
+
+    background: #151515;
+}
+
+.direction .arrow {
+    font-size: 18px;
+}
+
+.direction strong {
+    color: #f5d76e;
+}
+
+.direction small {
+    grid-column: 1 / 3;
+
+    color: #888;
+    font-size: 11px;
+}
+
+.movement-note {
+    margin-top: 12px;
+    color: #777;
+    font-size: 12px;
+}
+
+
+/* =========================================
+   START BUTTON
+========================================= */
+
+.start-section {
+    text-align: center;
+
+    padding-bottom: 15px;
+}
+
+.start-button {
+    width: min(500px, 100%);
+
+    padding: 17px;
+
+    border: 1px solid #f5d76e;
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f5d76e,
+            #b8891d
+        );
+
+    color: #111;
+
+    font-size: 19px;
+    font-weight: 900;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 8px 25px rgba(212, 175, 55, 0.18);
+
+    transition: 0.2s;
+}
+
+.start-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow:
+        0 12px 30px rgba(212, 175, 55, 0.28);
+}
+
+.start-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.registration-message {
+    margin-top: 10px;
+    color: #777;
     font-size: 13px;
 }
 
 
-.player-list-info span {
-    color: #7f8aa0;
+/* =========================================
+   GAME PAGE
+========================================= */
 
-    font-size: 11px;
+.game-page {
+    width: 100vw;
+    height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle,
+            #211b0b 0%,
+            #090909 55%,
+            #000 100%
+        );
+}
+
+.maze-container {
+    width: min(94vw, 94vh);
+    height: min(94vw, 94vh);
+
+    max-width: 900px;
+    max-height: 900px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 8px;
+
+    border-radius: 18px;
+
+    background: #080808;
+
+    border: 2px solid #8f7427;
+
+    box-shadow:
+        0 0 35px rgba(212, 175, 55, 0.18);
+}
+
+#maze {
+    width: 100%;
+    height: 100%;
+
+    display: block;
 }
 
 
 /* =========================================
-   الرسالة
+   MAZE
 ========================================= */
 
-.message {
-    margin-top: 18px;
+.maze-background {
+    fill: #090909;
+}
 
-    padding: 14px;
+.maze-wall {
+    stroke: #d4af37;
+    stroke-width: 1.7;
 
-    border-radius: 12px;
+    stroke-linecap: round;
+
+    filter:
+        drop-shadow(
+            0 0 2px rgba(212, 175, 55, 0.35)
+        );
+}
+
+.treasure circle {
+    fill: rgba(255, 210, 70, 0.16);
+
+    stroke: #f5d76e;
+    stroke-width: 0.8;
+
+    animation: treasurePulse 1.2s infinite;
+}
+
+.treasure-icon {
+    font-size: 8px;
+
+    dominant-baseline: middle;
+
+    filter:
+        drop-shadow(
+            0 0 3px rgba(255, 220, 80, 0.9)
+        );
+}
+
+@keyframes treasurePulse {
+
+    0%,
+    100% {
+        opacity: 0.65;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+}
+
+
+/* =========================================
+   PLAYERS INSIDE MAZE
+========================================= */
+
+.maze-player circle {
+    fill: #171717;
+
+    stroke: #f5d76e;
+    stroke-width: 0.8;
+
+    filter:
+        drop-shadow(
+            0 0 2px rgba(212, 175, 55, 0.8)
+        );
+}
+
+.maze-player image {
+    pointer-events: none;
+}
+
+.player-fallback {
+    fill: #f5d76e;
+
+    font-size: 6px;
+
+    dominant-baseline: middle;
+}
+
+
+/* =========================================
+   WINNER OVERLAY
+========================================= */
+
+.winner-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
 
     background:
-        rgba(255,255,255,0.05);
+        rgba(0, 0, 0, 0.78);
+
+    backdrop-filter: blur(7px);
+
+    z-index: 1000;
+}
+
+.winner-overlay.hidden {
+    display: none;
+}
+
+.winner-box {
+    width: min(390px, 90vw);
 
     text-align: center;
 
-    color: #cbd4e5;
+    padding: 30px 25px 22px;
 
-    font-size: 14px;
+    border-radius: 25px;
+
+    border: 1px solid #d4af37;
+
+    background:
+        radial-gradient(
+            circle at top,
+            #35290d,
+            #121212 65%
+        );
+
+    box-shadow:
+        0 0 50px rgba(212, 175, 55, 0.28);
 }
 
+.winner-title {
+    font-size: 48px;
 
-/* =========================================
-   الأزرار
-========================================= */
-
-.controls {
-    display: flex;
-
-    justify-content: center;
-
-    gap: 12px;
-
-    margin-top: 15px;
+    animation:
+        winnerBounce 1.2s infinite;
 }
 
+@keyframes winnerBounce {
 
-.controls button {
-    border: none;
+    0%,
+    100% {
+        transform: translateY(0);
+    }
 
+    50% {
+        transform: translateY(-7px);
+    }
+
+}
+
+.winner-subtitle {
+    color: #f5d76e;
+
+    font-size: 18px;
+    font-weight: bold;
+
+    margin-bottom: 18px;
+}
+
+.winner-avatar-wrapper {
+    width: 110px;
+    height: 110px;
+
+    margin: auto;
+
+    padding: 4px;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #fff1a3,
+            #d4af37,
+            #8f6e1c
+        );
+
+    box-shadow:
+        0 0 30px rgba(212, 175, 55, 0.35);
+}
+
+.winner-avatar {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+
+    background: #222;
+}
+
+.winner-name {
+    margin: 15px 0 22px;
+
+    color: #fff;
+
+    font-size: 25px;
+    font-weight: 900;
+}
+
+.reset-button {
+    width: 100%;
+
+    padding: 14px;
+
+    border: 0;
     border-radius: 12px;
 
-    padding: 13px 25px;
+    background:
+        linear-gradient(
+            135deg,
+            #f5d76e,
+            #b8891d
+        );
 
-    font-size: 14px;
+    color: #111;
 
+    font-size: 17px;
     font-weight: bold;
 
     cursor: pointer;
 }
 
-
-.start-button {
-    background:
-        linear-gradient(
-            135deg,
-            #d4af37,
-            #f5d76e
-        );
-
-    color: #111;
-}
-
-
-.start-button:disabled {
-    opacity: 0.4;
-
-    cursor: not-allowed;
-}
-
-
-.reset-button {
-    background: #273149;
-
-    color: white;
+.reset-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
 }
 
 
 /* =========================================
-   تعليمات
+   MOBILE
 ========================================= */
 
-.instructions {
-    margin-top: 15px;
+@media (max-width: 600px) {
 
-    display: flex;
-
-    justify-content: center;
-
-    align-items: center;
-
-    gap: 8px;
-
-    flex-wrap: wrap;
-
-    color: #9da8bb;
-
-    font-size: 12px;
-}
-
-
-.instructions div {
-    display: flex;
-
-    align-items: center;
-
-    gap: 5px;
-}
-
-
-.instructions span {
-    display: inline-flex;
-
-    justify-content: center;
-
-    align-items: center;
-
-    width: 28px;
-
-    height: 28px;
-
-    border-radius: 7px;
-
-    background: #1b2438;
-
-    color: #fff;
-
-    font-weight: bold;
-}
-
-
-.instructions p {
-    width: 100%;
-
-    text-align: center;
-
-    margin: 5px 0 0;
-}
-
-
-/* =========================================
-   الهاتف
-========================================= */
-
-@media (max-width: 800px) {
-
-    .game-container {
-        padding: 10px;
+    .registration-header {
+        height: 58px;
+        padding: 0 10px;
     }
 
-
-    .game-header {
-        flex-direction: column;
-
-        text-align: center;
+    .header-right {
+        font-size: 14px;
+        letter-spacing: 1px;
     }
 
-
-    .game-info {
-        grid-template-columns:
-            repeat(3, 1fr);
-
-        gap: 6px;
+    .header-center {
+        font-size: 16px;
     }
 
-
-    .info-box {
-        padding: 10px 4px;
+    .header-left {
+        font-size: 11px;
     }
 
-
-    .info-box span {
-        font-size: 10px;
+    .registration-content {
+        width: 94%;
+        padding: 15px 0;
+        gap: 12px;
     }
 
-
-    .info-box strong {
-        font-size: 13px;
+    .join-section {
+        padding: 17px;
     }
 
+    .join-section h1 {
+        font-size: 17px;
+    }
 
-    .game-area {
+    .join-command {
+        font-size: 21px;
+        padding: 5px 20px;
+    }
+
+    .players-section {
+        padding: 12px;
+    }
+
+    .registration-player-list {
         grid-template-columns: 1fr;
+        max-height: 235px;
     }
 
-
-    .maze-wrapper {
-        width: 100%;
-
-        padding: 8px;
+    .movement-section {
+        padding: 13px;
     }
 
-
-    .players-panel {
-        max-height: 220px;
+    .direction {
+        width: 58px;
+        height: 52px;
     }
 
-
-    .controls {
-        flex-direction: column;
+    .start-button {
+        padding: 14px;
+        font-size: 17px;
     }
 
+    .maze-container {
+        width: 96vw;
+        height: 96vw;
 
-    .controls button {
-        width: 100%;
+        max-width: none;
+        max-height: none;
+
+        padding: 5px;
+
+        border-radius: 12px;
+    }
+
+    .winner-box {
+        padding: 25px 18px 18px;
+    }
+
+    .winner-avatar-wrapper {
+        width: 95px;
+        height: 95px;
+    }
+
+    .winner-name {
+        font-size: 21px;
     }
 
 }
