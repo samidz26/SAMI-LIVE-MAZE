@@ -2,7 +2,6 @@
   "name": "sami-live-maze",
   "version": "1.0.0",
   "description": "SAMI LIVE TikTok Maze Game",
-  "type": "module",
   "scripts": {
     "start": "node server.js"
   },
