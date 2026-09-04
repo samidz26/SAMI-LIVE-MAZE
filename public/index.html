@@ -7,7 +7,7 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>SAMI LIVE MAZE</title>
+    <title>لعبة المتاهة التفاعلية</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
@@ -16,23 +16,18 @@
 
     <main class="connect-page">
 
-        <div class="logo">
-            SAMI LIVE
-        </div>
-
-        <h1>
-            🎮 SAMI LIVE MAZE
-        </h1>
-
-        <p class="subtitle">
-            لعبة المتاهة التفاعلية
-        </p>
-
-
         <div class="connect-box">
 
+            <h1>
+                لعبة المتاهة التفاعلية
+            </h1>
+
+            <p class="subtitle">
+                أدخل اسم مستخدم TikTok LIVE للاتصال
+            </p>
+
             <label for="username">
-                اسم مستخدم TikTok LIVE
+                اسم مستخدم TikTok
             </label>
 
             <input
@@ -56,7 +51,9 @@
 
 
     <!-- Socket.IO -->
+
     <script src="/socket.io/socket.io.js"></script>
+
 
     <script>
 
@@ -71,17 +68,17 @@
         const status =
             document.getElementById("status");
 
-
         let username = "";
 
 
         // =========================================
-        // زر الاتصال
+        // الاتصال
         // =========================================
 
         connectButton.addEventListener("click", () => {
 
-            username = usernameInput.value.trim();
+            username =
+                usernameInput.value.trim();
 
 
             if (!username) {
@@ -93,9 +90,8 @@
             }
 
 
-            // إزالة @ إذا كتبها المستخدم
-
-            username = username.replace("@", "");
+            username =
+                username.replace(/^@/, "");
 
 
             connectButton.disabled = true;
@@ -107,8 +103,6 @@
                 `جاري الاتصال بـ @${username}`;
 
 
-            // إرسال اسم المستخدم إلى السيرفر
-
             socket.emit(
                 "connect_tiktok",
                 username
@@ -118,7 +112,7 @@
 
 
         // =========================================
-        // نجاح الاتصال بـ TikTok
+        // نجاح الاتصال
         // =========================================
 
         socket.on("tiktok_connected", (data) => {
@@ -129,30 +123,33 @@
                     `🟢 تم الاتصال بـ @${username}`;
 
 
-                // حفظ اسم الحساب للجلسة
-
                 sessionStorage.setItem(
                     "tiktokUsername",
                     username
                 );
 
 
-                // الانتقال إلى اللعبة
+                /*
+                 * الانتقال إلى صفحة التسجيل
+                 */
 
                 setTimeout(() => {
 
                     window.location.href =
                         "/registration.html";
 
-                }, 800);
+                }, 700);
 
+            }
 
-            } else {
+            else {
 
                 status.textContent =
                     "❌ فشل الاتصال: " +
-                    (data.error ||
-                     "تعذر الاتصال بـ TikTok LIVE");
+                    (
+                        data.error ||
+                        "تعذر الاتصال بـ TikTok LIVE"
+                    );
 
 
                 connectButton.disabled = false;
@@ -166,14 +163,13 @@
 
 
         // =========================================
-        // فشل اتصال Socket.IO
+        // خطأ Socket
         // =========================================
 
         socket.on("connect_error", () => {
 
             status.textContent =
                 "❌ تعذر الاتصال بالسيرفر";
-
 
             connectButton.disabled = false;
 
@@ -184,20 +180,7 @@
 
 
         // =========================================
-        // انقطاع Socket
-        // =========================================
-
-        socket.on("disconnect", () => {
-
-            console.log(
-                "Socket disconnected"
-            );
-
-        });
-
-
-        // =========================================
-        // السماح بالضغط على Enter
+        // Enter
         // =========================================
 
         usernameInput.addEventListener(
