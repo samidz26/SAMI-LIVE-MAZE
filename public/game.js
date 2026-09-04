@@ -1,297 +1,474 @@
 const socket = io();
 
-const svg = document.getElementById("maze");
+
+// =========================================
+// عناصر الشاشات
+// =========================================
+
+const registrationScreen =
+    document.getElementById("registrationScreen");
+
+const mazeScreen =
+    document.getElementById("mazeScreen");
+
+const winnerScreen =
+    document.getElementById("winnerScreen");
+
+
+// =========================================
+// عناصر التسجيل
+// =========================================
 
 const playerCount =
     document.getElementById("playerCount");
 
-const gameStatus =
-    document.getElementById("gameStatus");
-
-const playersList =
-    document.getElementById("playersList");
-
-const message =
-    document.getElementById("message");
+const registrationPlayers =
+    document.getElementById("registrationPlayers");
 
 const startButton =
     document.getElementById("startButton");
 
+const registrationMessage =
+    document.getElementById("registrationMessage");
+
+
+// =========================================
+// عناصر المتاهة
+// =========================================
+
+const maze =
+    document.getElementById("maze");
+
+const mazePlayerCount =
+    document.getElementById("mazePlayerCount");
+
+const mazeMessage =
+    document.getElementById("mazeMessage");
+
+
+// =========================================
+// عناصر الفائز
+// =========================================
+
+const winnerAvatar =
+    document.getElementById("winnerAvatar");
+
+const winnerName =
+    document.getElementById("winnerName");
+
 const resetButton =
     document.getElementById("resetButton");
 
-const connectionStatus =
-    document.getElementById("connectionStatus");
+
+// =========================================
+// الحالة
+// =========================================
+
+let gameState = {
+    maze: [],
+    players: [],
+    treasure: null,
+    gameStarted: false,
+    winner: null
+};
 
 
-// ==================================================
-// إعدادات المتاهة
-// ==================================================
+// =========================================
+// إظهار شاشة
+// =========================================
 
-const SIZE = 15;
-const CELL = 20;
+function showScreen(screen) {
 
+    registrationScreen.classList.add("hidden");
+    mazeScreen.classList.add("hidden");
+    winnerScreen.classList.add("hidden");
 
-// ==================================================
-// حالة اللعبة
-// ==================================================
-
-let maze = [];
-
-let players = [];
-
-let treasure = null;
-
-let gameStarted = false;
-
-let winner = null;
+    screen.classList.remove("hidden");
+}
 
 
-// ==================================================
-// Socket.IO
-// ==================================================
+// =========================================
+// اتصال Socket
+// =========================================
 
 socket.on("connect", () => {
 
-    connectionStatus.textContent =
-        "🟢 متصل بالسيرفر";
+    console.log("Connected to game server");
 
 });
 
+
+// =========================================
+// انقطاع الاتصال
+// =========================================
 
 socket.on("disconnect", () => {
 
-    connectionStatus.textContent =
-        "🔴 انقطع الاتصال";
+    console.log("Disconnected from server");
+
+    const status =
+        document.getElementById("connectionStatus");
+
+    if (status) {
+        status.textContent = "🔴 غير متصل";
+    }
 
 });
 
 
-// ==================================================
-// استقبال حالة اللعبة
-// ==================================================
+// =========================================
+// حالة اللعبة
+// =========================================
 
-socket.on("game_state", data => {
+socket.on("game_state", (state) => {
 
-    maze =
-        data.maze || [];
+    gameState = state;
 
-    players =
-        data.players || [];
-
-    treasure =
-        data.treasure || null;
-
-    gameStarted =
-        data.gameStarted || false;
-
-    winner =
-        data.winner || null;
-
-
-    renderEverything();
+    renderGame();
 
 });
 
 
-// ==================================================
-// بداية اللعبة
-// ==================================================
+// =========================================
+// بدء اللعبة
+// =========================================
 
-socket.on("game_started", () => {
+socket.on("game_started", (state) => {
 
-    gameStarted = true;
+    gameState = state;
 
-    winner = null;
+    showScreen(mazeScreen);
 
-    gameStatus.textContent =
-        "🔥 اللعبة بدأت!";
+    renderGame();
 
-    message.textContent =
-        "تحرك باستخدام U / D / R / L";
-
-    startButton.disabled = true;
+    mazeMessage.textContent =
+        "🚀 بدأت اللعبة! أرسل U D R L للتحرك.";
 
 });
 
 
-// ==================================================
+// =========================================
 // الفوز
-// ==================================================
+// =========================================
 
-socket.on("game_winner", player => {
+socket.on("game_winner", (winner) => {
 
-    winner = player;
+    gameState.winner = winner;
+    gameState.gameStarted = false;
 
-    gameStarted = false;
-
-
-    gameStatus.textContent =
-        "🏆 انتهت اللعبة";
-
-
-    message.innerHTML =
-        `🏆 الفائز هو <strong>${escapeHtml(player.nickname)}</strong> 🎉`;
-
-
-    startButton.disabled = true;
-
-
-    renderEverything();
+    showWinner(winner);
 
 });
 
 
-// ==================================================
-// خطأ في اللعبة
-// ==================================================
+// =========================================
+// خطأ
+// =========================================
 
-socket.on("game_error", error => {
+socket.on("game_error", (message) => {
 
-    message.textContent =
-        "⚠️ " + error;
+    alert(message);
 
 });
 
 
-// ==================================================
+// =========================================
 // زر بدء اللعبة
-// ==================================================
+// =========================================
 
 startButton.addEventListener("click", () => {
 
-    if (players.length === 0) {
+    if (!gameState.players ||
+        gameState.players.length === 0) {
 
-        message.textContent =
-            "⚠️ لا يوجد لاعبون مسجلون";
+        registrationMessage.textContent =
+            "⚠️ لا يوجد لاعبون مسجلون بعد";
 
         return;
     }
-
 
     socket.emit("start_game");
 
 });
 
 
-// ==================================================
-// زر إعادة اللعبة
-// ==================================================
+// =========================================
+// زر جولة جديدة
+// =========================================
 
 resetButton.addEventListener("click", () => {
 
     socket.emit("reset_game");
 
-    message.innerHTML =
-        'أرسل <strong>JOIN</strong> في الشات للدخول';
-
 });
 
 
-// ==================================================
-// رسم كل شيء
-// ==================================================
+// =========================================
+// رسم اللعبة
+// =========================================
 
-function renderEverything() {
+function renderGame() {
 
-    renderMaze();
+    if (!gameState) return;
 
-    renderTreasure();
 
-    renderPlayers();
+    // -----------------------------------------
+    // إذا انتهت الجولة
+    // -----------------------------------------
 
-    renderPlayersList();
+    if (gameState.winner) {
 
-    updateGameInfo();
+        showWinner(gameState.winner);
+
+        return;
+    }
+
+
+    // -----------------------------------------
+    // إذا بدأت اللعبة
+    // -----------------------------------------
+
+    if (gameState.gameStarted) {
+
+        showScreen(mazeScreen);
+
+        renderMaze();
+
+        renderMazePlayers();
+
+        mazePlayerCount.textContent =
+            gameState.players.length;
+
+        return;
+    }
+
+
+    // -----------------------------------------
+    // مرحلة التسجيل
+    // -----------------------------------------
+
+    showScreen(registrationScreen);
+
+    renderRegistrationPlayers();
 
 }
 
 
-// ==================================================
+// =========================================
+// رسم قائمة التسجيل
+// =========================================
+
+function renderRegistrationPlayers() {
+
+    const players =
+        gameState.players || [];
+
+
+    playerCount.textContent =
+        `${players.length} / 20`;
+
+
+    if (players.length === 0) {
+
+        registrationPlayers.innerHTML = `
+            <div class="empty-players">
+                في انتظار اللاعبين...
+            </div>
+        `;
+
+        return;
+    }
+
+
+    registrationPlayers.innerHTML = "";
+
+
+    players.forEach((player, index) => {
+
+        const item =
+            document.createElement("div");
+
+        item.className =
+            "registration-player";
+
+
+        const avatar =
+            document.createElement("img");
+
+        avatar.className =
+            "registration-avatar";
+
+        avatar.src =
+            player.profilePictureUrl || "";
+
+        avatar.alt =
+            player.nickname || "Player";
+
+
+        avatar.onerror = () => {
+
+            avatar.style.display = "none";
+
+        };
+
+
+        const info =
+            document.createElement("div");
+
+        info.className =
+            "registration-player-info";
+
+
+        const number =
+            document.createElement("span");
+
+        number.className =
+            "registration-number";
+
+        number.textContent =
+            `#${index + 1}`;
+
+
+        const name =
+            document.createElement("span");
+
+        name.className =
+            "registration-name";
+
+        name.textContent =
+            player.nickname || "مستخدم";
+
+
+        const username =
+            document.createElement("span");
+
+        username.className =
+            "registration-username";
+
+        username.textContent =
+            player.uniqueId
+                ? `@${player.uniqueId}`
+                : "";
+
+
+        info.appendChild(number);
+        info.appendChild(name);
+        info.appendChild(username);
+
+
+        item.appendChild(avatar);
+        item.appendChild(info);
+
+
+        registrationPlayers.appendChild(item);
+
+    });
+
+
+    if (players.length >= 20) {
+
+        registrationMessage.textContent =
+            "🔒 اكتمل العدد! اضغط بدء اللعب.";
+
+    } else {
+
+        registrationMessage.textContent =
+            "🟢 التسجيل مفتوح — أرسل JOIN للانضمام.";
+
+    }
+
+}
+
+
+// =========================================
 // رسم المتاهة
-// ==================================================
+// =========================================
 
 function renderMaze() {
 
-    svg.innerHTML = "";
+    maze.innerHTML = "";
 
 
-    if (!maze.length) return;
+    if (!gameState.maze ||
+        gameState.maze.length === 0) {
+
+        return;
+    }
 
 
-    /*
-        الإطار الخارجي
-    */
+    const size =
+        gameState.maze.length;
 
-    drawLine(
-        0,
-        0,
-        300,
+    const cellSize =
+        300 / size;
+
+
+    // -----------------------------------------
+    // خلفية
+    // -----------------------------------------
+
+    const background =
+        document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "rect"
+        );
+
+    background.setAttribute(
+        "x",
         0
     );
 
-
-    drawLine(
-        300,
-        0,
-        300,
-        300
-    );
-
-
-    drawLine(
-        300,
-        300,
-        0,
-        300
-    );
-
-
-    drawLine(
-        0,
-        300,
-        0,
+    background.setAttribute(
+        "y",
         0
     );
 
+    background.setAttribute(
+        "width",
+        300
+    );
 
-    /*
-        الجدران الداخلية
-    */
+    background.setAttribute(
+        "height",
+        300
+    );
 
-    for (
-        let y = 0;
-        y < SIZE;
-        y++
-    ) {
+    background.setAttribute(
+        "fill",
+        "transparent"
+    );
 
-        for (
-            let x = 0;
-            x < SIZE;
-            x++
-        ) {
-
-            const cell =
-                maze[y]?.[x];
+    maze.appendChild(background);
 
 
-            if (!cell) continue;
+    // -----------------------------------------
+    // الجدران
+    // -----------------------------------------
 
+    gameState.maze.forEach((row, y) => {
 
-            const px =
-                x * CELL;
+        row.forEach((cell, x) => {
 
-            const py =
-                y * CELL;
+            const x1 =
+                x * cellSize;
+
+            const y1 =
+                y * cellSize;
+
+            const x2 =
+                x1 + cellSize;
+
+            const y2 =
+                y1 + cellSize;
 
 
             if (cell.walls.top) {
 
-                drawLine(
-                    px,
-                    py,
-                    px + CELL,
-                    py
+                drawWall(
+                    x1,
+                    y1,
+                    x2,
+                    y1
                 );
 
             }
@@ -299,11 +476,11 @@ function renderMaze() {
 
             if (cell.walls.right) {
 
-                drawLine(
-                    px + CELL,
-                    py,
-                    px + CELL,
-                    py + CELL
+                drawWall(
+                    x2,
+                    y1,
+                    x2,
+                    y2
                 );
 
             }
@@ -311,11 +488,11 @@ function renderMaze() {
 
             if (cell.walls.bottom) {
 
-                drawLine(
-                    px,
-                    py + CELL,
-                    px + CELL,
-                    py + CELL
+                drawWall(
+                    x1,
+                    y2,
+                    x2,
+                    y2
                 );
 
             }
@@ -323,32 +500,80 @@ function renderMaze() {
 
             if (cell.walls.left) {
 
-                drawLine(
-                    px,
-                    py,
-                    px,
-                    py + CELL
+                drawWall(
+                    x1,
+                    y1,
+                    x1,
+                    y2
                 );
 
             }
 
-        }
+        });
+
+    });
+
+
+    // -----------------------------------------
+    // الكنز
+    // -----------------------------------------
+
+    if (gameState.treasure) {
+
+        const treasure =
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "text"
+            );
+
+
+        treasure.setAttribute(
+            "x",
+            gameState.treasure.x * cellSize +
+            cellSize / 2
+        );
+
+
+        treasure.setAttribute(
+            "y",
+            gameState.treasure.y * cellSize +
+            cellSize * 0.72
+        );
+
+
+        treasure.setAttribute(
+            "text-anchor",
+            "middle"
+        );
+
+
+        treasure.setAttribute(
+            "font-size",
+            Math.max(10, cellSize * 0.75)
+        );
+
+
+        treasure.textContent =
+            "🎁";
+
+
+        treasure.classList.add(
+            "treasure"
+        );
+
+
+        maze.appendChild(treasure);
 
     }
 
 }
 
 
-// ==================================================
-// رسم خط
-// ==================================================
+// =========================================
+// رسم جدار
+// =========================================
 
-function drawLine(
-    x1,
-    y1,
-    x2,
-    y2
-) {
+function drawWall(x1, y1, x2, y2) {
 
     const line =
         document.createElementNS(
@@ -378,128 +603,43 @@ function drawLine(
     );
 
 
-    line.setAttribute(
-        "class",
+    line.classList.add(
         "maze-wall"
     );
 
 
-    svg.appendChild(line);
+    maze.appendChild(line);
 
 }
 
 
-// ==================================================
-// رسم الكنز
-// ==================================================
+// =========================================
+// رسم اللاعبين داخل المتاهة
+// =========================================
 
-function renderTreasure() {
+function renderMazePlayers() {
 
-    if (!treasure) return;
-
-
-    const px =
-        treasure.x * CELL +
-        CELL / 2;
-
-    const py =
-        treasure.y * CELL +
-        CELL / 2;
+    if (!gameState.players) return;
 
 
-    const group =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "g"
-        );
+    const size =
+        gameState.maze.length;
+
+    if (!size) return;
 
 
-    group.setAttribute(
-        "class",
-        "treasure"
-    );
+    const cellSize =
+        300 / size;
 
 
-    const glow =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "circle"
-        );
+    gameState.players.forEach(player => {
 
-
-    glow.setAttribute(
-        "cx",
-        px
-    );
-
-    glow.setAttribute(
-        "cy",
-        py
-    );
-
-    glow.setAttribute(
-        "r",
-        9
-    );
-
-
-    glow.setAttribute(
-        "class",
-        "treasure-glow"
-    );
-
-
-    const text =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "text"
-        );
-
-
-    text.setAttribute(
-        "x",
-        px
-    );
-
-    text.setAttribute(
-        "y",
-        py
-    );
-
-
-    text.setAttribute(
-        "class",
-        "treasure-icon"
-    );
-
-
-    text.textContent = "🎁";
-
-
-    group.appendChild(glow);
-
-    group.appendChild(text);
-
-    svg.appendChild(group);
-
-}
-
-
-// ==================================================
-// رسم اللاعبين
-// ==================================================
-
-function renderPlayers() {
-
-    players.forEach(player => {
-
-        const px =
-            player.x * CELL +
-            CELL / 2;
-
-        const py =
-            player.y * CELL +
-            CELL / 2;
+        if (
+            typeof player.x !== "number" ||
+            typeof player.y !== "number"
+        ) {
+            return;
+        }
 
 
         const group =
@@ -509,15 +649,21 @@ function renderPlayers() {
             );
 
 
-        group.setAttribute(
-            "class",
-            "player"
+        group.classList.add(
+            "maze-player"
         );
 
 
-        /*
-            دائرة اللاعب
-        */
+        const cx =
+            player.x * cellSize +
+            cellSize / 2;
+
+        const cy =
+            player.y * cellSize +
+            cellSize / 2;
+
+
+        // دائرة خلف الصورة
 
         const circle =
             document.createElementNS(
@@ -528,36 +674,28 @@ function renderPlayers() {
 
         circle.setAttribute(
             "cx",
-            px
+            cx
         );
 
         circle.setAttribute(
             "cy",
-            py
+            cy
         );
 
         circle.setAttribute(
             "r",
-            7
+            Math.max(5, cellSize * 0.38)
         );
 
 
-        circle.setAttribute(
-            "class",
-            "player-circle"
+        group.appendChild(
+            circle
         );
 
 
-        group.appendChild(circle);
+        // صورة اللاعب
 
-
-        /*
-            صورة البروفايل
-        */
-
-        if (
-            player.profilePictureUrl
-        ) {
+        if (player.profilePictureUrl) {
 
             const image =
                 document.createElementNS(
@@ -566,26 +704,32 @@ function renderPlayers() {
                 );
 
 
+            const sizeImg =
+                Math.max(
+                    8,
+                    cellSize * 0.65
+                );
+
+
             image.setAttribute(
                 "x",
-                px - 6
+                cx - sizeImg / 2
             );
 
             image.setAttribute(
                 "y",
-                py - 6
+                cy - sizeImg / 2
             );
 
             image.setAttribute(
                 "width",
-                12
+                sizeImg
             );
 
             image.setAttribute(
                 "height",
-                12
+                sizeImg
             );
-
 
             image.setAttribute(
                 "href",
@@ -599,20 +743,55 @@ function renderPlayers() {
             );
 
 
-            image.setAttribute(
-                "class",
-                "player-avatar"
+            group.appendChild(
+                image
+            );
+
+        } else {
+
+            const text =
+                document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "text"
+                );
+
+
+            text.setAttribute(
+                "x",
+                cx
+            );
+
+            text.setAttribute(
+                "y",
+                cy + 4
+            );
+
+            text.setAttribute(
+                "text-anchor",
+                "middle"
+            );
+
+            text.setAttribute(
+                "font-size",
+                Math.max(
+                    8,
+                    cellSize * 0.5
+                )
             );
 
 
-            group.appendChild(image);
+            text.textContent =
+                "👤";
+
+
+            group.appendChild(
+                text
+            );
 
         }
 
 
-        /*
-            اسم اللاعب
-        */
+        // اسم اللاعب
 
         const name =
             document.createElementNS(
@@ -623,184 +802,116 @@ function renderPlayers() {
 
         name.setAttribute(
             "x",
-            px
+            cx
         );
 
         name.setAttribute(
             "y",
-            py - 8
+            cy + cellSize * 0.48
         );
 
+        name.setAttribute(
+            "text-anchor",
+            "middle"
+        );
 
         name.setAttribute(
-            "class",
-            "player-name"
+            "font-size",
+            Math.max(
+                5,
+                cellSize * 0.32
+            )
         );
 
 
         name.textContent =
-            player.nickname;
+            player.nickname || "";
 
 
-        group.appendChild(name);
+        name.classList.add(
+            "player-name"
+        );
 
 
-        svg.appendChild(group);
+        group.appendChild(
+            name
+        );
+
+
+        maze.appendChild(
+            group
+        );
 
     });
 
 }
 
 
-// ==================================================
-// قائمة اللاعبين
-// ==================================================
+// =========================================
+// شاشة الفائز
+// =========================================
 
-function renderPlayersList() {
+function showWinner(winner) {
 
-    if (players.length === 0) {
-
-        playersList.innerHTML =
-            `<div class="empty-players">
-                في انتظار اللاعبين...
-            </div>`;
-
-        return;
-    }
+    showScreen(winnerScreen);
 
 
-    playersList.innerHTML = "";
+    winnerName.textContent =
+        winner.nickname ||
+        winner.uniqueId ||
+        "الفائز";
 
 
-    players.forEach(
-        (player, index) => {
-
-            const item =
-                document.createElement(
-                    "div"
-                );
+    winnerAvatar.innerHTML = "";
 
 
-            item.className =
-                "player-list-item";
+    if (winner.profilePictureUrl) {
+
+        const img =
+            document.createElement("img");
 
 
-            const avatar =
-                document.createElement(
-                    "img"
-                );
+        img.src =
+            winner.profilePictureUrl;
 
 
-            avatar.src =
-                player.profilePictureUrl ||
-                "https://via.placeholder.com/50";
+        img.alt =
+            winner.nickname || "Winner";
 
 
-            avatar.alt =
-                player.nickname;
+        img.onerror = () => {
+
+            winnerAvatar.textContent =
+                "👤";
+
+        };
 
 
-            const info =
-                document.createElement(
-                    "div"
-                );
-
-
-            info.className =
-                "player-list-info";
-
-
-            const name =
-                document.createElement(
-                    "strong"
-                );
-
-
-            name.textContent =
-                player.nickname;
-
-
-            const number =
-                document.createElement(
-                    "span"
-                );
-
-
-            number.textContent =
-                `لاعب ${index + 1}`;
-
-
-            info.appendChild(name);
-
-            info.appendChild(number);
-
-
-            item.appendChild(avatar);
-
-            item.appendChild(info);
-
-
-            playersList.appendChild(item);
-
-        }
-    );
-
-}
-
-
-// ==================================================
-// معلومات اللعبة
-// ==================================================
-
-function updateGameInfo() {
-
-    playerCount.textContent =
-        players.length;
-
-
-    if (winner) {
-
-        gameStatus.textContent =
-            "🏆 انتهت الجولة";
-
-        return;
-    }
-
-
-    if (gameStarted) {
-
-        gameStatus.textContent =
-            "🔥 اللعب الآن";
-
-        return;
-    }
-
-
-    gameStatus.textContent =
-        "🟢 التسجيل مفتوح";
-
-
-    startButton.disabled =
-        players.length === 0;
-
-}
-
-
-// ==================================================
-// حماية النصوص
-// ==================================================
-
-function escapeHtml(text) {
-
-    const div =
-        document.createElement(
-            "div"
+        winnerAvatar.appendChild(
+            img
         );
 
+    } else {
+
+        winnerAvatar.textContent =
+            "👤";
+
+    }
+
+}
+
+
+// =========================================
+// حماية النصوص
+// =========================================
+
+function escapeHtml(value) {
+
+    const div =
+        document.createElement("div");
 
     div.textContent =
-        text || "";
-
+        value || "";
 
     return div.innerHTML;
 
