@@ -1,16 +1,177 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>SAMI LIVE MAZE</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
+
 
 <body>
 
-    <h1>SAMI LIVE MAZE</h1>
+    <main class="connect-page">
 
-    <p>سيتم بناء اللعبة هنا...</p>
+        <div class="logo">
+            SAMI LIVE
+        </div>
+
+        <h1>
+            🎮 SAMI LIVE MAZE
+        </h1>
+
+        <p class="subtitle">
+            لعبة المتاهة التفاعلية
+        </p>
+
+
+        <div class="connect-box">
+
+            <label>
+                اسم مستخدم TikTok LIVE
+            </label>
+
+            <input
+                id="username"
+                type="text"
+                placeholder="@username"
+                autocomplete="off"
+            >
+
+
+            <button id="connectButton">
+                🔴 اتصال بالـ LIVE
+            </button>
+
+
+            <div
+                id="status"
+                class="status"
+            >
+                غير متصل
+            </div>
+
+        </div>
+
+    </main>
+
+
+<script>
+
+const usernameInput =
+    document.getElementById("username");
+
+const connectButton =
+    document.getElementById("connectButton");
+
+const status =
+    document.getElementById("status");
+
+
+connectButton.addEventListener("click", async () => {
+
+    let username =
+        usernameInput.value.trim();
+
+
+    if (!username) {
+
+        status.textContent =
+            "⚠️ أدخل اسم المستخدم أولاً";
+
+        return;
+    }
+
+
+    username =
+        username.replace("@", "");
+
+
+    connectButton.disabled = true;
+
+    connectButton.textContent =
+        "⏳ جاري الاتصال...";
+
+
+    status.textContent =
+        `جاري الاتصال بـ @${username}`;
+
+
+    try {
+
+        const response =
+            await fetch("/api/connect", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+                    username
+                })
+
+            });
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok || !data.success) {
+
+            throw new Error(
+                data.message ||
+                "فشل الاتصال"
+            );
+
+        }
+
+
+        status.textContent =
+            `🟢 متصل بـ @${username}`;
+
+
+        setTimeout(() => {
+
+            window.location.href =
+                "/game.html";
+
+        }, 800);
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        status.textContent =
+            "❌ فشل الاتصال";
+
+        connectButton.disabled = false;
+
+        connectButton.textContent =
+            "🔴 اتصال بالـ LIVE";
+
+    }
+
+});
+
+</script>
 
 </body>
+
 </html>
