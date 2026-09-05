@@ -57,6 +57,14 @@ const monsterSpeed =
 
 
 /* =====================================================
+   MODE BUTTONS
+===================================================== */
+
+const modeButtons =
+    document.querySelectorAll(".game-mode-option");
+
+
+/* =====================================================
    STATE
 ===================================================== */
 
@@ -73,7 +81,7 @@ let currentJoinKeyword =
 
 
 /* =====================================================
-   SOCKET
+   SOCKET CONNECTION
 ===================================================== */
 
 socket.on("connect", () => {
@@ -518,23 +526,140 @@ function updateKeywordUI() {
    GAME MODE
 ===================================================== */
 
-gameMode.addEventListener(
-    "change",
-    () => {
+/*
+   الأزرار المرئية الجديدة:
+   💰 الكنز
+   👹 المطاردة
+   🏃 نهروش - معطل
+*/
 
-        socket.emit(
-            "set_game_mode",
-            gameMode.value
+modeButtons.forEach(
+    button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                if (
+                    button.disabled
+                ) {
+                    return;
+                }
+
+
+                const mode =
+                    button.dataset.mode;
+
+
+                if (
+                    mode !== "treasure" &&
+                    mode !== "chase"
+                ) {
+                    return;
+                }
+
+
+                /*
+                   نغير قيمة الـ select المخفي
+                */
+
+                gameMode.value =
+                    mode;
+
+
+                /*
+                   نرسل نفس حدث change
+                   حتى تعمل الوظيفة الأصلية
+                */
+
+                gameMode.dispatchEvent(
+                    new Event(
+                        "change",
+                        {
+                            bubbles: true
+                        }
+                    )
+                );
+
+
+                updateModeButtons();
+
+            }
         );
 
     }
 );
 
 
+/* =====================================================
+   SELECT CHANGE
+===================================================== */
+
+gameMode.addEventListener(
+    "change",
+    () => {
+
+        const selectedMode =
+            gameMode.value;
+
+
+        if (
+            selectedMode !== "treasure" &&
+            selectedMode !== "chase"
+        ) {
+
+            gameMode.value =
+                currentGameMode;
+
+            return;
+
+        }
+
+
+        socket.emit(
+            "set_game_mode",
+            selectedMode
+        );
+
+    }
+);
+
+
+/* =====================================================
+   UPDATE MODE BUTTONS
+===================================================== */
+
+function updateModeButtons() {
+
+    modeButtons.forEach(
+        button => {
+
+            const mode =
+                button.dataset.mode;
+
+
+            button.classList.toggle(
+                "active",
+                mode === currentGameMode
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   UPDATE MODE UI
+===================================================== */
+
 function updateModeUI() {
 
     gameMode.value =
         currentGameMode;
+
+
+    updateModeButtons();
 
 
     if (
