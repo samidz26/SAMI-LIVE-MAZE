@@ -1,10 +1,29 @@
 const socket = io();
 
+/* =====================================================
+   ELEMENTS
+===================================================== */
+
 const mazeSvg =
     document.getElementById("maze");
 
+const gameTimer =
+    document.getElementById("gameTimer");
+
+const timerIcon =
+    document.getElementById("timerIcon");
+
+const timerValue =
+    document.getElementById("timerValue");
+
 const winnerOverlay =
     document.getElementById("winnerOverlay");
+
+const winnerIcon =
+    document.getElementById("winnerIcon");
+
+const winnerSubtitle =
+    document.getElementById("winnerSubtitle");
 
 const winnerAvatar =
     document.getElementById("winnerAvatar");
@@ -12,64 +31,91 @@ const winnerAvatar =
 const winnerName =
     document.getElementById("winnerName");
 
+const winnerMessage =
+    document.getElementById("winnerMessage");
+
 const resetButton =
     document.getElementById("resetButton");
 
 
-/* =========================================
-   SETTINGS
-========================================= */
+/* =====================================================
+   CONSTANTS
+===================================================== */
 
 const MAZE_SIZE = 15;
+
 const CELL_SIZE = 20;
 
 
-/* =========================================
-   GAME STATE
-========================================= */
+/* =====================================================
+   STATE
+===================================================== */
 
 let currentState = null;
 
 
-/* =========================================
-   RECEIVE GAME STATE
-========================================= */
+/* =====================================================
+   GAME STATE
+===================================================== */
 
-socket.on("game_state", (state) => {
+socket.on(
+    "game_state",
+    state => {
 
-    if (!state) return;
+        if (!state) return;
 
-    currentState = state;
+        currentState =
+            state;
 
-    renderMaze(state);
+        renderMaze(
+            state
+        );
 
-});
+        updateTimer(
+            state
+        );
+
+    }
+);
 
 
-/* =========================================
+/* =====================================================
    GAME STARTED
-========================================= */
+===================================================== */
 
-socket.on("game_started", (state) => {
+socket.on(
+    "game_started",
+    state => {
 
-    winnerOverlay.classList.add("hidden");
+        if (!state) return;
 
-    currentState = state;
+        winnerOverlay.classList.add(
+            "hidden"
+        );
 
-    renderMaze(state);
+        currentState =
+            state;
 
-});
+        renderMaze(
+            state
+        );
+
+        updateTimer(
+            state
+        );
+
+    }
+);
 
 
-/* =========================================
+/* =====================================================
    RENDER MAZE
-========================================= */
+===================================================== */
 
 function renderMaze(state) {
 
-    if (!state) return;
-
-    mazeSvg.innerHTML = "";
+    mazeSvg.innerHTML =
+        "";
 
     const maze =
         state.maze || [];
@@ -80,13 +126,14 @@ function renderMaze(state) {
     const treasure =
         state.treasure;
 
+    const monsters =
+        state.monsters || [];
 
-    /*
-        حجم SVG
-    */
 
     const size =
-        MAZE_SIZE * CELL_SIZE;
+        MAZE_SIZE *
+        CELL_SIZE;
+
 
     mazeSvg.setAttribute(
         "viewBox",
@@ -94,9 +141,9 @@ function renderMaze(state) {
     );
 
 
-    /*
-        خلفية المتاهة
-    */
+    /* =====================================
+       BACKGROUND
+    ====================================== */
 
     const background =
         document.createElementNS(
@@ -134,9 +181,9 @@ function renderMaze(state) {
     );
 
 
-    /*
-        رسم الجدران
-    */
+    /* =====================================
+       WALLS
+    ====================================== */
 
     for (
         let row = 0;
@@ -155,18 +202,19 @@ function renderMaze(state) {
 
             if (!cell) continue;
 
+
             const x =
-                col * CELL_SIZE;
+                col *
+                CELL_SIZE;
 
             const y =
-                row * CELL_SIZE;
+                row *
+                CELL_SIZE;
 
 
-            /*
-                Top
-            */
-
-            if (cell.walls?.top) {
+            if (
+                cell.walls?.top
+            ) {
 
                 drawWall(
                     x,
@@ -178,11 +226,9 @@ function renderMaze(state) {
             }
 
 
-            /*
-                Right
-            */
-
-            if (cell.walls?.right) {
+            if (
+                cell.walls?.right
+            ) {
 
                 drawWall(
                     x + CELL_SIZE,
@@ -194,11 +240,9 @@ function renderMaze(state) {
             }
 
 
-            /*
-                Bottom
-            */
-
-            if (cell.walls?.bottom) {
+            if (
+                cell.walls?.bottom
+            ) {
 
                 drawWall(
                     x,
@@ -210,11 +254,9 @@ function renderMaze(state) {
             }
 
 
-            /*
-                Left
-            */
-
-            if (cell.walls?.left) {
+            if (
+                cell.walls?.left
+            ) {
 
                 drawWall(
                     x,
@@ -230,11 +272,13 @@ function renderMaze(state) {
     }
 
 
-    /*
-        رسم الكنز
-    */
+    /* =====================================
+       TREASURE
+    ====================================== */
 
-    if (treasure) {
+    if (
+        treasure
+    ) {
 
         drawTreasure(
             treasure.x,
@@ -244,12 +288,35 @@ function renderMaze(state) {
     }
 
 
-    /*
-        رسم اللاعبين
-    */
+    /* =====================================
+       MONSTERS
+    ====================================== */
+
+    monsters.forEach(
+        monster => {
+
+            drawMonster(
+                monster
+            );
+
+        }
+    );
+
+
+    /* =====================================
+       PLAYERS
+    ====================================== */
 
     players.forEach(
         (player, index) => {
+
+            if (
+                player.alive === false
+            ) {
+
+                return;
+
+            }
 
             drawPlayer(
                 player,
@@ -262,9 +329,9 @@ function renderMaze(state) {
 }
 
 
-/* =========================================
-   DRAW WALL
-========================================= */
+/* =====================================================
+   WALL
+===================================================== */
 
 function drawWall(
     x1,
@@ -278,6 +345,7 @@ function drawWall(
             "http://www.w3.org/2000/svg",
             "line"
         );
+
 
     line.setAttribute(
         "x1",
@@ -299,10 +367,12 @@ function drawWall(
         y2
     );
 
+
     line.setAttribute(
         "class",
         "maze-wall"
     );
+
 
     mazeSvg.appendChild(
         line
@@ -311,9 +381,9 @@ function drawWall(
 }
 
 
-/* =========================================
-   DRAW TREASURE
-========================================= */
+/* =====================================================
+   TREASURE
+===================================================== */
 
 function drawTreasure(
     col,
@@ -321,11 +391,14 @@ function drawTreasure(
 ) {
 
     const x =
-        col * CELL_SIZE +
+        col *
+        CELL_SIZE +
         CELL_SIZE / 2;
 
+
     const y =
-        row * CELL_SIZE +
+        row *
+        CELL_SIZE +
         CELL_SIZE / 2;
 
 
@@ -348,6 +421,7 @@ function drawTreasure(
             "circle"
         );
 
+
     circle.setAttribute(
         "cx",
         x
@@ -360,7 +434,7 @@ function drawTreasure(
 
     circle.setAttribute(
         "r",
-        7
+        8
     );
 
 
@@ -370,6 +444,7 @@ function drawTreasure(
             "text"
         );
 
+
     text.setAttribute(
         "x",
         x
@@ -377,7 +452,7 @@ function drawTreasure(
 
     text.setAttribute(
         "y",
-        y + 4
+        y + 5
     );
 
     text.setAttribute(
@@ -385,10 +460,12 @@ function drawTreasure(
         "middle"
     );
 
+
     text.setAttribute(
         "class",
         "treasure-icon"
     );
+
 
     text.textContent =
         "💎";
@@ -402,6 +479,7 @@ function drawTreasure(
         text
     );
 
+
     mazeSvg.appendChild(
         group
     );
@@ -409,9 +487,152 @@ function drawTreasure(
 }
 
 
-/* =========================================
-   DRAW PLAYER
-========================================= */
+/* =====================================================
+   MONSTER
+===================================================== */
+
+function drawMonster(
+    monster
+) {
+
+    if (
+        monster.x === undefined ||
+        monster.y === undefined
+    ) {
+
+        return;
+
+    }
+
+
+    const x =
+        monster.x *
+        CELL_SIZE +
+        CELL_SIZE / 2;
+
+
+    const y =
+        monster.y *
+        CELL_SIZE +
+        CELL_SIZE / 2;
+
+
+    const group =
+        document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "g"
+        );
+
+
+    group.setAttribute(
+        "class",
+        "maze-monster"
+    );
+
+
+    /*
+        سيتم استخدام الصورة:
+        /monster.png
+
+        عندما تضعها داخل public/
+    */
+
+    const image =
+        document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "image"
+        );
+
+
+    image.setAttribute(
+        "x",
+        x - 9
+    );
+
+    image.setAttribute(
+        "y",
+        y - 9
+    );
+
+    image.setAttribute(
+        "width",
+        18
+    );
+
+    image.setAttribute(
+        "height",
+        18
+    );
+
+
+    image.setAttribute(
+        "preserveAspectRatio",
+        "xMidYMid meet"
+    );
+
+
+    image.setAttribute(
+        "href",
+        "/monster.png"
+    );
+
+
+    image.onerror =
+        () => {
+
+            image.remove();
+
+            const fallback =
+                document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "text"
+                );
+
+            fallback.setAttribute(
+                "x",
+                x
+            );
+
+            fallback.setAttribute(
+                "y",
+                y + 5
+            );
+
+            fallback.setAttribute(
+                "text-anchor",
+                "middle"
+            );
+
+            fallback.setAttribute(
+                "class",
+                "monster-fallback"
+            );
+
+            fallback.textContent =
+                "👹";
+
+            group.appendChild(
+                fallback
+            );
+
+        };
+
+
+    group.appendChild(
+        image
+    );
+
+
+    mazeSvg.appendChild(
+        group
+    );
+
+}
+
+
+/* =====================================================
+   PLAYER
+===================================================== */
 
 function drawPlayer(
     player,
@@ -422,16 +643,21 @@ function drawPlayer(
         player.x === undefined ||
         player.y === undefined
     ) {
+
         return;
+
     }
 
 
     const x =
-        player.x * CELL_SIZE +
+        player.x *
+        CELL_SIZE +
         CELL_SIZE / 2;
 
+
     const y =
-        player.y * CELL_SIZE +
+        player.y *
+        CELL_SIZE +
         CELL_SIZE / 2;
 
 
@@ -448,15 +674,12 @@ function drawPlayer(
     );
 
 
-    /*
-        دائرة خلف الصورة
-    */
-
     const circle =
         document.createElementNS(
             "http://www.w3.org/2000/svg",
             "circle"
         );
+
 
     circle.setAttribute(
         "cx",
@@ -470,7 +693,7 @@ function drawPlayer(
 
     circle.setAttribute(
         "r",
-        7
+        8
     );
 
 
@@ -478,10 +701,6 @@ function drawPlayer(
         circle
     );
 
-
-    /*
-        صورة اللاعب
-    */
 
     if (
         player.profilePictureUrl
@@ -493,6 +712,7 @@ function drawPlayer(
                 "image"
             );
 
+
         image.setAttribute(
             "x",
             x - 6
@@ -502,6 +722,7 @@ function drawPlayer(
             "y",
             y - 6
         );
+
 
         image.setAttribute(
             "width",
@@ -513,10 +734,12 @@ function drawPlayer(
             12
         );
 
+
         image.setAttribute(
             "preserveAspectRatio",
             "xMidYMid slice"
         );
+
 
         image.setAttribute(
             "href",
@@ -524,12 +747,9 @@ function drawPlayer(
         );
 
 
-        /*
-            قص الصورة بشكل دائري
-        */
-
         const clipId =
             `playerClip_${index}`;
+
 
         const defs =
             document.createElementNS(
@@ -537,11 +757,13 @@ function drawPlayer(
                 "defs"
             );
 
+
         const clipPath =
             document.createElementNS(
                 "http://www.w3.org/2000/svg",
                 "clipPath"
             );
+
 
         clipPath.setAttribute(
             "id",
@@ -555,6 +777,7 @@ function drawPlayer(
                 "circle"
             );
 
+
         clipCircle.setAttribute(
             "cx",
             x
@@ -567,7 +790,7 @@ function drawPlayer(
 
         clipCircle.setAttribute(
             "r",
-            5.5
+            6
         );
 
 
@@ -575,9 +798,11 @@ function drawPlayer(
             clipCircle
         );
 
+
         defs.appendChild(
             clipPath
         );
+
 
         mazeSvg.appendChild(
             defs
@@ -590,22 +815,28 @@ function drawPlayer(
         );
 
 
+        image.onerror =
+            () => {
+
+                image.remove();
+
+            };
+
+
         group.appendChild(
             image
         );
 
     }
-    else {
 
-        /*
-            صورة احتياطية
-        */
+    else {
 
         const text =
             document.createElementNS(
                 "http://www.w3.org/2000/svg",
                 "text"
             );
+
 
         text.setAttribute(
             "x",
@@ -614,18 +845,21 @@ function drawPlayer(
 
         text.setAttribute(
             "y",
-            y + 3
+            y + 4
         );
+
 
         text.setAttribute(
             "text-anchor",
             "middle"
         );
 
+
         text.setAttribute(
             "class",
             "player-fallback"
         );
+
 
         text.textContent =
             "●";
@@ -645,15 +879,94 @@ function drawPlayer(
 }
 
 
-/* =========================================
-   WINNER
-========================================= */
+/* =====================================================
+   TIMER
+===================================================== */
+
+function updateTimer(
+    state
+) {
+
+    if (
+        !state.gameStarted
+    ) {
+
+        gameTimer.classList.add(
+            "timer-hidden"
+        );
+
+        return;
+
+    }
+
+
+    gameTimer.classList.remove(
+        "timer-hidden"
+    );
+
+
+    if (
+        state.gameMode === "treasure"
+    ) {
+
+        timerIcon.textContent =
+            "💎";
+
+        timerValue.textContent =
+            Math.max(
+                0,
+                Number(
+                    state.treasureTimeLeft || 0
+                )
+            );
+
+    }
+
+    else if (
+        state.gameMode === "chase"
+    ) {
+
+        timerIcon.textContent =
+            "⏱️";
+
+        timerValue.textContent =
+            Math.max(
+                0,
+                Number(
+                    state.roundTimeLeft || 0
+                )
+            );
+
+    }
+
+    else {
+
+        gameTimer.classList.add(
+            "timer-hidden"
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   TREASURE WINNER
+===================================================== */
 
 socket.on(
     "game_winner",
-    (winner) => {
+    winner => {
 
         if (!winner) return;
+
+
+        winnerIcon.textContent =
+            "🏆";
+
+
+        winnerSubtitle.textContent =
+            "الفائز";
 
 
         winnerName.textContent =
@@ -661,42 +974,13 @@ socket.on(
             "الفائز";
 
 
-        winnerAvatar.src =
-            winner.profilePictureUrl ||
-            "";
+        winnerMessage.textContent =
+            "وصل إلى الكنز أولاً";
 
 
-        winnerAvatar.onerror =
-            () => {
-
-                winnerAvatar.src =
-                    "data:image/svg+xml," +
-                    encodeURIComponent(`
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             width="200"
-                             height="200"
-                             viewBox="0 0 200 200">
-
-                            <rect
-                                width="200"
-                                height="200"
-                                rx="100"
-                                fill="#222"/>
-
-                            <text
-                                x="100"
-                                y="125"
-                                text-anchor="middle"
-                                font-size="90">
-
-                                👤
-
-                            </text>
-
-                        </svg>
-                    `);
-
-            };
+        setWinnerAvatar(
+            winner.profilePictureUrl
+        );
 
 
         winnerOverlay.classList.remove(
@@ -707,24 +991,151 @@ socket.on(
 );
 
 
-/* =========================================
-   RESET / NEW ROUND
-========================================= */
+/* =====================================================
+   CHASE RESULT
+===================================================== */
+
+socket.on(
+    "game_result",
+    result => {
+
+        if (!result) return;
+
+
+        if (
+            result.winner === "monsters"
+        ) {
+
+            winnerIcon.textContent =
+                "👹";
+
+            winnerSubtitle.textContent =
+                "انتهت الجولة";
+
+            winnerName.textContent =
+                "الوحوش تفوز";
+
+            winnerMessage.textContent =
+                "تم الإمساك بجميع اللاعبين";
+
+            setWinnerAvatar(
+                ""
+            );
+
+        }
+
+        else {
+
+            winnerIcon.textContent =
+                "🏆";
+
+            winnerSubtitle.textContent =
+                "انتهت الجولة";
+
+            winnerName.textContent =
+                "اللاعبون يفوزون";
+
+            winnerMessage.textContent =
+                "انتهى الوقت وبقي لاعب واحد على الأقل";
+
+            setWinnerAvatar(
+                ""
+            );
+
+        }
+
+
+        winnerOverlay.classList.remove(
+            "hidden"
+        );
+
+    }
+);
+
+
+/* =====================================================
+   WINNER AVATAR
+===================================================== */
+
+function setWinnerAvatar(
+    url
+) {
+
+    if (url) {
+
+        winnerAvatar.src =
+            url;
+
+        winnerAvatar.style.display =
+            "block";
+
+        winnerAvatar.onerror =
+            () => {
+
+                showAvatarFallback();
+
+            };
+
+    }
+
+    else {
+
+        showAvatarFallback();
+
+    }
+
+}
+
+
+function showAvatarFallback() {
+
+    winnerAvatar.src =
+        "data:image/svg+xml," +
+        encodeURIComponent(`
+
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="200"
+                height="200"
+                viewBox="0 0 200 200">
+
+                <rect
+                    width="200"
+                    height="200"
+                    rx="100"
+                    fill="#222"/>
+
+                <text
+                    x="100"
+                    y="125"
+                    text-anchor="middle"
+                    font-size="90">
+
+                    👤
+
+                </text>
+
+            </svg>
+
+        `);
+
+}
+
+
+/* =====================================================
+   RESET
+===================================================== */
 
 resetButton.addEventListener(
     "click",
     () => {
 
-        resetButton.disabled = true;
+        resetButton.disabled =
+            true;
 
         socket.emit(
             "reset_game"
         );
-
-        /*
-            العودة مباشرة إلى
-            صفحة تسجيل اللاعبين
-        */
 
         window.location.href =
             "/registration.html";
