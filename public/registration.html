@@ -2,19 +2,27 @@
 <html lang="ar" dir="rtl">
 
 <head>
+
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <title>تسجيل اللاعبين - لعبة المتاهة التفاعلية</title>
+    <title>إدارة اللعبة - لعبة المتاهة التفاعلية</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
 
 <body>
 
 <div class="registration-page">
+
 
     <!-- =====================================
          HEADER
@@ -22,24 +30,17 @@
 
     <header class="registration-header">
 
-        <!-- اليمين -->
-
         <div class="header-right">
             SAMI LIVE
         </div>
-
-
-        <!-- المنتصف -->
 
         <div class="header-center">
             لعبة المتاهة التفاعلية
         </div>
 
-
-        <!-- اليسار -->
-
-        <div id="connectionStatus"
-             class="header-left">
+        <div
+            id="connectionStatus"
+            class="header-left">
 
             🟢 متصل
 
@@ -49,14 +50,106 @@
 
 
 
-    <!-- =====================================
-         محتوى التسجيل
-    ====================================== -->
-
     <main class="registration-content">
 
 
-        <!-- رسالة الانضمام -->
+        <!-- =====================================
+             GAME MODE
+        ====================================== -->
+
+        <section class="settings-card">
+
+            <div class="settings-title">
+                🎮 إعدادات اللعبة
+            </div>
+
+
+            <div class="setting-row">
+
+                <label for="gameMode">
+                    مود اللعبة
+                </label>
+
+                <select id="gameMode">
+
+                    <option value="treasure">
+                        💎 مود الكنز
+                    </option>
+
+                    <option value="chase">
+                        👹 مود المطاردة
+                    </option>
+
+                    <option value="nahroush">
+                        🏃 مود القبض على نهروش
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="setting-row">
+
+                <label for="joinKeyword">
+                    كلمة التسجيل
+                </label>
+
+                <div class="keyword-control">
+
+                    <input
+                        id="joinKeyword"
+                        type="text"
+                        value="JOIN"
+                        maxlength="20"
+                        autocomplete="off"
+                    >
+
+                    <button
+                        id="saveKeywordButton"
+                        type="button">
+
+                        حفظ
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="registration-control">
+
+                <div>
+
+                    <strong>
+                        حالة التسجيل
+                    </strong>
+
+                    <small id="registrationStatusText">
+                        التسجيل مفتوح
+                    </small>
+
+                </div>
+
+
+                <button
+                    id="registrationToggle"
+                    class="registration-toggle open">
+
+                    🟢 التسجيل مفتوح
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =====================================
+             JOIN INSTRUCTION
+        ====================================== -->
 
         <section class="join-section">
 
@@ -68,9 +161,15 @@
                 اكتب في الشات
             </h1>
 
-            <div class="join-command">
+
+            <div
+                id="currentKeyword"
+                class="join-command">
+
                 JOIN
+
             </div>
+
 
             <p>
                 للانضمام إلى اللعبة
@@ -81,7 +180,7 @@
 
 
         <!-- =====================================
-             قائمة اللاعبين
+             PLAYERS
         ====================================== -->
 
         <section class="players-section">
@@ -92,8 +191,9 @@
                     👥 اللاعبون المشاركون
                 </span>
 
-                <span id="playerCount"
-                      class="player-count">
+                <span
+                    id="playerCount"
+                    class="player-count">
 
                     0 / 20
 
@@ -102,8 +202,9 @@
             </div>
 
 
-            <div id="registrationPlayers"
-                 class="registration-player-list">
+            <div
+                id="registrationPlayers"
+                class="registration-player-list">
 
                 <div class="empty-players">
 
@@ -118,7 +219,7 @@
 
 
         <!-- =====================================
-             طريقة الحركة
+             MOVEMENT
         ====================================== -->
 
         <section class="movement-section">
@@ -130,7 +231,6 @@
 
             <div class="movement-controls">
 
-                <!-- فوق -->
 
                 <div class="movement-row">
 
@@ -153,7 +253,6 @@
                 </div>
 
 
-                <!-- يسار / يمين -->
 
                 <div class="movement-row horizontal">
 
@@ -193,7 +292,6 @@
                 </div>
 
 
-                <!-- تحت -->
 
                 <div class="movement-row">
 
@@ -229,21 +327,24 @@
 
 
         <!-- =====================================
-             بدء اللعبة
+             START
         ====================================== -->
 
         <section class="start-section">
 
-            <button id="startButton"
-                    class="start-button">
+            <button
+                id="startButton"
+                class="start-button"
+                disabled>
 
                 ▶️ بدء اللعب
 
             </button>
 
 
-            <div id="registrationMessage"
-                 class="registration-message">
+            <div
+                id="registrationMessage"
+                class="registration-message">
 
                 في انتظار اللاعبين...
 
@@ -257,12 +358,11 @@
 </div>
 
 
-<!-- Socket.IO -->
 
 <script src="/socket.io/socket.io.js"></script>
 
-
 <script src="registration.js"></script>
+
 
 </body>
 
