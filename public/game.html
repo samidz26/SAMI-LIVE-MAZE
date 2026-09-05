@@ -24,36 +24,41 @@
 <main class="game-page">
 
     <!-- =====================================
-         MAZE
+         GAME AREA
     ====================================== -->
 
-    <div class="maze-container">
+    <div class="game-board">
 
-        <svg
-            id="maze"
-            viewBox="0 0 300 300"
-            preserveAspectRatio="xMidYMid meet">
-        </svg>
+        <!-- MAZE -->
 
-    </div>
+        <div class="maze-container">
+
+            <svg
+                id="maze"
+                viewBox="0 0 300 300"
+                preserveAspectRatio="xMidYMid meet">
+            </svg>
+
+        </div>
 
 
-    <!-- =====================================
-         TIMER
-    ====================================== -->
+        <!-- =====================================
+             TIMER
+        ====================================== -->
 
-    <div
-        id="gameTimer"
-        class="game-timer">
+        <div
+            id="gameTimer"
+            class="game-timer">
 
-        <span id="timerIcon">
-            ⏱️
-        </span>
+            <span id="timerIcon">
+                ⏱️
+            </span>
 
-        <span
-            id="timerValue">
-            0
-        </span>
+            <span id="timerValue">
+                0
+            </span>
+
+        </div>
 
     </div>
 
@@ -75,6 +80,7 @@
                 🏆
 
             </div>
+
 
             <div
                 id="winnerSubtitle"
