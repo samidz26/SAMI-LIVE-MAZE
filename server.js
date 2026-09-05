@@ -19,7 +19,7 @@ app.use(express.static(__dirname + "/public"));
 
 const PORT = process.env.PORT || 3000;
 
-const MAZE_SIZE = 15;
+const MAZE_SIZE = 12;
 const MAX_PLAYERS = 20;
 
 const DEFAULT_JOIN_KEYWORD = "JOIN";
