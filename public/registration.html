@@ -2,7 +2,6 @@
 <html lang="ar" dir="rtl">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -16,17 +15,13 @@
         rel="stylesheet"
         href="style.css"
     >
-
 </head>
 
 <body>
 
 <div class="registration-page">
 
-
-    <!-- =====================================
-         HEADER
-    ====================================== -->
+    <!-- HEADER -->
 
     <header class="registration-header">
 
@@ -49,7 +44,6 @@
     </header>
 
 
-
     <main class="registration-content">
 
 
@@ -63,6 +57,8 @@
                 🎮 إعدادات اللعبة
             </div>
 
+
+            <!-- MODE -->
 
             <div class="setting-row">
 
@@ -89,11 +85,158 @@
             </div>
 
 
+            <!-- TREASURE SETTINGS -->
+
+            <div
+                id="treasureSettings"
+                class="mode-settings">
+
+                <div class="mode-settings-title">
+                    💎 إعدادات مود الكنز
+                </div>
+
+
+                <div class="setting-row">
+
+                    <label for="treasureDuration">
+                        ⏱️ مدة ظهور الكنز
+                    </label>
+
+
+                    <div class="number-control">
+
+                        <input
+                            id="treasureDuration"
+                            type="number"
+                            min="1"
+                            max="300"
+                            value="10"
+                        >
+
+                        <span>
+                            ثانية
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- CHASE SETTINGS -->
+
+            <div
+                id="chaseSettings"
+                class="mode-settings hidden-mode">
+
+                <div class="mode-settings-title">
+                    👹 إعدادات مود المطاردة
+                </div>
+
+
+                <!-- ROUND TIME -->
+
+                <div class="setting-row">
+
+                    <label for="roundDuration">
+                        ⏱️ مدة الجولة
+                    </label>
+
+
+                    <div class="number-control">
+
+                        <input
+                            id="roundDuration"
+                            type="number"
+                            min="10"
+                            max="3600"
+                            value="60"
+                        >
+
+                        <span>
+                            ثانية
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- MONSTER COUNT -->
+
+                <div class="setting-row">
+
+                    <label for="monsterCount">
+                        👹 عدد الوحوش
+                    </label>
+
+
+                    <div class="number-control">
+
+                        <input
+                            id="monsterCount"
+                            type="number"
+                            min="1"
+                            max="10"
+                            value="1"
+                        >
+
+                        <span>
+                            وحش
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- MONSTER SPEED -->
+
+                <div class="setting-row">
+
+                    <label for="monsterSpeed">
+                        ⚡ سرعة الوحش
+                    </label>
+
+
+                    <div class="number-control">
+
+                        <input
+                            id="monsterSpeed"
+                            type="number"
+                            min="100"
+                            max="10000"
+                            step="100"
+                            value="1000"
+                        >
+
+                        <span>
+                            ms / حركة
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="settings-note">
+
+                    ⚡ كلما قل الرقم زادت سرعة الوحش
+
+                </div>
+
+            </div>
+
+
+            <!-- JOIN KEYWORD -->
+
             <div class="setting-row">
 
                 <label for="joinKeyword">
                     كلمة التسجيل
                 </label>
+
 
                 <div class="keyword-control">
 
@@ -104,6 +247,7 @@
                         maxlength="20"
                         autocomplete="off"
                     >
+
 
                     <button
                         id="saveKeywordButton"
@@ -118,6 +262,8 @@
             </div>
 
 
+            <!-- REGISTRATION -->
+
             <div class="registration-control">
 
                 <div>
@@ -126,8 +272,11 @@
                         حالة التسجيل
                     </strong>
 
-                    <small id="registrationStatusText">
+                    <small
+                        id="registrationStatusText">
+
                         التسجيل مفتوح
+
                     </small>
 
                 </div>
@@ -148,7 +297,7 @@
 
 
         <!-- =====================================
-             JOIN INSTRUCTION
+             JOIN
         ====================================== -->
 
         <section class="join-section">
@@ -231,7 +380,6 @@
 
             <div class="movement-controls">
 
-
                 <div class="movement-row">
 
                     <div class="direction">
@@ -251,7 +399,6 @@
                     </div>
 
                 </div>
-
 
 
                 <div class="movement-row horizontal">
@@ -290,7 +437,6 @@
                     </div>
 
                 </div>
-
 
 
                 <div class="movement-row">
@@ -352,17 +498,14 @@
 
         </section>
 
-
     </main>
 
 </div>
 
 
-
 <script src="/socket.io/socket.io.js"></script>
 
 <script src="registration.js"></script>
-
 
 </body>
 
