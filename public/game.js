@@ -42,9 +42,13 @@ const resetButton =
    CONSTANTS
 ===================================================== */
 
-const MAZE_SIZE = 15;
+const MAZE_SIZE = 12;
 
-const CELL_SIZE = 20;
+/*
+   32px لكل خلية.
+   الـ SVG سيقوم بتصغيرها تلقائياً على الشاشات الصغيرة.
+*/
+const CELL_SIZE = 32;
 
 
 /* =====================================================
@@ -52,6 +56,26 @@ const CELL_SIZE = 20;
 ===================================================== */
 
 let currentState = null;
+
+
+/* =====================================================
+   SVG HELPERS
+===================================================== */
+
+const SVG_NS =
+    "http://www.w3.org/2000/svg";
+
+
+function createSvgElement(
+    type
+) {
+
+    return document.createElementNS(
+        SVG_NS,
+        type
+    );
+
+}
 
 
 /* =====================================================
@@ -146,8 +170,7 @@ function renderMaze(state) {
     ====================================== */
 
     const background =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
+        createSvgElement(
             "rect"
         );
 
@@ -273,7 +296,7 @@ function renderMaze(state) {
 
 
     /* =====================================
-       TREASURE
+       TREASURE CHEST
     ====================================== */
 
     if (
@@ -341,8 +364,7 @@ function drawWall(
 ) {
 
     const line =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
+        createSvgElement(
             "line"
         );
 
@@ -382,7 +404,7 @@ function drawWall(
 
 
 /* =====================================================
-   TREASURE
+   TREASURE CHEST
 ===================================================== */
 
 function drawTreasure(
@@ -403,8 +425,7 @@ function drawTreasure(
 
 
     const group =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
+        createSvgElement(
             "g"
         );
 
@@ -415,68 +436,269 @@ function drawTreasure(
     );
 
 
-    const circle =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
+    /*
+       هالة حول الصندوق
+    */
+
+    const glow =
+        createSvgElement(
             "circle"
         );
 
-
-    circle.setAttribute(
+    glow.setAttribute(
         "cx",
         x
     );
 
-    circle.setAttribute(
+    glow.setAttribute(
         "cy",
         y
     );
 
-    circle.setAttribute(
+    glow.setAttribute(
         "r",
-        8
+        14
+    );
+
+    glow.setAttribute(
+        "class",
+        "treasure-glow"
+    );
+
+    group.appendChild(
+        glow
     );
 
 
-    const text =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "text"
+    /*
+       ظل الصندوق
+    */
+
+    const shadow =
+        createSvgElement(
+            "ellipse"
         );
 
-
-    text.setAttribute(
-        "x",
+    shadow.setAttribute(
+        "cx",
         x
     );
 
-    text.setAttribute(
-        "y",
-        y + 5
+    shadow.setAttribute(
+        "cy",
+        y + 9
     );
 
-    text.setAttribute(
-        "text-anchor",
-        "middle"
+    shadow.setAttribute(
+        "rx",
+        11
     );
 
+    shadow.setAttribute(
+        "ry",
+        3
+    );
 
-    text.setAttribute(
+    shadow.setAttribute(
         "class",
-        "treasure-icon"
-    );
-
-
-    text.textContent =
-        "💎";
-
-
-    group.appendChild(
-        circle
+        "treasure-shadow"
     );
 
     group.appendChild(
-        text
+        shadow
+    );
+
+
+    /*
+       جسم الصندوق
+    */
+
+    const body =
+        createSvgElement(
+            "rect"
+        );
+
+    body.setAttribute(
+        "x",
+        x - 10
+    );
+
+    body.setAttribute(
+        "y",
+        y - 2
+    );
+
+    body.setAttribute(
+        "width",
+        20
+    );
+
+    body.setAttribute(
+        "height",
+        11
+    );
+
+    body.setAttribute(
+        "rx",
+        2
+    );
+
+    body.setAttribute(
+        "class",
+        "treasure-body"
+    );
+
+    group.appendChild(
+        body
+    );
+
+
+    /*
+       غطاء الصندوق
+    */
+
+    const lid =
+        createSvgElement(
+            "path"
+        );
+
+    lid.setAttribute(
+        "d",
+        `
+        M ${x - 11} ${y - 4}
+        Q ${x - 10} ${y - 9}
+          ${x - 5} ${y - 10}
+        L ${x + 5} ${y - 10}
+        Q ${x + 10} ${y - 9}
+          ${x + 11} ${y - 4}
+        Z
+        `
+    );
+
+    lid.setAttribute(
+        "class",
+        "treasure-lid"
+    );
+
+    group.appendChild(
+        lid
+    );
+
+
+    /*
+       الشريط الذهبي
+    */
+
+    const band =
+        createSvgElement(
+            "rect"
+        );
+
+    band.setAttribute(
+        "x",
+        x - 2
+    );
+
+    band.setAttribute(
+        "y",
+        y - 9
+    );
+
+    band.setAttribute(
+        "width",
+        4
+    );
+
+    band.setAttribute(
+        "height",
+        18
+    );
+
+    band.setAttribute(
+        "class",
+        "treasure-band"
+    );
+
+    group.appendChild(
+        band
+    );
+
+
+    /*
+       القفل
+    */
+
+    const lock =
+        createSvgElement(
+            "rect"
+        );
+
+    lock.setAttribute(
+        "x",
+        x - 3
+    );
+
+    lock.setAttribute(
+        "y",
+        y - 1
+    );
+
+    lock.setAttribute(
+        "width",
+        6
+    );
+
+    lock.setAttribute(
+        "height",
+        5
+    );
+
+    lock.setAttribute(
+        "rx",
+        1
+    );
+
+    lock.setAttribute(
+        "class",
+        "treasure-lock"
+    );
+
+    group.appendChild(
+        lock
+    );
+
+
+    /*
+       لمعان
+    */
+
+    const shine =
+        createSvgElement(
+            "circle"
+        );
+
+    shine.setAttribute(
+        "cx",
+        x - 6
+    );
+
+    shine.setAttribute(
+        "cy",
+        y - 5
+    );
+
+    shine.setAttribute(
+        "r",
+        1.5
+    );
+
+    shine.setAttribute(
+        "class",
+        "treasure-shine"
+    );
+
+    group.appendChild(
+        shine
     );
 
 
@@ -518,8 +740,7 @@ function drawMonster(
 
 
     const group =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
+        createSvgElement(
             "g"
         );
 
@@ -531,37 +752,71 @@ function drawMonster(
 
 
     /*
-        سيتم استخدام الصورة:
-        /monster.png
+       هالة الوحش
+    */
 
-        عندما تضعها داخل public/
+    const glow =
+        createSvgElement(
+            "circle"
+        );
+
+    glow.setAttribute(
+        "cx",
+        x
+    );
+
+    glow.setAttribute(
+        "cy",
+        y
+    );
+
+    glow.setAttribute(
+        "r",
+        13
+    );
+
+    glow.setAttribute(
+        "class",
+        "monster-glow"
+    );
+
+    group.appendChild(
+        glow
+    );
+
+
+    /*
+       صورة الوحش
     */
 
     const image =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
+        createSvgElement(
             "image"
         );
 
 
+    /*
+       أصبح أكبر ليتناسب مع 12×12
+    */
+
     image.setAttribute(
         "x",
-        x - 9
+        x - 13
     );
 
     image.setAttribute(
         "y",
-        y - 9
+        y - 13
     );
 
     image.setAttribute(
         "width",
-        18
+        26
     );
 
     image.setAttribute(
         "height",
-        18
+        26
     );
 
 
@@ -583,8 +838,7 @@ function drawMonster(
             image.remove();
 
             const fallback =
-                document.createElementNS(
-                    "http://www.w3.org/2000/svg",
+                createSvgElement(
                     "text"
                 );
 
@@ -595,7 +849,7 @@ function drawMonster(
 
             fallback.setAttribute(
                 "y",
-                y + 5
+                y + 7
             );
 
             fallback.setAttribute(
@@ -662,8 +916,7 @@ function drawPlayer(
 
 
     const group =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
+        createSvgElement(
             "g"
         );
 
@@ -674,9 +927,46 @@ function drawPlayer(
     );
 
 
+    /*
+       هالة اللاعب
+    */
+
+    const glow =
+        createSvgElement(
+            "circle"
+        );
+
+    glow.setAttribute(
+        "cx",
+        x
+    );
+
+    glow.setAttribute(
+        "cy",
+        y
+    );
+
+    glow.setAttribute(
+        "r",
+        14
+    );
+
+    glow.setAttribute(
+        "class",
+        "player-glow"
+    );
+
+    group.appendChild(
+        glow
+    );
+
+
+    /*
+       الإطار الخارجي
+    */
+
     const circle =
-        document.createElementNS(
-            "http://www.w3.org/2000/svg",
+        createSvgElement(
             "circle"
         );
 
@@ -693,7 +983,13 @@ function drawPlayer(
 
     circle.setAttribute(
         "r",
-        8
+        13
+    );
+
+
+    circle.setAttribute(
+        "class",
+        "player-ring"
     );
 
 
@@ -702,36 +998,44 @@ function drawPlayer(
     );
 
 
+    /*
+       صورة اللاعب
+       تقريباً 75% من حجم الخلية
+    */
+
+    const avatarSize =
+        22;
+
+
     if (
         player.profilePictureUrl
     ) {
 
         const image =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
+            createSvgElement(
                 "image"
             );
 
 
         image.setAttribute(
             "x",
-            x - 6
+            x - avatarSize / 2
         );
 
         image.setAttribute(
             "y",
-            y - 6
+            y - avatarSize / 2
         );
 
 
         image.setAttribute(
             "width",
-            12
+            avatarSize
         );
 
         image.setAttribute(
             "height",
-            12
+            avatarSize
         );
 
 
@@ -748,19 +1052,17 @@ function drawPlayer(
 
 
         const clipId =
-            `playerClip_${index}`;
+            `playerClip_${index}_${Date.now()}`;
 
 
         const defs =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
+            createSvgElement(
                 "defs"
             );
 
 
         const clipPath =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
+            createSvgElement(
                 "clipPath"
             );
 
@@ -772,8 +1074,7 @@ function drawPlayer(
 
 
         const clipCircle =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
+            createSvgElement(
                 "circle"
             );
 
@@ -790,7 +1091,7 @@ function drawPlayer(
 
         clipCircle.setAttribute(
             "r",
-            6
+            11
         );
 
 
@@ -832,8 +1133,7 @@ function drawPlayer(
     else {
 
         const text =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
+            createSvgElement(
                 "text"
             );
 
@@ -843,9 +1143,10 @@ function drawPlayer(
             x
         );
 
+
         text.setAttribute(
             "y",
-            y + 4
+            y + 7
         );
 
 
@@ -862,7 +1163,7 @@ function drawPlayer(
 
 
         text.textContent =
-            "●";
+            "👤";
 
 
         group.appendChild(
@@ -909,8 +1210,13 @@ function updateTimer(
         state.gameMode === "treasure"
     ) {
 
+        /*
+           صندوق كنز بدل الجوهرة
+        */
+
         timerIcon.textContent =
-            "💎";
+            "🧰";
+
 
         timerValue.textContent =
             Math.max(
@@ -928,6 +1234,7 @@ function updateTimer(
 
         timerIcon.textContent =
             "⏱️";
+
 
         timerValue.textContent =
             Math.max(
@@ -1009,14 +1316,18 @@ socket.on(
             winnerIcon.textContent =
                 "👹";
 
+
             winnerSubtitle.textContent =
                 "انتهت الجولة";
+
 
             winnerName.textContent =
                 "الوحوش تفوز";
 
+
             winnerMessage.textContent =
                 "تم الإمساك بجميع اللاعبين";
+
 
             setWinnerAvatar(
                 ""
@@ -1029,14 +1340,18 @@ socket.on(
             winnerIcon.textContent =
                 "🏆";
 
+
             winnerSubtitle.textContent =
                 "انتهت الجولة";
+
 
             winnerName.textContent =
                 "اللاعبون يفوزون";
 
+
             winnerMessage.textContent =
                 "انتهى الوقت وبقي لاعب واحد على الأقل";
+
 
             setWinnerAvatar(
                 ""
@@ -1133,9 +1448,11 @@ resetButton.addEventListener(
         resetButton.disabled =
             true;
 
+
         socket.emit(
             "reset_game"
         );
+
 
         window.location.href =
             "/registration.html";
