@@ -5,85 +5,127 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>لعبة المتاهة</title>
 
-    <link rel="stylesheet"
-          href="style.css">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
 
 </head>
 
 <body>
 
-    <main class="game-page">
+<main class="game-page">
 
-        <!-- المتاهة -->
+    <!-- =====================================
+         MAZE
+    ====================================== -->
 
-        <div class="maze-container">
+    <div class="maze-container">
 
-            <svg
-                id="maze"
-                viewBox="0 0 300 300"
-                preserveAspectRatio="xMidYMid meet">
-            </svg>
+        <svg
+            id="maze"
+            viewBox="0 0 300 300"
+            preserveAspectRatio="xMidYMid meet">
+        </svg>
 
-        </div>
-
-
-        <!-- طبقة الفوز -->
-
-        <div
-            id="winnerOverlay"
-            class="winner-overlay hidden">
-
-            <div class="winner-box">
-
-                <div class="winner-title">
-                    🏆
-                </div>
-
-                <div class="winner-subtitle">
-                    الفائز
-                </div>
+    </div>
 
 
-                <div class="winner-avatar-wrapper">
+    <!-- =====================================
+         TIMER
+    ====================================== -->
 
-                    <img
-                        id="winnerAvatar"
-                        class="winner-avatar"
-                        src=""
-                        alt="الفائز">
+    <div
+        id="gameTimer"
+        class="game-timer">
 
-                </div>
+        <span id="timerIcon">
+            ⏱️
+        </span>
+
+        <span
+            id="timerValue">
+            0
+        </span>
+
+    </div>
 
 
-                <div
-                    id="winnerName"
-                    class="winner-name">
-                </div>
+    <!-- =====================================
+         WINNER / RESULT
+    ====================================== -->
 
+    <div
+        id="winnerOverlay"
+        class="winner-overlay hidden">
 
-                <button
-                    id="resetButton"
-                    class="reset-button">
+        <div class="winner-box">
 
-                    🔄 إعادة اللعب
+            <div
+                id="winnerIcon"
+                class="winner-title">
 
-                </button>
+                🏆
 
             </div>
 
+            <div
+                id="winnerSubtitle"
+                class="winner-subtitle">
+
+                الفائز
+
+            </div>
+
+
+            <div class="winner-avatar-wrapper">
+
+                <img
+                    id="winnerAvatar"
+                    class="winner-avatar"
+                    src=""
+                    alt="">
+
+            </div>
+
+
+            <div
+                id="winnerName"
+                class="winner-name">
+            </div>
+
+
+            <div
+                id="winnerMessage"
+                class="winner-message">
+            </div>
+
+
+            <button
+                id="resetButton"
+                class="reset-button">
+
+                🔄 إعادة اللعب
+
+            </button>
+
         </div>
 
-    </main>
+    </div>
+
+</main>
 
 
-    <script src="/socket.io/socket.io.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 
-    <script src="game.js"></script>
+<script src="game.js"></script>
 
 </body>
 
