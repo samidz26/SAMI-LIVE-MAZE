@@ -1700,3 +1700,175 @@ body {
         box-sizing: border-box;
     }
         }
+/* =====================================================
+   GAME BOARD - MAZE + TIMER
+===================================================== */
+
+.game-page {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(212,175,55,0.08),
+            transparent 45%
+        ),
+        #050505;
+    overflow: hidden;
+}
+
+.game-board {
+    width: min(92vw, 620px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* =====================================================
+   MAZE
+===================================================== */
+
+.game-board .maze-container {
+    position: relative;
+    width: min(92vw, 520px);
+    aspect-ratio: 1 / 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto;
+
+    order: 1;
+}
+
+
+/* SVG */
+
+.game-board #maze {
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    max-width: 100%;
+    max-height: 100%;
+}
+
+
+/* =====================================================
+   TIMER UNDER MAZE
+===================================================== */
+
+.game-board #gameTimer {
+    position: relative !important;
+
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+
+    transform: none !important;
+
+    order: 2;
+
+    margin-top: 18px;
+
+    width: auto;
+    min-width: 150px;
+    height: 52px;
+
+    display: flex !important;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
+    padding: 0 22px;
+
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(25,25,25,0.98),
+            rgba(8,8,8,0.98)
+        );
+
+    border: 1px solid rgba(212,175,55,0.5);
+
+    box-shadow:
+        0 8px 30px rgba(0,0,0,0.45),
+        0 0 20px rgba(212,175,55,0.08);
+
+    color: #fff;
+
+    font-size: 24px;
+    font-weight: 900;
+
+    z-index: 20;
+}
+
+
+/* TIMER ICON */
+
+.game-board #timerIcon {
+    font-size: 23px;
+}
+
+
+/* TIMER NUMBER */
+
+.game-board #timerValue {
+    min-width: 45px;
+
+    text-align: center;
+
+    color: #d4af37;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* Hidden timer */
+
+.game-board #gameTimer.timer-hidden {
+    display: none !important;
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 600px) {
+
+    .game-board {
+        width: 94vw;
+    }
+
+    .game-board .maze-container {
+        width: 94vw;
+        max-width: 94vw;
+    }
+
+    .game-board #gameTimer {
+        margin-top: 14px;
+
+        min-width: 135px;
+        height: 46px;
+
+        font-size: 21px;
+    }
+
+    .game-board #timerIcon {
+        font-size: 20px;
+    }
+
+    }
