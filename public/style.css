@@ -1227,3 +1227,476 @@ body {
     }
 
 }
+/* =========================================================
+   PREMIUM REGISTRATION PAGE
+========================================================= */
+
+.registration-page {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top, rgba(212, 175, 55, 0.12), transparent 35%),
+        linear-gradient(135deg, #070707, #111111 50%, #080808);
+    color: #fff;
+}
+
+.registration-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: 72px;
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    align-items: center;
+    padding: 0 25px;
+    background: rgba(10, 10, 10, 0.92);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+    backdrop-filter: blur(15px);
+}
+
+.header-right {
+    color: #d4af37;
+    font-size: 20px;
+    font-weight: 900;
+    text-align: right;
+    letter-spacing: 1px;
+}
+
+.header-center {
+    text-align: center;
+    font-size: 25px;
+    font-weight: 900;
+    background: linear-gradient(90deg, #fff, #d4af37, #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header-left {
+    text-align: left;
+    font-size: 14px;
+    color: #55e88a;
+}
+
+.registration-content {
+    width: min(1000px, calc(100% - 30px));
+    margin: 30px auto 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* =========================================================
+   CARDS
+========================================================= */
+
+.game-mode-card,
+.mode-settings-card,
+.common-settings-card,
+.premium-join-section,
+.premium-players-section,
+.premium-movement-section,
+.premium-start-section,
+.settings-card,
+.join-section,
+.players-section,
+.movement-section,
+.start-section {
+    background: linear-gradient(
+        145deg,
+        rgba(30, 30, 30, 0.96),
+        rgba(12, 12, 12, 0.96)
+    );
+    border: 1px solid rgba(212, 175, 55, 0.22);
+    border-radius: 18px;
+    box-shadow:
+        0 15px 40px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* =========================================================
+   GAME MODES
+========================================================= */
+
+.game-mode-card {
+    padding: 22px;
+}
+
+.mode-title {
+    text-align: center;
+    color: #d4af37;
+    font-size: 20px;
+    font-weight: 900;
+    margin-bottom: 18px;
+}
+
+.game-mode-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.game-mode-option {
+    position: relative;
+    min-height: 125px;
+    padding: 18px 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.035);
+    color: white;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.game-mode-option:hover {
+    transform: translateY(-3px);
+    border-color: rgba(212,175,55,0.55);
+    box-shadow: 0 8px 25px rgba(212,175,55,0.12);
+}
+
+.game-mode-option.active {
+    border-color: #d4af37;
+    background: linear-gradient(
+        145deg,
+        rgba(212,175,55,0.18),
+        rgba(212,175,55,0.04)
+    );
+    box-shadow:
+        0 0 25px rgba(212,175,55,0.15),
+        inset 0 0 20px rgba(212,175,55,0.04);
+}
+
+.game-mode-icon {
+    display: block;
+    font-size: 35px;
+    margin-bottom: 8px;
+}
+
+.game-mode-name {
+    display: block;
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.game-mode-description {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #aaa;
+}
+
+.disabled-mode {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.hidden-real-select {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* =========================================================
+   MODE SETTINGS
+========================================================= */
+
+.mode-settings-card {
+    padding: 22px;
+}
+
+.mode-settings {
+    display: block;
+}
+
+.mode-settings.hidden-mode {
+    display: none !important;
+}
+
+.premium-setting-row,
+.setting-row {
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.premium-setting-row label,
+.setting-row label {
+    color: #eee;
+    font-weight: 700;
+}
+
+.premium-setting-row input,
+.setting-row input,
+.setting-row select {
+    min-width: 100px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    border: 1px solid rgba(212,175,55,0.35);
+    background: #090909;
+    color: white;
+    outline: none;
+}
+
+.premium-setting-row input:focus,
+.setting-row input:focus {
+    border-color: #d4af37;
+    box-shadow: 0 0 12px rgba(212,175,55,0.15);
+}
+
+.setting-information,
+.settings-note {
+    color: #888;
+    font-size: 12px;
+}
+
+/* =========================================================
+   COMMON SETTINGS
+========================================================= */
+
+.common-settings-card {
+    padding: 22px;
+}
+
+.registration-info {
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(212,175,55,0.06);
+    border: 1px solid rgba(212,175,55,0.15);
+}
+
+/* =========================================================
+   JOIN KEYWORD
+========================================================= */
+
+.premium-join-section {
+    padding: 25px;
+    text-align: center;
+}
+
+.join-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.join-label {
+    color: #aaa;
+    font-weight: 700;
+}
+
+#joinKeyword {
+    width: 180px;
+    text-align: center;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(212,175,55,0.35);
+    background: #080808;
+    color: #fff;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+#saveKeywordButton {
+    padding: 12px 20px;
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #d4af37, #a77c16);
+    color: #111;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+/* =========================================================
+   PLAYERS
+========================================================= */
+
+.premium-players-section {
+    padding: 22px;
+}
+
+.players-title-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.players-title-icon {
+    color: #d4af37;
+    font-size: 20px;
+}
+
+#playerCount {
+    color: #d4af37;
+    font-weight: 900;
+}
+
+#registrationPlayers {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.registration-player,
+.player-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 58px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.registration-player img,
+.player-item img {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #d4af37;
+}
+
+.registration-player-name,
+.player-name {
+    flex: 1;
+    font-weight: 800;
+}
+
+.registration-player button,
+.player-item button {
+    border: 0;
+    background: rgba(255,60,60,0.1);
+    color: #ff6868;
+    padding: 7px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* =========================================================
+   MOVEMENT
+========================================================= */
+
+.premium-movement-section {
+    padding: 22px;
+}
+
+.movement-header {
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+.movement-title-icon {
+    color: #d4af37;
+    font-size: 22px;
+}
+
+.movement-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.movement-control {
+    min-width: 75px;
+    padding: 12px;
+    text-align: center;
+    border-radius: 10px;
+    background: rgba(212,175,55,0.07);
+    border: 1px solid rgba(212,175,55,0.2);
+    color: #d4af37;
+    font-weight: 900;
+}
+
+/* =========================================================
+   START
+========================================================= */
+
+.premium-start-section {
+    padding: 25px;
+    text-align: center;
+}
+
+#startButton {
+    width: min(450px, 100%);
+    padding: 17px;
+    border: 0;
+    border-radius: 13px;
+    background: linear-gradient(135deg, #d4af37, #f1d477, #a77c16);
+    color: #111;
+    font-size: 18px;
+    font-weight: 1000;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(212,175,55,0.18);
+    transition: 0.25s;
+}
+
+#startButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(212,175,55,0.28);
+}
+
+#startButton:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .registration-header {
+        height: 62px;
+        padding: 0 12px;
+    }
+
+    .header-center {
+        font-size: 17px;
+    }
+
+    .header-right {
+        font-size: 15px;
+    }
+
+    .header-left {
+        font-size: 11px;
+    }
+
+    .registration-content {
+        width: calc(100% - 18px);
+        margin-top: 15px;
+    }
+
+    .game-mode-selector {
+        grid-template-columns: 1fr;
+    }
+
+    #registrationPlayers {
+        grid-template-columns: 1fr;
+    }
+
+    .premium-setting-row,
+    .setting-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .premium-setting-row input,
+    .setting-row input {
+        width: 100%;
+        box-sizing: border-box;
+    }
+        }
