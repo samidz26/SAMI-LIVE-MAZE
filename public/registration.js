@@ -1,9 +1,8 @@
 const socket = io();
 
-
-/* =========================================
+/* =====================================================
    ELEMENTS
-========================================= */
+===================================================== */
 
 const playersContainer =
     document.getElementById("registrationPlayers");
@@ -38,23 +37,44 @@ const registrationStatusText =
 const gameMode =
     document.getElementById("gameMode");
 
+const treasureSettingsBox =
+    document.getElementById("treasureSettings");
 
-/* =========================================
-   LOCAL STATE
-========================================= */
+const chaseSettingsBox =
+    document.getElementById("chaseSettings");
+
+const treasureDuration =
+    document.getElementById("treasureDuration");
+
+const roundDuration =
+    document.getElementById("roundDuration");
+
+const monsterCount =
+    document.getElementById("monsterCount");
+
+const monsterSpeed =
+    document.getElementById("monsterSpeed");
+
+
+/* =====================================================
+   STATE
+===================================================== */
 
 let players = [];
 
-let registrationOpen = true;
+let registrationOpen =
+    true;
 
-let currentGameMode = "treasure";
+let currentGameMode =
+    "treasure";
 
-let currentJoinKeyword = "JOIN";
+let currentJoinKeyword =
+    "JOIN";
 
 
-/* =========================================
-   SOCKET CONNECTED
-========================================= */
+/* =====================================================
+   SOCKET
+===================================================== */
 
 socket.on("connect", () => {
 
@@ -72,62 +92,105 @@ socket.on("disconnect", () => {
 });
 
 
-/* =========================================
+/* =====================================================
    GAME STATE
-========================================= */
+===================================================== */
 
-socket.on("game_state", (state) => {
+socket.on(
+    "game_state",
+    state => {
 
-    if (!state) return;
-
-
-    players =
-        state.players || [];
+        if (!state) return;
 
 
-    registrationOpen =
-        state.registrationOpen !== false;
+        players =
+            state.players || [];
 
 
-    currentGameMode =
-        state.gameMode || "treasure";
+        registrationOpen =
+            state.registrationOpen !== false;
 
 
-    currentJoinKeyword =
-        state.joinKeyword || "JOIN";
+        currentGameMode =
+            state.gameMode ||
+            "treasure";
 
 
-    renderPlayers(players);
-
-    updateRegistrationUI();
-
-    updateModeUI();
-
-});
+        currentJoinKeyword =
+            state.joinKeyword ||
+            "JOIN";
 
 
-/* =========================================
+        if (
+            state.treasureSettings
+        ) {
+
+            treasureDuration.value =
+                state.treasureSettings.duration;
+
+        }
+
+
+        if (
+            state.chaseSettings
+        ) {
+
+            roundDuration.value =
+                state.chaseSettings.roundDuration;
+
+            monsterCount.value =
+                state.chaseSettings.monsterCount;
+
+            monsterSpeed.value =
+                state.chaseSettings.monsterSpeed;
+
+        }
+
+
+        renderPlayers(
+            players
+        );
+
+
+        updateRegistrationUI();
+
+        updateKeywordUI();
+
+        updateModeUI();
+
+    }
+);
+
+
+/* =====================================================
    RENDER PLAYERS
-========================================= */
+===================================================== */
 
 function renderPlayers(list) {
 
     playerCount.textContent =
         `${list.length} / 20`;
 
+    playersContainer.innerHTML =
+        "";
 
-    playersContainer.innerHTML = "";
 
-
-    if (list.length === 0) {
+    if (
+        list.length === 0
+    ) {
 
         playersContainer.innerHTML = `
+
             <div class="empty-players">
+
                 في انتظار اللاعبين...
+
             </div>
+
         `;
 
-        startButton.disabled = true;
+        startButton.disabled =
+            true;
 
         registrationMessage.textContent =
             registrationOpen
@@ -135,193 +198,190 @@ function renderPlayers(list) {
                 : "التسجيل مغلق";
 
         return;
+
     }
 
 
-    /*
-        يوجد لاعبون
-    */
-
     startButton.disabled =
-        !registrationOpen;
+        false;
 
 
     registrationMessage.textContent =
         registrationOpen
             ? `تم تسجيل ${list.length} لاعب`
-            : `تم تسجيل ${list.length} لاعب — التسجيل مغلق`;
+            : `جاهز للعب — ${list.length} لاعب`;
 
 
-    list.forEach((player, index) => {
+    list.forEach(
+        (player, index) => {
 
-        const item =
-            document.createElement("div");
+            const item =
+                document.createElement("div");
 
-        item.className =
-            "registration-player";
-
-
-        /* صورة */
-
-        const avatar =
-            document.createElement("img");
-
-        avatar.className =
-            "registration-avatar";
-
-        avatar.src =
-            player.profilePictureUrl || "";
-
-        avatar.alt =
-            player.nickname || "لاعب";
+            item.className =
+                "registration-player";
 
 
-        const fallback =
-            document.createElement("div");
+            /* AVATAR */
 
-        fallback.className =
-            "registration-avatar fallback-avatar";
+            const avatar =
+                document.createElement("img");
 
-        fallback.textContent =
-            "👤";
+            avatar.className =
+                "registration-avatar";
 
-        fallback.style.display =
-            player.profilePictureUrl
-                ? "none"
-                : "flex";
+            avatar.src =
+                player.profilePictureUrl ||
+                "";
+
+            avatar.alt =
+                player.nickname ||
+                "لاعب";
 
 
-        avatar.onerror = () => {
+            const fallback =
+                document.createElement("div");
 
-            avatar.style.display =
-                "none";
+            fallback.className =
+                "registration-avatar fallback-avatar";
+
+            fallback.textContent =
+                "👤";
 
             fallback.style.display =
-                "flex";
-
-        };
-
-
-        /* معلومات اللاعب */
-
-        const info =
-            document.createElement("div");
-
-        info.className =
-            "registration-player-info";
+                player.profilePictureUrl
+                    ? "none"
+                    : "flex";
 
 
-        const name =
-            document.createElement("div");
+            avatar.onerror =
+                () => {
 
-        name.className =
-            "registration-player-name";
+                    avatar.style.display =
+                        "none";
 
-        name.textContent =
-            player.nickname || "مستخدم";
+                    fallback.style.display =
+                        "flex";
+
+                };
 
 
-        const username =
-            document.createElement("div");
+            /* INFO */
 
-        username.className =
-            "registration-player-username";
+            const info =
+                document.createElement("div");
 
-        username.textContent =
-            "@" +
-            (
-                player.uniqueId ||
-                "unknown"
+            info.className =
+                "registration-player-info";
+
+
+            const name =
+                document.createElement("div");
+
+            name.className =
+                "registration-player-name";
+
+            name.textContent =
+                player.nickname ||
+                "مستخدم";
+
+
+            const username =
+                document.createElement("div");
+
+            username.className =
+                "registration-player-username";
+
+            username.textContent =
+                "@" +
+                (
+                    player.uniqueId ||
+                    "unknown"
+                );
+
+
+            info.appendChild(name);
+
+            info.appendChild(username);
+
+
+            /* NUMBER */
+
+            const number =
+                document.createElement("div");
+
+            number.className =
+                "registration-player-number";
+
+            number.textContent =
+                index + 1;
+
+
+            /* DELETE */
+
+            const deleteButton =
+                document.createElement("button");
+
+            deleteButton.type =
+                "button";
+
+            deleteButton.className =
+                "delete-player-button";
+
+            deleteButton.textContent =
+                "🗑";
+
+            deleteButton.title =
+                "حذف اللاعب";
+
+
+            deleteButton.addEventListener(
+                "click",
+                () => {
+
+                    socket.emit(
+                        "remove_player",
+                        player.uniqueId
+                    );
+
+                }
             );
 
 
-        info.appendChild(name);
-        info.appendChild(username);
+            item.appendChild(
+                avatar
+            );
+
+            item.appendChild(
+                fallback
+            );
+
+            item.appendChild(
+                info
+            );
+
+            item.appendChild(
+                number
+            );
+
+            item.appendChild(
+                deleteButton
+            );
 
 
-        /* رقم اللاعب */
+            playersContainer.appendChild(
+                item
+            );
 
-        const number =
-            document.createElement("div");
-
-        number.className =
-            "registration-player-number";
-
-        number.textContent =
-            index + 1;
-
-
-        /* زر الحذف */
-
-        const deleteButton =
-            document.createElement("button");
-
-        deleteButton.type =
-            "button";
-
-        deleteButton.className =
-            "delete-player-button";
-
-        deleteButton.textContent =
-            "🗑";
-
-
-        deleteButton.title =
-            "حذف اللاعب";
-
-
-        deleteButton.addEventListener(
-            "click",
-            () => {
-
-                deletePlayer(
-                    player.uniqueId
-                );
-
-            }
-        );
-
-
-        /* إضافة العناصر */
-
-        item.appendChild(avatar);
-
-        item.appendChild(fallback);
-
-        item.appendChild(info);
-
-        item.appendChild(number);
-
-        item.appendChild(deleteButton);
-
-
-        playersContainer.appendChild(item);
-
-    });
-
-}
-
-
-/* =========================================
-   DELETE PLAYER
-========================================= */
-
-function deletePlayer(uniqueId) {
-
-    if (!uniqueId) return;
-
-
-    socket.emit(
-        "remove_player",
-        uniqueId
+        }
     );
 
 }
 
 
-/* =========================================
-   REGISTRATION OPEN / CLOSE
-========================================= */
+/* =====================================================
+   REGISTRATION TOGGLE
+===================================================== */
 
 registrationToggle.addEventListener(
     "click",
@@ -335,13 +395,15 @@ registrationToggle.addEventListener(
 );
 
 
-/* =========================================
-   UPDATE REGISTRATION UI
-========================================= */
+/* =====================================================
+   REGISTRATION UI
+===================================================== */
 
 function updateRegistrationUI() {
 
-    if (registrationOpen) {
+    if (
+        registrationOpen
+    ) {
 
         registrationToggle.className =
             "registration-toggle open";
@@ -371,28 +433,12 @@ function updateRegistrationUI() {
     startButton.disabled =
         players.length === 0;
 
-
-    /*
-        بعد إغلاق التسجيل يمكن بدء اللعبة
-    */
-
-    if (!registrationOpen &&
-        players.length > 0) {
-
-        startButton.disabled =
-            false;
-
-        registrationMessage.textContent =
-            `جاهز للعب — ${players.length} لاعب`;
-
-    }
-
 }
 
 
-/* =========================================
-   SAVE JOIN KEYWORD
-========================================= */
+/* =====================================================
+   KEYWORD
+===================================================== */
 
 saveKeywordButton.addEventListener(
     "click",
@@ -402,9 +448,11 @@ saveKeywordButton.addEventListener(
 
 joinKeyword.addEventListener(
     "keydown",
-    (event) => {
+    event => {
 
-        if (event.key === "Enter") {
+        if (
+            event.key === "Enter"
+        ) {
 
             saveKeyword();
 
@@ -417,33 +465,20 @@ joinKeyword.addEventListener(
 function saveKeyword() {
 
     let keyword =
-        joinKeyword.value.trim();
+        joinKeyword.value
+            .trim()
+            .toUpperCase();
 
 
     if (!keyword) {
 
         alert(
-            "يجب إدخال كلمة التسجيل"
+            "أدخل كلمة التسجيل"
         );
 
         return;
 
     }
-
-
-    if (keyword.length > 20) {
-
-        alert(
-            "كلمة التسجيل طويلة جدًا"
-        );
-
-        return;
-
-    }
-
-
-    keyword =
-        keyword.toUpperCase();
 
 
     socket.emit(
@@ -454,9 +489,19 @@ function saveKeyword() {
 }
 
 
-/* =========================================
-   UPDATE KEYWORD UI
-========================================= */
+socket.on(
+    "join_keyword_updated",
+    keyword => {
+
+        currentJoinKeyword =
+            keyword ||
+            "JOIN";
+
+        updateKeywordUI();
+
+    }
+);
+
 
 function updateKeywordUI() {
 
@@ -469,82 +514,232 @@ function updateKeywordUI() {
 }
 
 
-/* =========================================
-   SERVER CONFIRMED KEYWORD
-========================================= */
-
-socket.on(
-    "join_keyword_updated",
-    (keyword) => {
-
-        currentJoinKeyword =
-            keyword || "JOIN";
-
-        updateKeywordUI();
-
-    }
-);
-
-
-/* =========================================
+/* =====================================================
    GAME MODE
-========================================= */
+===================================================== */
 
 gameMode.addEventListener(
     "change",
     () => {
 
-        const mode =
-            gameMode.value;
-
-
         socket.emit(
             "set_game_mode",
-            mode
+            gameMode.value
         );
 
     }
 );
 
 
-/* =========================================
-   UPDATE MODE UI
-========================================= */
-
 function updateModeUI() {
 
     gameMode.value =
         currentGameMode;
 
+
+    if (
+        currentGameMode === "treasure"
+    ) {
+
+        treasureSettingsBox.classList.remove(
+            "hidden-mode"
+        );
+
+        chaseSettingsBox.classList.add(
+            "hidden-mode"
+        );
+
+    }
+
+    else if (
+        currentGameMode === "chase"
+    ) {
+
+        treasureSettingsBox.classList.add(
+            "hidden-mode"
+        );
+
+        chaseSettingsBox.classList.remove(
+            "hidden-mode"
+        );
+
+    }
+
+    else {
+
+        treasureSettingsBox.classList.add(
+            "hidden-mode"
+        );
+
+        chaseSettingsBox.classList.add(
+            "hidden-mode"
+        );
+
+    }
+
 }
 
 
-/* =========================================
-   GAME MODE CONFIRMED
-========================================= */
+/* =====================================================
+   TREASURE SETTINGS
+===================================================== */
 
-socket.on(
-    "game_mode_updated",
-    (mode) => {
-
-        currentGameMode =
-            mode || "treasure";
-
-        updateModeUI();
-
-    }
+treasureDuration.addEventListener(
+    "change",
+    saveTreasureSettings
 );
 
 
-/* =========================================
+function saveTreasureSettings() {
+
+    const duration =
+        Number(
+            treasureDuration.value
+        );
+
+
+    if (
+        !Number.isFinite(duration) ||
+        duration < 1 ||
+        duration > 300
+    ) {
+
+        alert(
+            "مدة ظهور الكنز يجب أن تكون بين 1 و 300 ثانية"
+        );
+
+        treasureDuration.value =
+            10;
+
+        return;
+
+    }
+
+
+    socket.emit(
+        "set_treasure_settings",
+        {
+            duration
+        }
+    );
+
+}
+
+
+/* =====================================================
+   CHASE SETTINGS
+===================================================== */
+
+roundDuration.addEventListener(
+    "change",
+    saveChaseSettings
+);
+
+
+monsterCount.addEventListener(
+    "change",
+    saveChaseSettings
+);
+
+
+monsterSpeed.addEventListener(
+    "change",
+    saveChaseSettings
+);
+
+
+function saveChaseSettings() {
+
+    const settings = {
+
+        roundDuration:
+            Number(
+                roundDuration.value
+            ),
+
+        monsterCount:
+            Number(
+                monsterCount.value
+            ),
+
+        monsterSpeed:
+            Number(
+                monsterSpeed.value
+            )
+
+    };
+
+
+    if (
+        !Number.isFinite(
+            settings.roundDuration
+        ) ||
+        settings.roundDuration < 10 ||
+        settings.roundDuration > 3600
+    ) {
+
+        alert(
+            "مدة الجولة يجب أن تكون بين 10 و 3600 ثانية"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !Number.isFinite(
+            settings.monsterCount
+        ) ||
+        settings.monsterCount < 1 ||
+        settings.monsterCount > 10
+    ) {
+
+        alert(
+            "عدد الوحوش يجب أن يكون بين 1 و 10"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !Number.isFinite(
+            settings.monsterSpeed
+        ) ||
+        settings.monsterSpeed < 100 ||
+        settings.monsterSpeed > 10000
+    ) {
+
+        alert(
+            "سرعة الوحش يجب أن تكون بين 100 و 10000 ms"
+        );
+
+        return;
+
+    }
+
+
+    socket.emit(
+        "set_chase_settings",
+        settings
+    );
+
+}
+
+
+/* =====================================================
    START GAME
-========================================= */
+===================================================== */
 
 startButton.addEventListener(
     "click",
     () => {
 
-        if (players.length === 0) {
+        if (
+            players.length === 0
+        ) {
 
             return;
 
@@ -554,9 +749,8 @@ startButton.addEventListener(
         startButton.disabled =
             true;
 
-
         startButton.textContent =
-            "⏳ جاري بدء اللعبة...";
+            "⏳ جاري تجهيز اللعبة...";
 
 
         registrationMessage.textContent =
@@ -571,9 +765,9 @@ startButton.addEventListener(
 );
 
 
-/* =========================================
+/* =====================================================
    GAME STARTED
-========================================= */
+===================================================== */
 
 socket.on(
     "game_started",
@@ -586,13 +780,13 @@ socket.on(
 );
 
 
-/* =========================================
-   SERVER ERROR
-========================================= */
+/* =====================================================
+   ERROR
+===================================================== */
 
 socket.on(
     "game_error",
-    (message) => {
+    message => {
 
         startButton.disabled =
             players.length === 0;
@@ -600,18 +794,17 @@ socket.on(
         startButton.textContent =
             "▶️ بدء اللعب";
 
-
         registrationMessage.textContent =
             message ||
-            "حدث خطأ أثناء تنفيذ العملية";
+            "حدث خطأ";
 
     }
 );
 
 
-/* =========================================
-   INITIAL UI
-========================================= */
+/* =====================================================
+   INITIAL
+===================================================== */
 
 updateRegistrationUI();
 
