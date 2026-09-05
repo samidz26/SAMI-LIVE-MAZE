@@ -1,119 +1,133 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
-
 const {
     TikTokLiveConnection,
     WebcastEvent,
     ControlEvent
 } = require("tiktok-live-connector");
 
-
-/* =========================================
-   SERVER
-========================================= */
-
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
-const server =
-    http.createServer(app);
+app.use(express.static(__dirname + "/public"));
 
-const io =
-    new Server(server);
-
-
-app.use(
-    express.static(
-        __dirname + "/public"
-    )
-);
-
-
-/* =========================================
+/* =====================================================
    SETTINGS
-========================================= */
+===================================================== */
 
-const PORT =
-    process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 const MAZE_SIZE = 15;
-
 const MAX_PLAYERS = 20;
 
 const DEFAULT_JOIN_KEYWORD = "JOIN";
 
+const DEFAULT_TREASURE_DURATION = 10;
+const DEFAULT_ROUND_DURATION = 60;
+const DEFAULT_MONSTER_COUNT = 1;
+const DEFAULT_MONSTER_SPEED = 1000;
 
-/* =========================================
-   GAME STATE
-========================================= */
+/* =====================================================
+   TIKTOK
+===================================================== */
 
 let tiktokLiveConnection = null;
-
 let connectedUsername = "";
+
+const avatarCache = new Map();
+
+/* =====================================================
+   GAME STATE
+===================================================== */
 
 let registrationOpen = true;
 
 let joinKeyword =
     DEFAULT_JOIN_KEYWORD;
 
-let gameMode = "treasure";
+let gameMode =
+    "treasure";
 
 let gameStarted = false;
 
 let gameWinner = null;
 
-let players = new Map();
+let gameResult = null;
+
+let players =
+    new Map();
 
 let maze = [];
 
 let treasure = null;
 
+let treasureTimer = null;
 
-/* =========================================
-   AVATAR CACHE
-========================================= */
+let roundTimer = null;
 
-const avatarCache =
-    new Map();
+let monsterTimer = null;
 
+let roundTimeLeft =
+    DEFAULT_ROUND_DURATION;
 
-/* =========================================
-   AVATAR EXTRACTION
-========================================= */
+let treasureTimeLeft =
+    DEFAULT_TREASURE_DURATION;
+
+let monsters = [];
+
+/* =====================================================
+   MODE SETTINGS
+===================================================== */
+
+let treasureSettings = {
+
+    duration:
+        DEFAULT_TREASURE_DURATION
+
+};
+
+let chaseSettings = {
+
+    roundDuration:
+        DEFAULT_ROUND_DURATION,
+
+    monsterCount:
+        DEFAULT_MONSTER_COUNT,
+
+    monsterSpeed:
+        DEFAULT_MONSTER_SPEED
+
+};
+
+/* =====================================================
+   AVATAR
+===================================================== */
 
 function extractAvatar(data) {
 
     const user =
         data?.user || {};
 
-
     const sources = [
 
         user.profilePictureUrl,
-
         user.avatarThumb,
-
         user.avatarMedium,
-
         user.avatarLarge,
-
         user.avatarJpg,
 
         data?.profilePictureUrl,
-
         data?.avatarThumb,
-
         data?.avatarMedium,
-
         data?.avatarLarge
 
     ];
 
-
     for (const source of sources) {
 
         if (!source) continue;
-
 
         if (
             typeof source === "string" &&
@@ -123,7 +137,6 @@ function extractAvatar(data) {
             return source;
 
         }
-
 
         if (
             typeof source === "object"
@@ -142,11 +155,9 @@ function extractAvatar(data) {
                             item.startsWith("http")
                     );
 
-
                 if (url) return url;
 
             }
-
 
             if (
                 Array.isArray(
@@ -161,11 +172,9 @@ function extractAvatar(data) {
                             item.startsWith("http")
                     );
 
-
                 if (url) return url;
 
             }
-
 
             if (
                 typeof source.url === "string" &&
@@ -180,323 +189,13 @@ function extractAvatar(data) {
 
     }
 
-
     return "";
 
 }
 
-
-/* =========================================
-   RANDOM
-========================================= */
-
-function randomInt(max) {
-
-    return Math.floor(
-        Math.random() * max
-    );
-
-}
-
-
-/* =========================================
-   MAZE GENERATION
-========================================= */
-
-function createEmptyMaze() {
-
-    maze = [];
-
-
-    for (
-        let row = 0;
-        row < MAZE_SIZE;
-        row++
-    ) {
-
-        maze[row] = [];
-
-
-        for (
-            let col = 0;
-            col < MAZE_SIZE;
-            col++
-        ) {
-
-            maze[row][col] = {
-
-                visited: false,
-
-                walls: {
-
-                    top: true,
-
-                    right: true,
-
-                    bottom: true,
-
-                    left: true
-
-                }
-
-            };
-
-        }
-
-    }
-
-}
-
-
-/* =========================================
-   REMOVE WALL
-========================================= */
-
-function removeWall(
-    current,
-    next,
-    direction
-) {
-
-    const row = current.row;
-
-    const col = current.col;
-
-    const nextRow = next.row;
-
-    const nextCol = next.col;
-
-
-    if (direction === "top") {
-
-        maze[row][col]
-            .walls.top = false;
-
-        maze[nextRow][nextCol]
-            .walls.bottom = false;
-
-    }
-
-
-    if (direction === "right") {
-
-        maze[row][col]
-            .walls.right = false;
-
-        maze[nextRow][nextCol]
-            .walls.left = false;
-
-    }
-
-
-    if (direction === "bottom") {
-
-        maze[row][col]
-            .walls.bottom = false;
-
-        maze[nextRow][nextCol]
-            .walls.top = false;
-
-    }
-
-
-    if (direction === "left") {
-
-        maze[row][col]
-            .walls.left = false;
-
-        maze[nextRow][nextCol]
-            .walls.right = false;
-
-    }
-
-}
-
-
-/* =========================================
-   GENERATE PERFECT MAZE
-========================================= */
-
-function generateMaze() {
-
-    createEmptyMaze();
-
-
-    const stack = [];
-
-
-    const start = {
-
-        row: 0,
-
-        col: 0
-
-    };
-
-
-    maze[0][0].visited = true;
-
-    stack.push(start);
-
-
-    const directions = [
-
-        {
-            dr: -1,
-            dc: 0,
-            wall: "top"
-        },
-
-        {
-            dr: 0,
-            dc: 1,
-            wall: "right"
-        },
-
-        {
-            dr: 1,
-            dc: 0,
-            wall: "bottom"
-        },
-
-        {
-            dr: 0,
-            dc: -1,
-            wall: "left"
-        }
-
-    ];
-
-
-    while (stack.length > 0) {
-
-        const current =
-            stack[
-                stack.length - 1
-            ];
-
-
-        const available = [];
-
-
-        for (
-            const direction
-            of directions
-        ) {
-
-            const nextRow =
-                current.row +
-                direction.dr;
-
-            const nextCol =
-                current.col +
-                direction.dc;
-
-
-            if (
-                nextRow < 0 ||
-                nextRow >= MAZE_SIZE ||
-                nextCol < 0 ||
-                nextCol >= MAZE_SIZE
-            ) {
-
-                continue;
-
-            }
-
-
-            if (
-                maze[nextRow][nextCol]
-                    .visited
-            ) {
-
-                continue;
-
-            }
-
-
-            available.push({
-
-                row: nextRow,
-
-                col: nextCol,
-
-                wall: direction.wall
-
-            });
-
-        }
-
-
-        if (available.length === 0) {
-
-            stack.pop();
-
-            continue;
-
-        }
-
-
-        const next =
-            available[
-                randomInt(
-                    available.length
-                )
-            ];
-
-
-        removeWall(
-            current,
-            next,
-            next.wall
-        );
-
-
-        maze[next.row][next.col]
-            .visited = true;
-
-
-        stack.push({
-
-            row: next.row,
-
-            col: next.col
-
-        });
-
-    }
-
-
-    /*
-        التأكد من إغلاق الحدود الخارجية
-    */
-
-    for (
-        let i = 0;
-        i < MAZE_SIZE;
-        i++
-    ) {
-
-        maze[0][i]
-            .walls.top = true;
-
-        maze[MAZE_SIZE - 1][i]
-            .walls.bottom = true;
-
-        maze[i][0]
-            .walls.left = true;
-
-        maze[i][MAZE_SIZE - 1]
-            .walls.right = true;
-
-    }
-
-}
-
-
-/* =========================================
-   GET PLAYERS
-========================================= */
+/* =====================================================
+   PLAYER ARRAY
+===================================================== */
 
 function getPlayersArray() {
 
@@ -517,16 +216,21 @@ function getPlayersArray() {
             player.x,
 
         y:
-            player.y
+            player.y,
+
+        alive:
+            player.alive !== false,
+
+        caught:
+            player.caught === true
 
     }));
 
 }
 
-
-/* =========================================
+/* =====================================================
    GAME STATE
-========================================= */
+===================================================== */
 
 function getGameState() {
 
@@ -539,9 +243,13 @@ function getGameState() {
         players:
             getPlayersArray(),
 
+        monsters,
+
         gameStarted,
 
         gameWinner,
+
+        gameResult,
 
         registrationOpen,
 
@@ -549,18 +257,25 @@ function getGameState() {
 
         gameMode,
 
-        connectedUsername
+        connectedUsername,
+
+        treasureTimeLeft,
+
+        roundTimeLeft,
+
+        treasureSettings,
+
+        chaseSettings
 
     };
 
 }
 
-
-/* =========================================
+/* =====================================================
    BROADCAST
-========================================= */
+===================================================== */
 
-function broadcastGameState() {
+function broadcastState() {
 
     io.emit(
         "game_state",
@@ -569,43 +284,146 @@ function broadcastGameState() {
 
 }
 
+/* =====================================================
+   MAZE GENERATION
+===================================================== */
 
-/* =========================================
-   FIND FREE CELL
-========================================= */
+function createMaze() {
 
-function findFreeCell(
-    occupied
-) {
-
-    const freeCells = [];
-
+    const grid = [];
 
     for (
-        let row = 0;
-        row < MAZE_SIZE;
-        row++
+        let y = 0;
+        y < MAZE_SIZE;
+        y++
     ) {
 
+        const row = [];
+
         for (
-            let col = 0;
-            col < MAZE_SIZE;
-            col++
+            let x = 0;
+            x < MAZE_SIZE;
+            x++
         ) {
 
-            const key =
-                `${row},${col}`;
+            row.push({
 
+                x,
+                y,
+
+                walls: {
+
+                    top: true,
+                    right: true,
+                    bottom: true,
+                    left: true
+
+                },
+
+                visited: false
+
+            });
+
+        }
+
+        grid.push(row);
+
+    }
+
+    const stack = [];
+
+    const startX =
+        Math.floor(
+            Math.random() *
+            MAZE_SIZE
+        );
+
+    const startY =
+        Math.floor(
+            Math.random() *
+            MAZE_SIZE
+        );
+
+    grid[startY][startX].visited =
+        true;
+
+    stack.push(
+        grid[startY][startX]
+    );
+
+    while (stack.length > 0) {
+
+        const current =
+            stack[
+                stack.length - 1
+            ];
+
+        const neighbors = [];
+
+        const directions = [
+
+            {
+                dx: 0,
+                dy: -1,
+                wall: "top",
+                opposite: "bottom"
+            },
+
+            {
+                dx: 1,
+                dy: 0,
+                wall: "right",
+                opposite: "left"
+            },
+
+            {
+                dx: 0,
+                dy: 1,
+                wall: "bottom",
+                opposite: "top"
+            },
+
+            {
+                dx: -1,
+                dy: 0,
+                wall: "left",
+                opposite: "right"
+            }
+
+        ];
+
+        for (
+            const direction of directions
+        ) {
+
+            const nx =
+                current.x +
+                direction.dx;
+
+            const ny =
+                current.y +
+                direction.dy;
 
             if (
-                !occupied.has(key)
+                nx < 0 ||
+                nx >= MAZE_SIZE ||
+                ny < 0 ||
+                ny >= MAZE_SIZE
             ) {
 
-                freeCells.push({
+                continue;
 
-                    x: col,
+            }
 
-                    y: row
+            const neighbor =
+                grid[ny][nx];
+
+            if (!neighbor.visited) {
+
+                neighbors.push({
+
+                    neighbor,
+                    direction
 
                 });
 
@@ -613,170 +431,1169 @@ function findFreeCell(
 
         }
 
+        if (
+            neighbors.length === 0
+        ) {
+
+            stack.pop();
+
+            continue;
+
+        }
+
+        const chosen =
+            neighbors[
+                Math.floor(
+                    Math.random() *
+                    neighbors.length
+                )
+            ];
+
+        const neighbor =
+            chosen.neighbor;
+
+        const direction =
+            chosen.direction;
+
+        current.walls[
+            direction.wall
+        ] = false;
+
+        neighbor.walls[
+            direction.opposite
+        ] = false;
+
+        neighbor.visited = true;
+
+        stack.push(
+            neighbor
+        );
+
     }
 
+    return grid;
 
-    if (freeCells.length === 0) {
+}
 
-        return null;
+/* =====================================================
+   FREE CELLS
+===================================================== */
+
+function isCellOccupied(
+    x,
+    y
+) {
+
+    return Array.from(
+        players.values()
+    ).some(
+        player =>
+            player.x === x &&
+            player.y === y &&
+            player.alive !== false
+    );
+
+}
+
+/* =====================================================
+   PLAYER SPAWN
+   Around the edges
+===================================================== */
+
+function getRandomEdgeCell() {
+
+    const candidates = [];
+
+    for (
+        let y = 0;
+        y < MAZE_SIZE;
+        y++
+    ) {
+
+        for (
+            let x = 0;
+            x < MAZE_SIZE;
+            x++
+        ) {
+
+            const isEdge =
+                x === 0 ||
+                y === 0 ||
+                x === MAZE_SIZE - 1 ||
+                y === MAZE_SIZE - 1;
+
+            if (!isEdge) continue;
+
+            if (
+                isCellOccupied(x, y)
+            ) {
+
+                continue;
+
+            }
+
+            candidates.push({
+                x,
+                y
+            });
+
+        }
 
     }
 
+    if (
+        candidates.length === 0
+    ) {
 
-    return freeCells[
-        randomInt(
-            freeCells.length
+        return {
+
+            x:
+                Math.floor(
+                    Math.random() *
+                    MAZE_SIZE
+                ),
+
+            y:
+                Math.floor(
+                    Math.random() *
+                    MAZE_SIZE
+                )
+
+        };
+
+    }
+
+    return candidates[
+        Math.floor(
+            Math.random() *
+            candidates.length
         )
     ];
 
 }
 
+/* =====================================================
+   CENTER CELL
+===================================================== */
 
-/* =========================================
-   REGISTER PLAYER
-========================================= */
+function getCenterCell() {
 
-function registerPlayer(user) {
+    const center =
+        Math.floor(
+            MAZE_SIZE / 2
+        );
 
-    if (gameStarted) {
+    return {
 
-        return;
-
-    }
-
-
-    if (!registrationOpen) {
-
-        return;
-
-    }
-
-
-    if (
-        players.has(
-            user.uniqueId
-        )
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        players.size >= MAX_PLAYERS
-    ) {
-
-        return;
-
-    }
-
-
-    const player = {
-
-        uniqueId:
-            user.uniqueId,
-
-        nickname:
-            user.nickname || "مستخدم",
-
-        profilePictureUrl:
-            user.profilePictureUrl || "",
-
-        x: null,
-
-        y: null
+        x: center,
+        y: center
 
     };
 
+}
 
-    players.set(
-        user.uniqueId,
-        player
-    );
+/* =====================================================
+   RANDOM FREE CELL
+===================================================== */
 
+function getRandomFreeCell(
+    avoidCenter = false
+) {
 
-    console.log(
-        `Player joined: ${player.uniqueId}`
-    );
+    const candidates = [];
 
+    for (
+        let y = 0;
+        y < MAZE_SIZE;
+        y++
+    ) {
 
-    broadcastGameState();
+        for (
+            let x = 0;
+            x < MAZE_SIZE;
+            x++
+        ) {
+
+            if (
+                avoidCenter &&
+                x === Math.floor(
+                    MAZE_SIZE / 2
+                ) &&
+                y === Math.floor(
+                    MAZE_SIZE / 2
+                )
+            ) {
+
+                continue;
+
+            }
+
+            if (
+                isCellOccupied(x, y)
+            ) {
+
+                continue;
+
+            }
+
+            if (
+                monsters.some(
+                    monster =>
+                        monster.x === x &&
+                        monster.y === y
+                )
+            ) {
+
+                continue;
+
+            }
+
+            candidates.push({
+                x,
+                y
+            });
+
+        }
+
+    }
+
+    if (
+        candidates.length === 0
+    ) {
+
+        return getCenterCell();
+
+    }
+
+    return candidates[
+        Math.floor(
+            Math.random() *
+            candidates.length
+        )
+    ];
 
 }
 
+/* =====================================================
+   START GAME
+===================================================== */
 
-/* =========================================
-   REMOVE PLAYER
-========================================= */
-
-function removePlayer(uniqueId) {
+function startGame() {
 
     if (gameStarted) {
 
-        return false;
+        return {
+            success: false,
+            message:
+                "اللعبة بدأت بالفعل"
+        };
 
     }
-
 
     if (
-        !players.has(uniqueId)
+        players.size === 0
     ) {
 
-        return false;
+        return {
+            success: false,
+            message:
+                "يجب تسجيل لاعب واحد على الأقل"
+        };
 
     }
 
+    clearGameTimers();
 
-    players.delete(uniqueId);
+    maze =
+        createMaze();
 
+    treasure = null;
 
-    console.log(
-        `Player removed: ${uniqueId}`
+    monsters = [];
+
+    gameWinner = null;
+
+    gameResult = null;
+
+    gameStarted = true;
+
+    registrationOpen = false;
+
+    /* =====================================
+       PLAYERS ON EDGES
+    ====================================== */
+
+    for (
+        const player of players.values()
+    ) {
+
+        const position =
+            getRandomEdgeCell();
+
+        player.x =
+            position.x;
+
+        player.y =
+            position.y;
+
+        player.alive = true;
+
+        player.caught = false;
+
+    }
+
+    /* =====================================
+       TREASURE MODE
+    ====================================== */
+
+    if (
+        gameMode === "treasure"
+    ) {
+
+        spawnTreasure(
+            true
+        );
+
+    }
+
+    /* =====================================
+       CHASE MODE
+    ====================================== */
+
+    else if (
+        gameMode === "chase"
+    ) {
+
+        spawnMonsters();
+
+        roundTimeLeft =
+            chaseSettings.roundDuration;
+
+        startRoundCountdown();
+
+        startMonsterAI();
+
+    }
+
+    /* =====================================
+       NAHROUSH
+    ====================================== */
+
+    else if (
+        gameMode === "nahroush"
+    ) {
+
+        /*
+            Reserved for future mode.
+        */
+
+        gameStarted = false;
+
+        registrationOpen = true;
+
+        return {
+
+            success: false,
+
+            message:
+                "مود القبض على نهروش سيتم تطويره لاحقًا"
+
+        };
+
+    }
+
+    io.emit(
+        "game_started",
+        getGameState()
     );
 
+    broadcastState();
 
-    broadcastGameState();
-
-
-    return true;
+    return {
+        success: true
+    };
 
 }
 
+/* =====================================================
+   TREASURE SPAWN
+===================================================== */
 
-/* =========================================
+function spawnTreasure(
+    firstSpawn = false
+) {
+
+    if (!gameStarted) return;
+
+    if (
+        gameMode !== "treasure"
+    ) return;
+
+    if (firstSpawn) {
+
+        treasure =
+            getCenterCell();
+
+    }
+
+    else {
+
+        treasure =
+            getRandomFreeCell(
+                false
+            );
+
+    }
+
+    treasureTimeLeft =
+        treasureSettings.duration;
+
+    broadcastState();
+
+    startTreasureCountdown();
+
+}
+
+/* =====================================================
+   TREASURE COUNTDOWN
+===================================================== */
+
+function startTreasureCountdown() {
+
+    if (treasureTimer) {
+
+        clearInterval(
+            treasureTimer
+        );
+
+    }
+
+    treasureTimer =
+        setInterval(
+            () => {
+
+                if (
+                    !gameStarted ||
+                    gameMode !== "treasure"
+                ) {
+
+                    clearInterval(
+                        treasureTimer
+                    );
+
+                    treasureTimer = null;
+
+                    return;
+
+                }
+
+                treasureTimeLeft--;
+
+                if (
+                    treasureTimeLeft <= 0
+                ) {
+
+                    treasureTimeLeft = 0;
+
+                    treasure = null;
+
+                    broadcastState();
+
+                    setTimeout(
+                        () => {
+
+                            if (
+                                gameStarted &&
+                                gameMode === "treasure"
+                            ) {
+
+                                spawnTreasure(
+                                    false
+                                );
+
+                            }
+
+                        },
+                        250
+                    );
+
+                }
+
+                else {
+
+                    broadcastState();
+
+                }
+
+            },
+            1000
+        );
+
+}
+
+/* =====================================================
+   ROUND COUNTDOWN
+===================================================== */
+
+function startRoundCountdown() {
+
+    if (roundTimer) {
+
+        clearInterval(
+            roundTimer
+        );
+
+    }
+
+    roundTimer =
+        setInterval(
+            () => {
+
+                if (
+                    !gameStarted ||
+                    gameMode !== "chase"
+                ) {
+
+                    clearInterval(
+                        roundTimer
+                    );
+
+                    roundTimer = null;
+
+                    return;
+
+                }
+
+                roundTimeLeft--;
+
+                if (
+                    roundTimeLeft <= 0
+                ) {
+
+                    roundTimeLeft = 0;
+
+                    endChaseGame(
+                        "players"
+                    );
+
+                    return;
+
+                }
+
+                broadcastState();
+
+            },
+            1000
+        );
+
+}
+
+/* =====================================================
+   MONSTERS
+===================================================== */
+
+function spawnMonsters() {
+
+    monsters = [];
+
+    const center =
+        getCenterCell();
+
+    for (
+        let i = 0;
+        i < chaseSettings.monsterCount;
+        i++
+    ) {
+
+        let position;
+
+        if (i === 0) {
+
+            position = {
+                x: center.x,
+                y: center.y
+            };
+
+        }
+
+        else {
+
+            position =
+                getMonsterSpawnCell();
+
+        }
+
+        monsters.push({
+
+            id:
+                `monster_${Date.now()}_${i}`,
+
+            x:
+                position.x,
+
+            y:
+                position.y,
+
+            targetId:
+                null
+
+        });
+
+    }
+
+}
+
+/* =====================================================
+   MONSTER SPAWN
+===================================================== */
+
+function getMonsterSpawnCell() {
+
+    const candidates = [];
+
+    const center =
+        getCenterCell();
+
+    for (
+        let y = 0;
+        y < MAZE_SIZE;
+        y++
+    ) {
+
+        for (
+            let x = 0;
+            x < MAZE_SIZE;
+            x++
+        ) {
+
+            if (
+                x === center.x &&
+                y === center.y
+            ) {
+
+                continue;
+
+            }
+
+            if (
+                monsters.some(
+                    monster =>
+                        monster.x === x &&
+                        monster.y === y
+                )
+            ) {
+
+                continue;
+
+            }
+
+            candidates.push({
+                x,
+                y
+            });
+
+        }
+
+    }
+
+    return candidates[
+        Math.floor(
+            Math.random() *
+            candidates.length
+        )
+    ];
+
+}
+
+/* =====================================================
+   MONSTER AI
+===================================================== */
+
+function startMonsterAI() {
+
+    if (monsterTimer) {
+
+        clearInterval(
+            monsterTimer
+        );
+
+    }
+
+    monsterTimer =
+        setInterval(
+            () => {
+
+                if (
+                    !gameStarted ||
+                    gameMode !== "chase"
+                ) {
+
+                    clearInterval(
+                        monsterTimer
+                    );
+
+                    monsterTimer = null;
+
+                    return;
+
+                }
+
+                moveMonsters();
+
+            },
+            Math.max(
+                100,
+                Number(
+                    chaseSettings.monsterSpeed
+                )
+            )
+        );
+
+}
+
+/* =====================================================
+   FIND NEAREST PLAYER
+===================================================== */
+
+function findNearestPlayer(
+    monster
+) {
+
+    const alivePlayers =
+        Array.from(
+            players.values()
+        ).filter(
+            player =>
+                player.alive !== false
+        );
+
+    if (
+        alivePlayers.length === 0
+    ) {
+
+        return null;
+
+    }
+
+    let nearest = null;
+
+    let shortestDistance =
+        Infinity;
+
+    for (
+        const player of alivePlayers
+    ) {
+
+        const path =
+            findPath(
+                monster.x,
+                monster.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            path &&
+            path.length < shortestDistance
+        ) {
+
+            shortestDistance =
+                path.length;
+
+            nearest = player;
+
+        }
+
+    }
+
+    return nearest;
+
+}
+
+/* =====================================================
+   PATHFINDING
+===================================================== */
+
+function findPath(
+    startX,
+    startY,
+    targetX,
+    targetY
+) {
+
+    if (
+        !maze[startY] ||
+        !maze[targetY]
+    ) {
+
+        return null;
+
+    }
+
+    const queue = [
+
+        {
+            x: startX,
+            y: startY,
+            path: []
+        }
+
+    ];
+
+    const visited =
+        new Set();
+
+    visited.add(
+        `${startX},${startY}`
+    );
+
+    while (
+        queue.length > 0
+    ) {
+
+        const current =
+            queue.shift();
+
+        if (
+            current.x === targetX &&
+            current.y === targetY
+        ) {
+
+            return current.path;
+
+        }
+
+        const cell =
+            maze[current.y]?.[
+                current.x
+            ];
+
+        if (!cell) continue;
+
+        const directions = [
+
+            {
+                dx: 0,
+                dy: -1,
+                blocked:
+                    cell.walls.top
+            },
+
+            {
+                dx: 1,
+                dy: 0,
+                blocked:
+                    cell.walls.right
+            },
+
+            {
+                dx: 0,
+                dy: 1,
+                blocked:
+                    cell.walls.bottom
+            },
+
+            {
+                dx: -1,
+                dy: 0,
+                blocked:
+                    cell.walls.left
+            }
+
+        ];
+
+        for (
+            const direction of directions
+        ) {
+
+            if (
+                direction.blocked
+            ) {
+
+                continue;
+
+            }
+
+            const nx =
+                current.x +
+                direction.dx;
+
+            const ny =
+                current.y +
+                direction.dy;
+
+            if (
+                nx < 0 ||
+                nx >= MAZE_SIZE ||
+                ny < 0 ||
+                ny >= MAZE_SIZE
+            ) {
+
+                continue;
+
+            }
+
+            const key =
+                `${nx},${ny}`;
+
+            if (
+                visited.has(key)
+            ) {
+
+                continue;
+
+            }
+
+            visited.add(key);
+
+            queue.push({
+
+                x: nx,
+                y: ny,
+
+                path: [
+                    ...current.path,
+                    {
+                        x: nx,
+                        y: ny
+                    }
+                ]
+
+            });
+
+        }
+
+    }
+
+    return null;
+
+}
+
+/* =====================================================
+   MOVE MONSTERS
+===================================================== */
+
+function moveMonsters() {
+
+    for (
+        const monster of monsters
+    ) {
+
+        const target =
+            findNearestPlayer(
+                monster
+            );
+
+        if (!target) {
+
+            continue;
+
+        }
+
+        monster.targetId =
+            target.uniqueId;
+
+        const path =
+            findPath(
+                monster.x,
+                monster.y,
+                target.x,
+                target.y
+            );
+
+        if (
+            !path ||
+            path.length === 0
+        ) {
+
+            catchPlayersOnMonsterCell(
+                monster
+            );
+
+            continue;
+
+        }
+
+        const next =
+            path[0];
+
+        monster.x =
+            next.x;
+
+        monster.y =
+            next.y;
+
+        catchPlayersOnMonsterCell(
+            monster
+        );
+
+    }
+
+    const alivePlayers =
+        Array.from(
+            players.values()
+        ).filter(
+            player =>
+                player.alive !== false
+        );
+
+    if (
+        alivePlayers.length === 0
+    ) {
+
+        endChaseGame(
+            "monsters"
+        );
+
+        return;
+
+    }
+
+    broadcastState();
+
+}
+
+/* =====================================================
+   CATCH PLAYER
+===================================================== */
+
+function catchPlayersOnMonsterCell(
+    monster
+) {
+
+    for (
+        const player of players.values()
+    ) {
+
+        if (
+            player.alive === false
+        ) {
+
+            continue;
+
+        }
+
+        if (
+            player.x === monster.x &&
+            player.y === monster.y
+        ) {
+
+            player.alive = false;
+
+            player.caught = true;
+
+            io.emit(
+                "player_caught",
+                {
+                    uniqueId:
+                        player.uniqueId,
+
+                    nickname:
+                        player.nickname
+                }
+            );
+
+        }
+
+    }
+
+}
+
+/* =====================================================
+   END CHASE
+===================================================== */
+
+function endChaseGame(
+    winner
+) {
+
+    if (!gameStarted) return;
+
+    clearGameTimers();
+
+    gameStarted = false;
+
+    if (
+        winner === "monsters"
+    ) {
+
+        gameResult = {
+
+            winner: "monsters",
+
+            title:
+                "👹 الوحوش تفوز",
+
+            message:
+                "تم الإمساك بجميع اللاعبين"
+
+        };
+
+    }
+
+    else {
+
+        gameResult = {
+
+            winner: "players",
+
+            title:
+                "🏆 اللاعبون يفوزون",
+
+            message:
+                "انتهى الوقت وبقي لاعب واحد على الأقل"
+
+        };
+
+    }
+
+    io.emit(
+        "game_result",
+        gameResult
+    );
+
+    broadcastState();
+
+}
+
+/* =====================================================
    MOVE PLAYER
-========================================= */
+===================================================== */
 
 function movePlayer(
     uniqueId,
-    direction
+    command
 ) {
 
-    if (!gameStarted) {
+    if (
+        !gameStarted
+    ) {
 
         return;
 
     }
-
-
-    if (gameWinner) {
-
-        return;
-
-    }
-
 
     const player =
-        players.get(uniqueId);
+        players.get(
+            uniqueId
+        );
 
+    if (!player) return;
 
-    if (!player) {
+    if (
+        player.alive === false
+    ) {
 
         return;
 
     }
 
+    const cell =
+        maze[player.y]?.[
+            player.x
+        ];
+
+    if (!cell) return;
 
     let nx =
         player.x;
@@ -784,97 +1601,47 @@ function movePlayer(
     let ny =
         player.y;
 
-
-    const cell =
-        maze[player.y]?.[player.x];
-
-
-    if (!cell) {
-
-        return;
-
-    }
-
-
-    /*
-        U = فوق
-    */
-
     if (
-        direction === "u"
+        command === "u" &&
+        !cell.walls.top
     ) {
-
-        if (cell.walls.top) {
-
-            return;
-
-        }
 
         ny--;
 
     }
 
-
-    /*
-        D = تحت
-    */
-
     else if (
-        direction === "d"
+        command === "d" &&
+        !cell.walls.bottom
     ) {
-
-        if (cell.walls.bottom) {
-
-            return;
-
-        }
 
         ny++;
 
     }
 
-
-    /*
-        R = يمين
-    */
-
     else if (
-        direction === "r"
+        command === "r" &&
+        !cell.walls.right
     ) {
-
-        if (cell.walls.right) {
-
-            return;
-
-        }
 
         nx++;
 
     }
 
-
-    /*
-        L = يسار
-    */
-
     else if (
-        direction === "l"
+        command === "l" &&
+        !cell.walls.left
     ) {
-
-        if (cell.walls.left) {
-
-            return;
-
-        }
 
         nx--;
 
     }
 
+    else {
 
-    /*
-        حماية الحدود
-    */
+        return;
+
+    }
 
     if (
         nx < 0 ||
@@ -887,285 +1654,294 @@ function movePlayer(
 
     }
 
-
     /*
-        لا يمكن للاعب المرور فوق لاعب آخر
+        اللاعبون يستطيعون الوقوف
+        فوق بعضهم البعض.
     */
 
-    for (
-        const other of players.values()
-    ) {
+    player.x =
+        nx;
 
-        if (
-            other.uniqueId ===
-            player.uniqueId
-        ) {
+    player.y =
+        ny;
 
-            continue;
-
-        }
-
-
-        if (
-            other.x === nx &&
-            other.y === ny
-        ) {
-
-            return;
-
-        }
-
-    }
-
-
-    player.x = nx;
-
-    player.y = ny;
-
-
-    /*
-        وصل إلى الكنز
-    */
+    /* =====================================
+       TREASURE CHECK
+    ====================================== */
 
     if (
+        gameMode === "treasure" &&
         treasure &&
         player.x === treasure.x &&
         player.y === treasure.y
     ) {
 
-        gameWinner = {
-
-            uniqueId:
-                player.uniqueId,
-
-            nickname:
-                player.nickname,
-
-            profilePictureUrl:
-                player.profilePictureUrl
-
-        };
-
-
-        console.log(
-            `WINNER: ${player.nickname}`
+        finishTreasureGame(
+            player
         );
-
-
-        io.emit(
-            "game_winner",
-            gameWinner
-        );
-
-
-        broadcastGameState();
-
 
         return;
 
     }
 
-
-    broadcastGameState();
+    broadcastState();
 
 }
 
+/* =====================================================
+   TREASURE WINNER
+===================================================== */
 
-/* =========================================
-   START GAME
-========================================= */
+function finishTreasureGame(
+    player
+) {
 
-function startGame() {
+    if (!gameStarted) return;
+
+    clearGameTimers();
+
+    gameStarted = false;
+
+    gameWinner = {
+
+        uniqueId:
+            player.uniqueId,
+
+        nickname:
+            player.nickname,
+
+        profilePictureUrl:
+            player.profilePictureUrl
+
+    };
+
+    gameResult = {
+
+        winner: "player",
+
+        title:
+            "🏆 الفائز",
+
+        message:
+            player.nickname
+
+    };
+
+    io.emit(
+        "game_winner",
+        gameWinner
+    );
+
+    broadcastState();
+
+}
+
+/* =====================================================
+   REGISTER PLAYER
+===================================================== */
+
+function registerPlayer(
+    user
+) {
 
     if (gameStarted) {
 
-        return false;
+        return;
 
     }
 
+    if (!registrationOpen) {
 
-    if (players.size === 0) {
-
-        return false;
+        return;
 
     }
 
-
-    /*
-        إغلاق التسجيل
-    */
-
-    registrationOpen = false;
-
-
-    /*
-        توليد متاهة جديدة
-    */
-
-    generateMaze();
-
-
-    /*
-        إعادة ضبط المواقع
-    */
-
-    for (
-        const player of players.values()
+    if (
+        players.has(
+            user.uniqueId
+        )
     ) {
 
-        player.x = null;
-
-        player.y = null;
+        return;
 
     }
 
-
-    const occupied =
-        new Set();
-
-
-    /*
-        توزيع اللاعبين
-    */
-
-    for (
-        const player of players.values()
+    if (
+        players.size >= MAX_PLAYERS
     ) {
 
-        const position =
-            findFreeCell(
-                occupied
-            );
+        return;
 
+    }
 
-        if (!position) {
+    players.set(
+        user.uniqueId,
+        {
 
-            return false;
+            uniqueId:
+                user.uniqueId,
+
+            nickname:
+                user.nickname,
+
+            profilePictureUrl:
+                user.profilePictureUrl,
+
+            x: null,
+
+            y: null,
+
+            alive: true,
+
+            caught: false
 
         }
-
-
-        player.x =
-            position.x;
-
-        player.y =
-            position.y;
-
-
-        occupied.add(
-            `${position.y},${position.x}`
-        );
-
-    }
-
-
-    /*
-        وضع الكنز
-    */
-
-    treasure =
-        findFreeCell(
-            occupied
-        );
-
-
-    if (!treasure) {
-
-        return false;
-
-    }
-
-
-    gameStarted = true;
-
-    gameWinner = null;
-
-
-    console.log(
-        `Game started - Mode: ${gameMode}`
     );
 
-
-    io.emit(
-        "game_started",
-        getGameState()
-    );
-
-
-    broadcastGameState();
-
-
-    return true;
+    broadcastState();
 
 }
 
+/* =====================================================
+   REMOVE PLAYER
+===================================================== */
 
-/* =========================================
+function removePlayer(
+    uniqueId
+) {
+
+    if (gameStarted) {
+
+        return;
+
+    }
+
+    players.delete(
+        uniqueId
+    );
+
+    broadcastState();
+
+}
+
+/* =====================================================
+   CLEAR TIMERS
+===================================================== */
+
+function clearGameTimers() {
+
+    if (treasureTimer) {
+
+        clearInterval(
+            treasureTimer
+        );
+
+        treasureTimer = null;
+
+    }
+
+    if (roundTimer) {
+
+        clearInterval(
+            roundTimer
+        );
+
+        roundTimer = null;
+
+    }
+
+    if (monsterTimer) {
+
+        clearInterval(
+            monsterTimer
+        );
+
+        monsterTimer = null;
+
+    }
+
+}
+
+/* =====================================================
    RESET GAME
-========================================= */
+===================================================== */
 
 function resetGame() {
+
+    clearGameTimers();
 
     gameStarted = false;
 
     gameWinner = null;
 
+    gameResult = null;
+
     maze = [];
 
     treasure = null;
+
+    monsters = [];
+
+    roundTimeLeft =
+        chaseSettings.roundDuration;
+
+    treasureTimeLeft =
+        treasureSettings.duration;
 
     players.clear();
 
     registrationOpen = true;
 
-
-    console.log(
-        "Game reset"
-    );
-
-
-    broadcastGameState();
+    broadcastState();
 
 }
 
-
-/* =========================================
+/* =====================================================
    SOCKET.IO
-========================================= */
+===================================================== */
 
 io.on(
     "connection",
-    (socket) => {
+    socket => {
 
         console.log(
             "Client connected to UI"
         );
-
-
-        /*
-            إرسال الحالة الحالية
-        */
 
         socket.emit(
             "game_state",
             getGameState()
         );
 
-
-        /* ================================
-           CONNECT TIKTOK
-        ================================= */
+        /* =====================================
+           TIKTOK CONNECT
+        ====================================== */
 
         socket.on(
             "connect_tiktok",
-            (username) => {
+            username => {
+
+                username =
+                    String(
+                        username || ""
+                    )
+                    .trim()
+                    .replace(/^@/, "");
 
                 if (!username) {
+
+                    socket.emit(
+                        "tiktok_connected",
+                        {
+                            success: false,
+                            error:
+                                "اسم المستخدم غير صحيح"
+                        }
+                    );
 
                     return;
 
                 }
-
 
                 if (
                     tiktokLiveConnection
@@ -1173,29 +1949,20 @@ io.on(
 
                     try {
 
-                        tiktokLiveConnection
-                            .disconnect();
+                        tiktokLiveConnection.disconnect();
 
                     }
+
                     catch (error) {}
 
                 }
 
-
                 connectedUsername =
-                    String(username)
-                        .trim()
-                        .replace(/^@/, "");
-
-
-                /*
-                    نفس طريقة مشروع
-                    SAMI-LIVE-GAMES
-                */
+                    username;
 
                 tiktokLiveConnection =
                     new TikTokLiveConnection(
-                        connectedUsername,
+                        username,
                         {
 
                             processInitialData:
@@ -1207,16 +1974,14 @@ io.on(
                         }
                     );
 
-
                 tiktokLiveConnection
                     .connect()
                     .then(
                         state => {
 
                             console.log(
-                                `Connected to TikTok Live: ${connectedUsername}, Room ID: ${state.roomId}`
+                                `Connected to TikTok Live: @${username}, Room ID: ${state.roomId}`
                             );
-
 
                             socket.emit(
                                 "tiktok_connected",
@@ -1231,8 +1996,7 @@ io.on(
                                 }
                             );
 
-
-                            broadcastGameState();
+                            broadcastState();
 
                         }
                     )
@@ -1240,10 +2004,9 @@ io.on(
                         error => {
 
                             console.error(
-                                "Failed to connect to TikTok Live",
+                                "Failed to connect to TikTok Live:",
                                 error
                             );
-
 
                             socket.emit(
                                 "tiktok_connected",
@@ -1261,10 +2024,9 @@ io.on(
                         }
                     );
 
-
-                /*
-                    CHAT
-                */
+                /* =====================================
+                   CHAT
+                ====================================== */
 
                 tiktokLiveConnection.on(
                     WebcastEvent.CHAT,
@@ -1275,7 +2037,6 @@ io.on(
                             data.content ||
                             "";
 
-
                         const comment =
                             typeof rawComment === "string"
                                 ? rawComment
@@ -1283,10 +2044,8 @@ io.on(
                                     .toLowerCase()
                                 : "";
 
-
                         const tikUser =
                             data.user || {};
-
 
                         const uniqueId =
                             tikUser.uniqueId ||
@@ -1294,25 +2053,18 @@ io.on(
                             data.uniqueId ||
                             "unknown";
 
-
                         const nickname =
                             tikUser.nickname ||
                             data.nickname ||
                             "مستخدم";
 
-
                         let avatar =
-                            extractAvatar(data);
-
-
-                        /*
-                            استخدام الصورة القديمة
-                            إذا لم تصل مع الرسالة الحالية
-                        */
+                            extractAvatar(
+                                data
+                            );
 
                         if (
                             !avatar &&
-                            uniqueId &&
                             avatarCache.has(
                                 uniqueId
                             )
@@ -1325,10 +2077,8 @@ io.on(
 
                         }
 
-
                         if (
-                            avatar &&
-                            uniqueId
+                            avatar
                         ) {
 
                             avatarCache.set(
@@ -1337,7 +2087,6 @@ io.on(
                             );
 
                         }
-
 
                         const user = {
 
@@ -1350,15 +2099,21 @@ io.on(
 
                         };
 
-
                         console.log(
                             `[CHAT] ${uniqueId} (${nickname}): ${comment}`
                         );
 
+                        io.emit(
+                            "tiktok_comment",
+                            {
+                                user,
+                                comment
+                            }
+                        );
 
-                        /*
-                            التسجيل
-                        */
+                        /* =====================================
+                           JOIN
+                        ====================================== */
 
                         if (
                             comment ===
@@ -1374,12 +2129,9 @@ io.on(
 
                         }
 
-
-                        /*
-                            الحركة
-                            يجب أن يكون التعليق
-                            حرفًا واحدًا فقط
-                        */
+                        /* =====================================
+                           MOVEMENT
+                        ====================================== */
 
                         if (
                             comment === "u" ||
@@ -1398,11 +2150,6 @@ io.on(
                     }
                 );
 
-
-                /*
-                    TikTok ERROR
-                */
-
                 tiktokLiveConnection.on(
                     ControlEvent.ERROR,
                     error => {
@@ -1418,10 +2165,9 @@ io.on(
             }
         );
 
-
-        /* ================================
+        /* =====================================
            REMOVE PLAYER
-        ================================= */
+        ====================================== */
 
         socket.on(
             "remove_player",
@@ -1434,10 +2180,9 @@ io.on(
             }
         );
 
-
-        /* ================================
+        /* =====================================
            TOGGLE REGISTRATION
-        ================================= */
+        ====================================== */
 
         socket.on(
             "toggle_registration",
@@ -1449,29 +2194,17 @@ io.on(
 
                 }
 
-
                 registrationOpen =
                     !registrationOpen;
 
-
-                console.log(
-                    `Registration: ${
-                        registrationOpen
-                            ? "OPEN"
-                            : "CLOSED"
-                    }`
-                );
-
-
-                broadcastGameState();
+                broadcastState();
 
             }
         );
 
-
-        /* ================================
-           SET JOIN KEYWORD
-        ================================= */
+        /* =====================================
+           JOIN KEYWORD
+        ====================================== */
 
         socket.on(
             "set_join_keyword",
@@ -1483,22 +2216,12 @@ io.on(
 
                 }
 
-
-                if (
-                    typeof keyword !==
-                    "string"
-                ) {
-
-                    return;
-
-                }
-
-
                 keyword =
-                    keyword
-                        .trim()
-                        .toUpperCase();
-
+                    String(
+                        keyword || ""
+                    )
+                    .trim()
+                    .toUpperCase();
 
                 if (!keyword) {
 
@@ -1506,40 +2229,22 @@ io.on(
 
                 }
 
-
-                if (
-                    keyword.length > 20
-                ) {
-
-                    return;
-
-                }
-
-
                 joinKeyword =
                     keyword;
 
-
-                console.log(
-                    `Join keyword changed to: ${joinKeyword}`
-                );
-
-
-                socket.emit(
+                io.emit(
                     "join_keyword_updated",
                     joinKeyword
                 );
 
-
-                broadcastGameState();
+                broadcastState();
 
             }
         );
 
-
-        /* ================================
-           SET GAME MODE
-        ================================= */
+        /* =====================================
+           GAME MODE
+        ====================================== */
 
         socket.on(
             "set_game_mode",
@@ -1551,78 +2256,177 @@ io.on(
 
                 }
 
-
-                const allowedModes = [
-
-                    "treasure",
-
-                    "chase",
-
-                    "nahroush"
-
-                ];
-
-
                 if (
-                    !allowedModes.includes(
-                        mode
-                    )
+                    mode !== "treasure" &&
+                    mode !== "chase" &&
+                    mode !== "nahroush"
                 ) {
 
                     return;
 
                 }
 
-
                 gameMode =
                     mode;
 
-
-                console.log(
-                    `Game mode changed to: ${gameMode}`
-                );
-
-
-                socket.emit(
+                io.emit(
                     "game_mode_updated",
                     gameMode
                 );
 
-
-                broadcastGameState();
+                broadcastState();
 
             }
         );
 
+        /* =====================================
+           TREASURE SETTINGS
+        ====================================== */
 
-        /* ================================
-           START GAME
-        ================================= */
+        socket.on(
+            "set_treasure_settings",
+            settings => {
+
+                if (gameStarted) {
+
+                    return;
+
+                }
+
+                const duration =
+                    Number(
+                        settings?.duration
+                    );
+
+                if (
+                    Number.isFinite(
+                        duration
+                    ) &&
+                    duration >= 1 &&
+                    duration <= 300
+                ) {
+
+                    treasureSettings.duration =
+                        duration;
+
+                    treasureTimeLeft =
+                        duration;
+
+                }
+
+                broadcastState();
+
+            }
+        );
+
+        /* =====================================
+           CHASE SETTINGS
+        ====================================== */
+
+        socket.on(
+            "set_chase_settings",
+            settings => {
+
+                if (gameStarted) {
+
+                    return;
+
+                }
+
+                const roundDuration =
+                    Number(
+                        settings?.roundDuration
+                    );
+
+                const monsterCount =
+                    Number(
+                        settings?.monsterCount
+                    );
+
+                const monsterSpeed =
+                    Number(
+                        settings?.monsterSpeed
+                    );
+
+                if (
+                    Number.isFinite(
+                        roundDuration
+                    ) &&
+                    roundDuration >= 10 &&
+                    roundDuration <= 3600
+                ) {
+
+                    chaseSettings.roundDuration =
+                        roundDuration;
+
+                }
+
+                if (
+                    Number.isFinite(
+                        monsterCount
+                    ) &&
+                    monsterCount >= 1 &&
+                    monsterCount <= 10
+                ) {
+
+                    chaseSettings.monsterCount =
+                        Math.floor(
+                            monsterCount
+                        );
+
+                }
+
+                if (
+                    Number.isFinite(
+                        monsterSpeed
+                    ) &&
+                    monsterSpeed >= 100 &&
+                    monsterSpeed <= 10000
+                ) {
+
+                    chaseSettings.monsterSpeed =
+                        monsterSpeed;
+
+                }
+
+                roundTimeLeft =
+                    chaseSettings.roundDuration;
+
+                broadcastState();
+
+            }
+        );
+
+        /* =====================================
+           START
+        ====================================== */
 
         socket.on(
             "start_game",
             () => {
 
-                const started =
+                const result =
                     startGame();
 
-
-                if (!started) {
+                if (
+                    !result.success
+                ) {
 
                     socket.emit(
                         "game_error",
-                        "لا يمكن بدء اللعبة الآن"
+                        result.message
                     );
+
+                    return;
 
                 }
 
             }
         );
 
-
-        /* ================================
-           RESET GAME
-        ================================= */
+        /* =====================================
+           RESET
+        ====================================== */
 
         socket.on(
             "reset_game",
@@ -1636,10 +2440,9 @@ io.on(
     }
 );
 
-
-/* =========================================
+/* =====================================================
    START SERVER
-========================================= */
+===================================================== */
 
 server.listen(
     PORT,
