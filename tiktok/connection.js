@@ -7,27 +7,40 @@ let connection = null;
 function createConnection(username) {
 
     if (!username) {
-        throw new Error("TikTok username is required");
+        throw new Error(
+            "TikTok username is required"
+        );
     }
 
-    connection = new TikTokLiveConnection(username);
+    connection =
+        new TikTokLiveConnection(
+            username,
+            {
+                processInitialData: true,
+                fetchRoomInfoOnConnect: true
+            }
+        );
 
     return connection;
 }
+
 
 function getConnection() {
     return connection;
 }
 
+
 function disconnect() {
 
-    if (!connection) {
+    if (!connection)
         return;
-    }
 
     try {
+
         connection.disconnect();
+
     } catch (error) {
+
         console.error(
             "[TikTok] Disconnect error:",
             error.message
@@ -37,8 +50,12 @@ function disconnect() {
     connection = null;
 }
 
+
 module.exports = {
+
     createConnection,
+
     getConnection,
+
     disconnect
 };
