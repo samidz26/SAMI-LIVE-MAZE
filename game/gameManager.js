@@ -1,6 +1,6 @@
 const {
     createMaze,
-    MAZE_SIZE
+    MAZE_SIZE 
 } = require("./maze");
 
 const {
