@@ -158,6 +158,12 @@ socket.on(
             "hidden"
         );
 
+        /*
+           إعادة شكل صورة الفائز الطبيعي
+           عند بدء جولة جديدة
+        */
+        resetWinnerAvatarStyle();
+
         updateModeLabel(state);
 
         renderMaze(state);
@@ -1519,6 +1525,14 @@ function showTreasureWinner(
     );
 
 
+    /*
+       تأكد من إعادة حجم صورة الفائز
+       إلى الوضع الطبيعي
+    */
+
+    resetWinnerAvatarStyle();
+
+
     winnerIcon.textContent =
         "🏆";
 
@@ -1573,7 +1587,9 @@ socket.on(
         ) {
 
             /*
-               نهروش + الوحش
+               ==================================
+               نهروش + الوحش يفوزان
+               ==================================
             */
 
             if (
@@ -1602,16 +1618,13 @@ socket.on(
                     "تم إقصاء جميع اللاعبين";
 
 
-                const nahroush =
-                    currentState?.players?.find(
-                        player =>
-                            player.isNahroush
-                    );
+                /*
+                   الصورة الكبيرة الخاصة
+                   بفوز نهروش
+                */
 
-
-                setWinnerAvatar(
-                    nahroush?.profilePictureUrl ||
-                    ""
+                setNahroushEndImage(
+                    "/nahroush-wins.png"
                 );
 
 
@@ -1623,7 +1636,9 @@ socket.on(
 
 
             /*
-               اللاعبون
+               ==================================
+               اللاعبون يقبضون على نهروش
+               ==================================
             */
 
             else {
@@ -1646,8 +1661,13 @@ socket.on(
                     "تم القبض على نهروش";
 
 
-                setWinnerAvatar(
-                    ""
+                /*
+                   الصورة الكبيرة الخاصة
+                   بالقبض على نهروش
+                */
+
+                setNahroushEndImage(
+                    "/nahroush-caught.png"
                 );
 
 
@@ -1670,6 +1690,14 @@ socket.on(
         /* =====================================
            NORMAL CHASE
         ====================================== */
+
+        /*
+           إعادة الصورة للحجم الطبيعي
+           للمودات العادية
+        */
+
+        resetWinnerAvatarStyle();
+
 
         if (
             result.winner ===
@@ -1968,6 +1996,14 @@ function showSurvivors(
 
 function setWinnerAvatar(url) {
 
+    /*
+       هذه الدالة تستخدم للفائزين العاديين
+       وتبقي الصورة بالحجم الطبيعي.
+    */
+
+    resetWinnerAvatarStyle();
+
+
     if (url) {
 
         winnerAvatar.src =
@@ -1995,412 +2031,180 @@ function setWinnerAvatar(url) {
 }
 
 
-function showAvatarFallback() {
+/* =====================================================
+   NAHROUSH END IMAGE
+   صورة كبيرة وفخمة في نهاية مود نهروش
+===================================================== */
+
+function setNahroushEndImage(url) {
+
+    if (!winnerAvatar) return;
+
+
+    /*
+       إلغاء أي معالج خطأ سابق
+    */
+
+    winnerAvatar.onerror = null;
+
+
+    /*
+       الصورة
+    */
 
     winnerAvatar.src =
-        createAvatarFallback();
+        url;
+
 
     winnerAvatar.style.display =
         "block";
 
-}
 
+    /*
+       حجم كبير جدًا ومتجاوب
+       مع شاشة الهاتف
+    */
 
-function createAvatarFallback() {
-
-    return (
-        "data:image/svg+xml," +
-        encodeURIComponent(`
-
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="200"
-                height="200"
-                viewBox="0 0 200 200">
-
-                <rect
-                    width="200"
-                    height="200"
-                    rx="100"
-                    fill="#222"/>
-
-                <text
-                    x="100"
-                    y="125"
-                    text-anchor="middle"
-                    font-size="90">
-
-                    👤
-
-                </text>
-
-            </svg>
-
-        `)
+    winnerAvatar.style.setProperty(
+        "width",
+        "min(82vw, 330px)",
+        "important"
     );
 
-}
-
-
-/* =====================================================
-   GAME STATUS
-===================================================== */
-
-function setGameStatus(
-    message
-) {
-
-    if (!gameStatus) return;
-
-    gameStatus.textContent =
-        message || "";
-
-}
-
-
-/* =====================================================
-   AUDIO SYSTEM
-   لا يحتاج ملفات صوتية خارجية حاليًا
-===================================================== */
-
-function getAudioContext() {
-
-    if (!audioContext) {
-
-        try {
-
-            audioContext =
-                new (
-                    window.AudioContext ||
-                    window.webkitAudioContext
-                )();
-
-        }
-
-        catch (error) {
-
-            return null;
-
-        }
-
-    }
-
-
-    if (
-        audioContext.state ===
-        "suspended"
-    ) {
-
-        audioContext.resume().catch(
-            () => {}
-        );
-
-    }
-
-
-    return audioContext;
-
-}
-
-
-function playTone(
-    frequency,
-    duration,
-    type = "sine",
-    volume = 0.05
-) {
-
-    const context =
-        getAudioContext();
-
-    if (!context) return;
-
-
-    const oscillator =
-        context.createOscillator();
-
-    const gain =
-        context.createGain();
-
-
-    oscillator.type =
-        type;
-
-    oscillator.frequency.value =
-        frequency;
-
-
-    gain.gain.setValueAtTime(
-        0.0001,
-        context.currentTime
+    winnerAvatar.style.setProperty(
+        "height",
+        "min(48vh, 370px)",
+        "important"
     );
 
-    gain.gain.exponentialRampToValueAtTime(
-        volume,
-        context.currentTime + 0.02
+    winnerAvatar.style.setProperty(
+        "max-width",
+        "82vw",
+        "important"
     );
 
-    gain.gain.exponentialRampToValueAtTime(
-        0.0001,
-        context.currentTime + duration
+    winnerAvatar.style.setProperty(
+        "max-height",
+        "48vh",
+        "important"
     );
 
 
-    oscillator.connect(
-        gain
+    /*
+       الصورة كاملة بدون قص
+    */
+
+    winnerAvatar.style.setProperty(
+        "object-fit",
+        "contain",
+        "important"
     );
 
-    gain.connect(
-        context.destination
+
+    /*
+       شكل فاخر
+    */
+
+    winnerAvatar.style.setProperty(
+        "border-radius",
+        "24px",
+        "important"
+    );
+
+    winnerAvatar.style.setProperty(
+        "border",
+        "3px solid rgba(255, 215, 80, 0.95)",
+        "important"
+    );
+
+    winnerAvatar.style.setProperty(
+        "padding",
+        "6px",
+        "important"
+    );
+
+    winnerAvatar.style.setProperty(
+        "background",
+        "rgba(0, 0, 0, 0.25)",
+        "important"
     );
 
 
-    oscillator.start();
+    /*
+       توهج ذهبي قوي
+    */
 
-    oscillator.stop(
-        context.currentTime +
-        duration +
-        0.03
+    winnerAvatar.style.setProperty(
+        "box-shadow",
+        "0 0 12px rgba(255, 215, 80, 0.9), 0 0 30px rgba(255, 190, 0, 0.65), 0 0 65px rgba(255, 150, 0, 0.35)",
+        "important"
     );
 
-}
+
+    /*
+       منع الصورة من التشوه
+    */
+
+    winnerAvatar.style.setProperty(
+        "display",
+        "block",
+        "important"
+    );
 
 
-function playSound(
-    type
-) {
+    /*
+       في حال فشل تحميل الصورة
+       لا نعرض صورة المستخدم البديلة.
+    */
 
-    try {
+    winnerAvatar.onerror =
+        () => {
 
-        if (type === "countdown") {
-
-            playTone(
-                520,
-                0.12,
-                "sine",
-                0.045
+            console.warn(
+                "تعذر تحميل صورة نهروش:",
+                url
             );
 
-        }
+            winnerAvatar.style.display =
+                "none";
 
-
-        else if (
-            type === "start"
-        ) {
-
-            playTone(
-                880,
-                0.15,
-                "sine",
-                0.07
-            );
-
-            setTimeout(
-                () => {
-
-                    playTone(
-                        1175,
-                        0.2,
-                        "sine",
-                        0.07
-                    );
-
-                },
-                120
-            );
-
-        }
-
-
-        else if (
-            type === "instruction"
-        ) {
-
-            playTone(
-                420,
-                0.12,
-                "sine",
-                0.035
-            );
-
-        }
-
-
-        else if (
-            type === "elimination"
-        ) {
-
-            playTone(
-                180,
-                0.16,
-                "sawtooth",
-                0.055
-            );
-
-            setTimeout(
-                () => {
-
-                    playTone(
-                        110,
-                        0.18,
-                        "sawtooth",
-                        0.045
-                    );
-
-                },
-                100
-            );
-
-        }
-
-
-        else if (
-            type === "win"
-        ) {
-
-            playTone(
-                660,
-                0.15,
-                "sine",
-                0.06
-            );
-
-            setTimeout(
-                () => {
-
-                    playTone(
-                        880,
-                        0.15,
-                        "sine",
-                        0.065
-                    );
-
-                },
-                130
-            );
-
-            setTimeout(
-                () => {
-
-                    playTone(
-                        1175,
-                        0.28,
-                        "sine",
-                        0.07
-                    );
-
-                },
-                260
-            );
-
-        }
-
-
-        else if (
-            type === "monsterWin"
-        ) {
-
-            playTone(
-                130,
-                0.25,
-                "sawtooth",
-                0.06
-            );
-
-            setTimeout(
-                () => {
-
-                    playTone(
-                        90,
-                        0.35,
-                        "sawtooth",
-                        0.055
-                    );
-
-                },
-                180
-            );
-
-        }
-
-
-        else if (
-            type === "nahroushWin"
-        ) {
-
-            playTone(
-                220,
-                0.2,
-                "triangle",
-                0.055
-            );
-
-            setTimeout(
-                () => {
-
-                    playTone(
-                        330,
-                        0.2,
-                        "triangle",
-                        0.06
-                    );
-
-                },
-                150
-            );
-
-            setTimeout(
-                () => {
-
-                    playTone(
-                        165,
-                        0.4,
-                        "sawtooth",
-                        0.05
-                    );
-
-                },
-                300
-            );
-
-        }
-
-    }
-
-    catch (error) {
-
-        console.warn(
-            "Audio error:",
-            error
-        );
-
-    }
+        };
 
 }
 
 
 /* =====================================================
-   RESET
+   RESET WINNER AVATAR STYLE
 ===================================================== */
 
-resetButton.addEventListener(
-    "click",
-    () => {
+function resetWinnerAvatarStyle() {
 
-        resetButton.disabled =
-            true;
+    if (!winnerAvatar) return;
 
 
-        clearIntroductionTimers();
+    /*
+       إزالة جميع التعديلات الخاصة
+       بصورة نهروش الكبيرة
+    */
 
+    winnerAvatar.style.removeProperty(
+        "width"
+    );
 
-        socket.emit(
-            "reset_game"
-        );
+    winnerAvatar.style.removeProperty(
+        "height"
+    );
 
+    winnerAvatar.style.removeProperty(
+        "max-width"
+    );
 
-        window.location.href =
-            "/registration.html";
+    winnerAvatar.style.removeProperty(
+        "max-height"
+    );
 
-    }
-);
+    winnerAvatar.style.removeProperty(
+        "object-fit"
+    );
+
+   
