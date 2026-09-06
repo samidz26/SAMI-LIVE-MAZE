@@ -1,20 +1,21 @@
-function createMonsterManager(options) {
+function createMonsterManager(options = {}) {
 
     const {
+        mazeSize,
         getMaze,
         getPlayers,
-        mazeSize,
         broadcastState,
-        onPlayerCaught,
-        onNahroushCaught
+        onCatchPlayer
     } = options;
 
     let monsters = [];
     let monsterTimer = null;
 
+
     function getMonsters() {
         return monsters;
     }
+
 
     function clearMonsterTimer() {
 
@@ -24,23 +25,34 @@ function createMonsterManager(options) {
         }
     }
 
+
     function clearMonsters() {
 
         clearMonsterTimer();
         monsters = [];
+
+        broadcastState();
     }
+
 
     function isCellOccupied(x, y) {
 
-        const players = getPlayers();
-
-        for (const player of players.values()) {
+        for (const player of getPlayers().values()) {
 
             if (
                 player.x === x &&
                 player.y === y &&
-                player.alive !== false &&
-                player.caught !== true
+                player.alive !== false
+            ) {
+                return true;
+            }
+        }
+
+        for (const monster of monsters) {
+
+            if (
+                monster.x === x &&
+                monster.y === y
             ) {
                 return true;
             }
@@ -49,17 +61,33 @@ function createMonsterManager(options) {
         return false;
     }
 
+
     function getRandomFreeCell() {
 
         const maze = getMaze();
 
+        if (!maze || !maze.length)
+            return null;
+
+
         const cells = [];
 
-        for (let y = 0; y < mazeSize; y++) {
 
-            for (let x = 0; x < mazeSize; x++) {
+        for (
+            let y = 0;
+            y < mazeSize;
+            y++
+        ) {
 
-                if (!isCellOccupied(x, y)) {
+            for (
+                let x = 0;
+                x < mazeSize;
+                x++
+            ) {
+
+                if (
+                    !isCellOccupied(x, y)
+                ) {
 
                     cells.push({
                         x,
@@ -69,14 +97,19 @@ function createMonsterManager(options) {
             }
         }
 
-        if (cells.length === 0) {
+
+        if (!cells.length)
             return null;
-        }
+
 
         return cells[
-            Math.floor(Math.random() * cells.length)
+            Math.floor(
+                Math.random() *
+                cells.length
+            )
         ];
     }
+
 
     function spawnMonsters(count = 1) {
 
@@ -84,45 +117,94 @@ function createMonsterManager(options) {
 
         monsters = [];
 
-        for (let i = 0; i < count; i++) {
 
-            let position;
+        for (
+            let i = 0;
+            i < count;
+            i++
+        ) {
 
-            if (i === 0) {
+            const cell =
+                getRandomFreeCell();
 
-                const center = Math.floor(mazeSize / 2);
 
-                position = {
-                    x: center,
-                    y: center
-                };
-
-            } else {
-
-                position = getRandomFreeCell();
-            }
-
-            if (!position) {
+            if (!cell)
                 continue;
-            }
+
 
             monsters.push({
-                id: `monster-${i + 1}`,
-                x: position.x,
-                y: position.y
+
+                id:
+                    `monster-${i + 1}`,
+
+                x: cell.x,
+
+                y: cell.y
             });
         }
 
+
         broadcastState();
+
+        return monsters;
     }
+
+
+    function findNearestPlayer(monster) {
+
+        let nearest = null;
+        let shortestDistance = Infinity;
+
+
+        for (
+            const player
+            of getPlayers().values()
+        ) {
+
+            if (
+                player.alive === false ||
+                player.caught === true ||
+                player.x === null ||
+                player.y === null
+            ) {
+                continue;
+            }
+
+
+            const distance =
+                Math.abs(
+                    player.x - monster.x
+                ) +
+                Math.abs(
+                    player.y - monster.y
+                );
+
+
+            if (
+                distance <
+                shortestDistance
+            ) {
+
+                shortestDistance =
+                    distance;
+
+                nearest =
+                    player;
+            }
+        }
+
+
+        return nearest;
+    }
+
 
     function findPath(start, target) {
 
         const maze = getMaze();
 
-        if (!start || !target) {
+        if (!maze || !maze.length)
             return [];
-        }
+
 
         const queue = [
             {
@@ -132,58 +214,84 @@ function createMonsterManager(options) {
             }
         ];
 
-        const visited = new Set();
 
-        visited.add(`${start.x},${start.y}`);
+        const visited =
+            new Set([
+                `${start.x},${start.y}`
+            ]);
 
-        while (queue.length > 0) {
 
-            const current = queue.shift();
+        const directions = [
+            {
+                dx: 0,
+                dy: -1,
+                wall: "top"
+            },
+            {
+                dx: 0,
+                dy: 1,
+                wall: "bottom"
+            },
+            {
+                dx: 1,
+                dy: 0,
+                wall: "right"
+            },
+            {
+                dx: -1,
+                dy: 0,
+                wall: "left"
+            }
+        ];
+
+
+        while (queue.length) {
+
+            const current =
+                queue.shift();
+
 
             if (
                 current.x === target.x &&
                 current.y === target.y
             ) {
+
                 return current.path;
             }
 
-            const cell = maze[current.y]?.[current.x];
 
-            if (!cell) {
+            const cell =
+                maze[current.y]?.[
+                    current.x
+                ];
+
+
+            if (!cell)
                 continue;
-            }
 
-            const directions = [
-                {
-                    x: 0,
-                    y: -1,
-                    wall: "top"
-                },
-                {
-                    x: 0,
-                    y: 1,
-                    wall: "bottom"
-                },
-                {
-                    x: 1,
-                    y: 0,
-                    wall: "right"
-                },
-                {
-                    x: -1,
-                    y: 0,
-                    wall: "left"
-                }
-            ];
 
-            for (const direction of directions) {
+            for (
+                const direction
+                of directions
+            ) {
 
-                if (cell.walls[direction.wall]) {
+                if (
+                    cell.walls?.[
+                        direction.wall
+                    ]
+                ) {
                     continue;
                 }
 
-                const nx = current.x + direction.x;
-                const ny = current.y + direction.y;
+
+                const nx =
+                    current.x +
+                    direction.dx;
+
+                const ny =
+                    current.y +
+                    direction.dy;
+
 
                 if (
                     nx < 0 ||
@@ -194,17 +302,27 @@ function createMonsterManager(options) {
                     continue;
                 }
 
-                const key = `${nx},${ny}`;
 
-                if (visited.has(key)) {
+                const key =
+                    `${nx},${ny}`;
+
+
+                if (
+                    visited.has(key)
+                ) {
                     continue;
                 }
 
+
                 visited.add(key);
 
+
                 queue.push({
+
                     x: nx,
+
                     y: ny,
+
                     path: [
                         ...current.path,
                         {
@@ -216,136 +334,159 @@ function createMonsterManager(options) {
             }
         }
 
+
         return [];
     }
 
-    function getNearestPlayer(monster) {
 
-        const players = getPlayers();
+    function checkCollision(player) {
 
-        let nearest = null;
-        let shortestDistance = Infinity;
+        if (!player)
+            return false;
 
-        for (const player of players.values()) {
 
-            if (player.alive === false) {
-                continue;
-            }
-
-            if (player.caught === true) {
-                continue;
-            }
+        for (
+            const monster
+            of monsters
+        ) {
 
             if (
-                player.x === null ||
-                player.y === null
+                monster.x === player.x &&
+                monster.y === player.y
             ) {
-                continue;
-            }
 
-            const distance =
-                Math.abs(monster.x - player.x) +
-                Math.abs(monster.y - player.y);
+                if (
+                    typeof onCatchPlayer ===
+                    "function"
+                ) {
 
-            if (distance < shortestDistance) {
+                    onCatchPlayer(player);
+                }
 
-                shortestDistance = distance;
-                nearest = player;
+                return true;
             }
         }
 
-        return nearest;
+
+        return false;
     }
 
-    function checkCollision(monster) {
-
-        const players = getPlayers();
-
-        for (const player of players.values()) {
-
-            if (
-                player.x !== monster.x ||
-                player.y !== monster.y
-            ) {
-                continue;
-            }
-
-            if (player.isNahroush) {
-
-                if (typeof onNahroushCaught === "function") {
-                    onNahroushCaught(player, monster);
-                }
-
-            } else {
-
-                if (typeof onPlayerCaught === "function") {
-                    onPlayerCaught(player, monster);
-                }
-            }
-        }
-    }
 
     function moveMonsters() {
 
-        const players = getPlayers();
+        const players =
+            getPlayers();
 
-        if (players.size === 0) {
-            return;
-        }
 
-        for (const monster of monsters) {
+        for (
+            const monster
+            of monsters
+        ) {
 
-            const target = getNearestPlayer(monster);
+            const target =
+                findNearestPlayer(
+                    monster
+                );
 
-            if (!target) {
+
+            if (!target)
                 continue;
-            }
 
-            const path = findPath(
-                {
-                    x: monster.x,
-                    y: monster.y
-                },
-                {
-                    x: target.x,
-                    y: target.y
+
+            const path =
+                findPath(
+                    monster,
+                    target
+                );
+
+
+            if (!path.length)
+                continue;
+
+
+            const next =
+                path[0];
+
+
+            monster.x =
+                next.x;
+
+            monster.y =
+                next.y;
+
+
+            for (
+                const player
+                of players.values()
+            ) {
+
+                if (
+                    player.alive === false ||
+                    player.caught === true
+                ) {
+                    continue;
                 }
-            );
 
-            if (path.length > 0) {
 
-                monster.x = path[0].x;
-                monster.y = path[0].y;
+                if (
+                    player.x === monster.x &&
+                    player.y === monster.y
+                ) {
+
+                    if (
+                        typeof onCatchPlayer ===
+                        "function"
+                    ) {
+
+                        onCatchPlayer(
+                            player
+                        );
+                    }
+                }
             }
-
-            checkCollision(monster);
         }
+
 
         broadcastState();
     }
+
 
     function startAI(speed = 1000) {
 
         clearMonsterTimer();
 
-        monsterTimer = setInterval(() => {
 
-            moveMonsters();
+        monsterTimer =
+            setInterval(() => {
 
-        }, Math.max(100, speed));
+                moveMonsters();
+
+            }, speed);
     }
 
+
     return {
+
         getMonsters,
+
         spawnMonsters,
-        moveMonsters,
-        startAI,
-        clearMonsterTimer,
+
         clearMonsters,
+
+        clearMonsterTimer,
+
+        checkCollision,
+
+        moveMonsters,
+
+        startAI,
+
         findPath,
-        getNearestPlayer
+
+        findNearestPlayer
     };
 }
+
 
 module.exports = {
     createMonsterManager
