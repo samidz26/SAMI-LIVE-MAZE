@@ -1717,7 +1717,6 @@ function createGameManager({ io, settings }) {
     ===================================================== */
 
     function catchPlayersOnMonsterCell(
-    function catchPlayersOnMonsterCell(
     monster
 ) {
 
