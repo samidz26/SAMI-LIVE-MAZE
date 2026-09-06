@@ -10,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>لعبة المتاهة</title>
+    <title>لعبة المتاهة التفاعلية</title>
 
     <link
         rel="stylesheet"
@@ -19,36 +19,69 @@
 
 </head>
 
+
 <body>
 
 <main class="game-page">
 
-    <!-- =====================================
+
+    <!-- =================================================
+         TOP HEADER
+    ================================================== -->
+
+    <header class="game-header">
+
+        <div class="game-brand">
+            SAMI LIVE
+        </div>
+
+        <div
+            id="gameModeLabel"
+            class="game-mode-label"
+        >
+            لعبة المتاهة
+        </div>
+
+    </header>
+
+
+
+    <!-- =================================================
          GAME AREA
-    ====================================== -->
+    ================================================== -->
 
-    <div class="game-board">
+    <section class="game-board">
 
-        <!-- MAZE -->
+
+        <!-- =============================================
+             MAZE
+
+             مهم:
+             لا نغير SVG أو طريقة رسم المتاهة.
+             game.js يعتمد على id="maze".
+        ============================================== -->
 
         <div class="maze-container">
 
             <svg
                 id="maze"
                 viewBox="0 0 300 300"
-                preserveAspectRatio="xMidYMid meet">
+                preserveAspectRatio="xMidYMid meet"
+            >
             </svg>
 
         </div>
 
 
-        <!-- =====================================
+
+        <!-- =============================================
              TIMER
-        ====================================== -->
+        ============================================== -->
 
         <div
             id="gameTimer"
-            class="game-timer">
+            class="game-timer"
+        >
 
             <span id="timerIcon">
                 ⏱️
@@ -60,78 +93,323 @@
 
         </div>
 
-    </div>
 
 
-    <!-- =====================================
-         WINNER / RESULT
-    ====================================== -->
+        <!-- =============================================
+             GAME START INSTRUCTIONS
+        ============================================== -->
+
+        <div
+            id="gameInstructions"
+            class="game-instructions hidden"
+        >
+
+            <div
+                id="instructionTitle"
+                class="instruction-title"
+            >
+                الهدف الوصول إلى الكنز
+            </div>
+
+            <div
+                id="instructionText"
+                class="instruction-text"
+            >
+                تحرك باستخدام الأسهم أو الأوامر
+            </div>
+
+            <div
+                class="instruction-controls"
+            >
+
+                <span>⬆️ فوق</span>
+                <span>⬇️ تحت</span>
+                <span>➡️ يمين</span>
+                <span>⬅️ يسار</span>
+
+            </div>
+
+            <div
+                class="instruction-commands"
+            >
+                U · D · R · L
+            </div>
+
+        </div>
+
+
+
+        <!-- =============================================
+             COUNTDOWN
+        ============================================== -->
+
+        <div
+            id="gameCountdown"
+            class="game-countdown hidden"
+        >
+            <span id="countdownValue">
+                5
+            </span>
+        </div>
+
+
+
+        <!-- =============================================
+             ELIMINATION MESSAGE
+        ============================================== -->
+
+        <div
+            id="eliminationOverlay"
+            class="elimination-overlay hidden"
+        >
+
+            <div
+                id="eliminationTitle"
+                class="elimination-title"
+            >
+                تم إقصاء
+            </div>
+
+
+            <div
+                class="elimination-avatar-wrapper"
+            >
+
+                <img
+                    id="eliminationAvatar"
+                    class="elimination-avatar"
+                    src=""
+                    alt=""
+                >
+
+            </div>
+
+
+            <div
+                id="eliminationName"
+                class="elimination-name"
+            >
+                اللاعب
+            </div>
+
+        </div>
+
+
+
+        <!-- =============================================
+             SMALL GAME STATUS
+        ============================================== -->
+
+        <div
+            id="gameStatus"
+            class="game-status"
+        >
+        </div>
+
+
+    </section>
+
+
+
+    <!-- =================================================
+         WINNER / RESULT OVERLAY
+    ================================================== -->
 
     <div
         id="winnerOverlay"
-        class="winner-overlay hidden">
+        class="winner-overlay hidden"
+    >
 
         <div class="winner-box">
 
+
+            <!-- =========================================
+                 WINNER ICON
+            ========================================== -->
+
             <div
                 id="winnerIcon"
-                class="winner-title">
-
+                class="winner-title"
+            >
                 🏆
-
             </div>
 
+
+            <!-- =========================================
+                 RESULT SUBTITLE
+            ========================================== -->
 
             <div
                 id="winnerSubtitle"
-                class="winner-subtitle">
-
+                class="winner-subtitle"
+            >
                 الفائز
-
             </div>
 
 
-            <div class="winner-avatar-wrapper">
+            <!-- =========================================
+                 RESULT IMAGE
+            ========================================== -->
+
+            <div
+                class="winner-avatar-wrapper"
+            >
 
                 <img
                     id="winnerAvatar"
                     class="winner-avatar"
                     src=""
-                    alt="">
+                    alt=""
+                >
 
             </div>
 
+
+            <!-- =========================================
+                 WINNER NAME
+            ========================================== -->
 
             <div
                 id="winnerName"
-                class="winner-name">
+                class="winner-name"
+            >
             </div>
 
+
+            <!-- =========================================
+                 RESULT MESSAGE
+            ========================================== -->
 
             <div
                 id="winnerMessage"
-                class="winner-message">
+                class="winner-message"
+            >
             </div>
 
 
+            <!-- =========================================
+                 SURVIVORS
+                 سيتم استخدامه لاحقًا في مود النجاة
+                 عندما يكون هناك أكثر من ناجٍ.
+            ========================================== -->
+
+            <div
+                id="survivorsContainer"
+                class="survivors-container hidden"
+            >
+
+                <div
+                    class="survivors-title"
+                >
+                    الناجون
+                </div>
+
+                <div
+                    id="survivorsList"
+                    class="survivors-list"
+                >
+                </div>
+
+            </div>
+
+
+            <!-- =========================================
+                 REPLAY
+            ========================================== -->
+
             <button
                 id="resetButton"
-                class="reset-button">
+                class="reset-button"
+                type="button"
+            >
 
-                🔄 إعادة اللعب
+                <span class="reset-icon">
+                    🔄
+                </span>
+
+                <span>
+                    إعادة اللعب
+                </span>
 
             </button>
+
 
         </div>
 
     </div>
 
+
+
+    <!-- =================================================
+         AUDIO SYSTEM
+
+         الملفات الصوتية سنربطها لاحقًا في game.js.
+         وجود العناصر هنا لا يشغل أي صوت حاليًا.
+    ================================================== -->
+
+    <audio
+        id="soundCountdown"
+        preload="auto"
+    ></audio>
+
+    <audio
+        id="soundGameStart"
+        preload="auto"
+    ></audio>
+
+    <audio
+        id="soundElimination"
+        preload="auto"
+    ></audio>
+
+    <audio
+        id="soundTreasure"
+        preload="auto"
+    ></audio>
+
+    <audio
+        id="soundWin"
+        preload="auto"
+    ></audio>
+
+    <audio
+        id="soundMonsterWin"
+        preload="auto"
+    ></audio>
+
+    <audio
+        id="soundNahroushWin"
+        preload="auto"
+    ></audio>
+
+
+
 </main>
 
 
+
+<!-- =====================================================
+     SOCKET.IO
+====================================================== -->
+
 <script src="/socket.io/socket.io.js"></script>
 
+
+
+<!-- =====================================================
+     GAME JAVASCRIPT
+
+     هذا هو الملف الحالي المسؤول عن:
+     - المتاهة
+     - اللاعبين
+     - الوحوش
+     - الكنز
+     - المؤقت
+     - نتائج اللعبة
+====================================================== -->
+
 <script src="game.js"></script>
+
 
 </body>
 
