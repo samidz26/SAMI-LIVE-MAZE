@@ -1,4 +1,4 @@
-alert("GAME.JS LOADED");
+alert("GAME JS WORKING");
 const socket = io();
 
 /* =====================================================
