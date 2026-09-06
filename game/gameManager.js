@@ -2019,7 +2019,46 @@ function createGameManager({ io, settings }) {
        MOVE PLAYER
     ===================================================== */
 
-   
+   function movePlayer(uniqueId, direction) {
+
+    movePlayerModule(
+        uniqueId,
+        direction,
+        {
+            players,
+            maze,
+            mazeSize: MAZE_SIZE,
+            gameStarted,
+            broadcastState,
+
+            onTreasureReached: player => {
+
+                if (
+                    gameMode === "treasure" &&
+                    treasure &&
+                    player.x === treasure.x &&
+                    player.y === treasure.y
+                ) {
+                    finishTreasureGame(player);
+                }
+            },
+
+            onMonsterCollision: player => {
+
+                for (const monster of monsters) {
+
+                    if (
+                        monster.x === player.x &&
+                        monster.y === player.y
+                    ) {
+                        catchPlayersOnMonsterCell(monster);
+                        break;
+                    }
+                }
+            }
+        }
+    );
+       }
 
     /* =====================================================
        REMOVE PLAYER
