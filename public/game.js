@@ -1,5 +1,7 @@
-alert("GAME JS WORKING");
-const socket = io();
+document.body.insertAdjacentHTML(
+    "afterbegin",
+    '<div id="jsTest" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:red;color:white;padding:15px;text-align:center;font-size:20px;">GAME.JS WORKING</div>'
+);const socket = io();
 
 /* =====================================================
    ELEMENTS
