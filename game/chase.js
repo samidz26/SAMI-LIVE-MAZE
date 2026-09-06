@@ -1,132 +1,164 @@
-function createChaseManager(options) {
+function createChaseManager(options = {}) {
 
     const {
         getPlayers,
-        getMonsters,
-        startMonsterAI,
-        stopMonsterAI,
         broadcastState,
-        onChaseEnded
+        roundDuration = 60,
+        onEnd
     } = options;
 
-    let chaseTimer = null;
-    let timeLeft = 0;
+    let timer = null;
+    let timeLeft = roundDuration;
     let running = false;
+
 
     function getTimeLeft() {
         return timeLeft;
     }
 
+
     function isRunning() {
         return running;
     }
 
+
     function clearTimer() {
 
-        if (chaseTimer) {
-            clearInterval(chaseTimer);
-            chaseTimer = null;
+        if (timer) {
+
+            clearInterval(timer);
+            timer = null;
         }
     }
 
-    function start(duration = 60, monsterSpeed = 1000) {
+
+    function start() {
 
         clearTimer();
 
         running = true;
-        timeLeft = duration;
 
-        if (typeof startMonsterAI === "function") {
-            startMonsterAI(monsterSpeed);
-        }
+        timeLeft =
+            roundDuration;
 
         broadcastState();
 
-        chaseTimer = setInterval(() => {
 
-            timeLeft--;
+        timer =
+            setInterval(() => {
 
-            broadcastState();
+                if (!running) {
 
-            if (timeLeft <= 0) {
+                    clearTimer();
 
-                end("time");
-            }
+                    return;
+                }
 
-        }, 1000);
+
+                timeLeft--;
+
+                broadcastState();
+
+
+                if (timeLeft <= 0) {
+
+                    clearTimer();
+
+                    running = false;
+
+
+                    if (
+                        typeof onEnd ===
+                        "function"
+                    ) {
+
+                        onEnd({
+
+                            type: "time",
+
+                            winner: null
+                        });
+                    }
+
+
+                    broadcastState();
+                }
+
+            }, 1000);
     }
 
-    function end(reason = "time", winner = null) {
+
+    function end(result = {}) {
+
+        if (!running)
+            return;
+
 
         clearTimer();
 
         running = false;
 
-        if (typeof stopMonsterAI === "function") {
-            stopMonsterAI();
+
+        if (
+            typeof onEnd ===
+            "function"
+        ) {
+
+            onEnd(result);
         }
 
-        if (typeof onChaseEnded === "function") {
-
-            onChaseEnded({
-                reason,
-                winner
-            });
-        }
 
         broadcastState();
     }
 
+
     function checkPlayers() {
 
-        const players = getPlayers();
+        const players =
+            getPlayers();
 
-        let alivePlayers = [];
 
-        for (const player of players.values()) {
-
-            if (
-                player.isNahroush === true
-            ) {
-                continue;
-            }
-
-            if (
+        const alivePlayers =
+            Array.from(
+                players.values()
+            ).filter(player =>
                 player.alive !== false &&
                 player.caught !== true
-            ) {
-                alivePlayers.push(player);
-            }
-        }
+            );
 
-        if (alivePlayers.length === 0) {
 
-            end("all_caught");
-
-            return true;
-        }
-
-        return false;
+        return alivePlayers;
     }
+
 
     function reset() {
 
         clearTimer();
 
         running = false;
-        timeLeft = 0;
+
+        timeLeft =
+            roundDuration;
 
         broadcastState();
     }
 
+
     return {
-        getTimeLeft,
-        isRunning,
+
         start,
+
         end,
-        checkPlayers,
+
         reset,
-        clearTimer
+
+        clearTimer,
+
+        checkPlayers,
+
+        getTimeLeft,
+
+        isRunning
     };
 }
 
