@@ -1,4 +1,8 @@
 const {
+    movePlayer: movePlayerModule
+} = require("./movement");    
+
+const {
     createMaze,
     MAZE_SIZE 
 } = require("./maze");
@@ -2015,124 +2019,7 @@ function createGameManager({ io, settings }) {
        MOVE PLAYER
     ===================================================== */
 
-    function movePlayer(
-        uniqueId,
-        command
-    ) {
-
-        if (!gameStarted) {
-            return;
-        }
-
-
-        const player =
-            getPlayer(uniqueId);
-
-
-        if (!player) {
-            return;
-        }
-
-
-        if (
-            player.alive === false
-        ) {
-            return;
-        }
-
-
-        const cell =
-            maze[player.y]?.[
-                player.x
-            ];
-
-
-        if (!cell) {
-            return;
-        }
-
-
-        let nx =
-            player.x;
-
-        let ny =
-            player.y;
-
-
-        if (
-            command === "u" &&
-            !cell.walls.top
-        ) {
-
-            ny--;
-
-        } else if (
-            command === "d" &&
-            !cell.walls.bottom
-        ) {
-
-            ny++;
-
-        } else if (
-            command === "r" &&
-            !cell.walls.right
-        ) {
-
-            nx++;
-
-        } else if (
-            command === "l" &&
-            !cell.walls.left
-        ) {
-
-            /*
-             * نبقي هذا كما هو حاليًا.
-             * سنصلحه لاحقًا بعد حل مشكلة المتاهة.
-             */
-
-            nx--;
-
-        } else {
-
-            return;
-        }
-
-
-        if (
-            nx < 0 ||
-            nx >= MAZE_SIZE ||
-            ny < 0 ||
-            ny >= MAZE_SIZE
-        ) {
-            return;
-        }
-
-
-        player.x =
-            nx;
-
-        player.y =
-            ny;
-
-
-        if (
-            gameMode === "treasure" &&
-            treasure &&
-            player.x === treasure.x &&
-            player.y === treasure.y
-        ) {
-
-            finishTreasureGame(
-                player
-            );
-
-            return;
-        }
-
-
-        broadcastState();
-    }
-
+   
 
     /* =====================================================
        REMOVE PLAYER
