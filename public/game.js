@@ -37,6 +37,42 @@ const winnerMessage =
 const resetButton =
     document.getElementById("resetButton");
 
+const gameModeLabel =
+    document.getElementById("gameModeLabel");
+
+const gameInstructions =
+    document.getElementById("gameInstructions");
+
+const instructionTitle =
+    document.getElementById("instructionTitle");
+
+const instructionText =
+    document.getElementById("instructionText");
+
+const gameCountdown =
+    document.getElementById("gameCountdown");
+
+const countdownValue =
+    document.getElementById("countdownValue");
+
+const eliminationOverlay =
+    document.getElementById("eliminationOverlay");
+
+const eliminationAvatar =
+    document.getElementById("eliminationAvatar");
+
+const eliminationName =
+    document.getElementById("eliminationName");
+
+const gameStatus =
+    document.getElementById("gameStatus");
+
+const survivorsContainer =
+    document.getElementById("survivorsContainer");
+
+const survivorsList =
+    document.getElementById("survivorsList");
+
 
 /* =====================================================
    CONSTANTS
@@ -45,12 +81,21 @@ const resetButton =
 const MAZE_SIZE = 12;
 const CELL_SIZE = 32;
 
+const INTRO_DURATION = 5000;
+const ELIMINATION_DURATION = 1500;
+
 
 /* =====================================================
    STATE
 ===================================================== */
 
 let currentState = null;
+
+let instructionTimer = null;
+let countdownTimer = null;
+let eliminationTimer = null;
+
+let audioContext = null;
 
 
 /* =====================================================
@@ -83,6 +128,8 @@ socket.on(
 
         currentState = state;
 
+        updateModeLabel(state);
+
         renderMaze(state);
 
         updateTimer(state);
@@ -101,18 +148,286 @@ socket.on(
 
         if (!state) return;
 
+        currentState = state;
+
         winnerOverlay.classList.add(
             "hidden"
         );
 
-        currentState = state;
+        survivorsContainer.classList.add(
+            "hidden"
+        );
+
+        updateModeLabel(state);
 
         renderMaze(state);
 
         updateTimer(state);
 
+        startGameIntroduction(
+            state
+        );
+
     }
 );
+
+
+/* =====================================================
+   GAME MODE LABEL
+===================================================== */
+
+function updateModeLabel(state) {
+
+    if (!gameModeLabel) return;
+
+    const mode =
+        state?.gameMode;
+
+    if (mode === "treasure") {
+
+        gameModeLabel.textContent =
+            "🏆 مود الكنز";
+
+    }
+
+    else if (mode === "chase") {
+
+        gameModeLabel.textContent =
+            "👹 مود النجاة";
+
+    }
+
+    else if (mode === "nahroush") {
+
+        gameModeLabel.textContent =
+            "🦉 مود القبض على نهروش";
+
+    }
+
+    else {
+
+        gameModeLabel.textContent =
+            "لعبة المتاهة";
+
+    }
+
+}
+
+
+/* =====================================================
+   GAME INTRODUCTION
+===================================================== */
+
+function startGameIntroduction(state) {
+
+    clearIntroductionTimers();
+
+    if (!gameInstructions) return;
+
+    gameInstructions.classList.remove(
+        "hidden"
+    );
+
+    if (state.gameMode === "treasure") {
+
+        instructionTitle.textContent =
+            "الهدف الوصول إلى الكنز";
+
+        instructionText.textContent =
+            "كن أول من يصل إلى الكنز";
+
+    }
+
+    else if (state.gameMode === "chase") {
+
+        instructionTitle.textContent =
+            "الهدف النجاة من الوحش سيلا حتى نهاية الوقت";
+
+        instructionText.textContent =
+            "اهرب من الوحش وحاول البقاء حتى النهاية";
+
+    }
+
+    else if (state.gameMode === "nahroush") {
+
+        instructionTitle.textContent =
+            "الهدف القضاء على البومة";
+
+        instructionText.textContent =
+            "احذروا من الوحش";
+
+    }
+
+    else {
+
+        instructionTitle.textContent =
+            "استعدوا للعب";
+
+        instructionText.textContent =
+            "تحركوا باستخدام الأوامر";
+
+    }
+
+
+    /*
+       إظهار التعليمات
+    */
+
+    playSound(
+        "instruction"
+    );
+
+
+    /*
+       عد تنازلي مرئي
+    */
+
+    startCountdown();
+
+
+    /*
+       تختفي التعليمات بعد 5 ثوانٍ
+    */
+
+    instructionTimer =
+        setTimeout(
+            () => {
+
+                gameInstructions.classList.add(
+                    "hidden"
+                );
+
+            },
+            INTRO_DURATION
+        );
+
+}
+
+
+/* =====================================================
+   COUNTDOWN
+===================================================== */
+
+function startCountdown() {
+
+    if (!gameCountdown) return;
+
+    clearInterval(
+        countdownTimer
+    );
+
+    let value = 5;
+
+    gameCountdown.classList.remove(
+        "hidden"
+    );
+
+    countdownValue.textContent =
+        value;
+
+    playSound(
+        "countdown"
+    );
+
+
+    countdownTimer =
+        setInterval(
+            () => {
+
+                value--;
+
+                if (value > 0) {
+
+                    countdownValue.textContent =
+                        value;
+
+                    playSound(
+                        "countdown"
+                    );
+
+                    return;
+
+                }
+
+
+                if (value === 0) {
+
+                    countdownValue.textContent =
+                        "GO!";
+
+                    playSound(
+                        "start"
+                    );
+
+                    return;
+
+                }
+
+
+                clearInterval(
+                    countdownTimer
+                );
+
+                countdownTimer =
+                    null;
+
+                gameCountdown.classList.add(
+                    "hidden"
+                );
+
+            },
+            1000
+        );
+
+}
+
+
+/* =====================================================
+   CLEAR INTRO
+===================================================== */
+
+function clearIntroductionTimers() {
+
+    if (instructionTimer) {
+
+        clearTimeout(
+            instructionTimer
+        );
+
+        instructionTimer = null;
+
+    }
+
+
+    if (countdownTimer) {
+
+        clearInterval(
+            countdownTimer
+        );
+
+        countdownTimer = null;
+
+    }
+
+
+    if (gameInstructions) {
+
+        gameInstructions.classList.add(
+            "hidden"
+        );
+
+    }
+
+
+    if (gameCountdown) {
+
+        gameCountdown.classList.add(
+            "hidden"
+        );
+
+    }
+
+}
 
 
 /* =====================================================
@@ -1181,32 +1496,58 @@ socket.on(
 
         if (!winner) return;
 
-
-        winnerIcon.textContent =
-            "🏆";
-
-        winnerSubtitle.textContent =
-            "الفائز";
-
-        winnerName.textContent =
-            winner.nickname ||
-            "الفائز";
-
-        winnerMessage.textContent =
-            "وصل إلى الكنز أولاً";
-
-
-        setWinnerAvatar(
-            winner.profilePictureUrl
-        );
-
-
-        winnerOverlay.classList.remove(
-            "hidden"
+        showTreasureWinner(
+            winner
         );
 
     }
 );
+
+
+/* =====================================================
+   TREASURE WINNER DISPLAY
+===================================================== */
+
+function showTreasureWinner(
+    winner
+) {
+
+    clearIntroductionTimers();
+
+    playSound(
+        "win"
+    );
+
+
+    winnerIcon.textContent =
+        "🏆";
+
+    winnerSubtitle.textContent =
+        "الفائز";
+
+    winnerName.textContent =
+        winner.nickname ||
+        "الفائز";
+
+    winnerMessage.textContent =
+        "وصل إلى الكنز أولاً";
+
+
+    setWinnerAvatar(
+        winner.profilePictureUrl
+    );
+
+
+    survivorsContainer.classList.add(
+        "hidden"
+    );
+
+
+    winnerOverlay.classList.remove(
+        "hidden"
+    );
+
+}
 
 
 /* =====================================================
@@ -1218,6 +1559,8 @@ socket.on(
     result => {
 
         if (!result) return;
+
+        clearIntroductionTimers();
 
 
         /* =====================================
@@ -1240,6 +1583,11 @@ socket.on(
                 result.winner ===
                 "monsters"
             ) {
+
+                playSound(
+                    "nahroushWin"
+                );
+
 
                 winnerIcon.textContent =
                     "👑";
@@ -1266,6 +1614,11 @@ socket.on(
                     ""
                 );
 
+
+                survivorsContainer.classList.add(
+                    "hidden"
+                );
+
             }
 
 
@@ -1274,6 +1627,11 @@ socket.on(
             */
 
             else {
+
+                playSound(
+                    "win"
+                );
+
 
                 winnerIcon.textContent =
                     "🏆";
@@ -1290,6 +1648,11 @@ socket.on(
 
                 setWinnerAvatar(
                     ""
+                );
+
+
+                survivorsContainer.classList.add(
+                    "hidden"
                 );
 
             }
@@ -1313,6 +1676,11 @@ socket.on(
             "monsters"
         ) {
 
+            playSound(
+                "monsterWin"
+            );
+
+
             winnerIcon.textContent =
                 "👹";
 
@@ -1320,17 +1688,26 @@ socket.on(
                 "انتهت الجولة";
 
             winnerName.textContent =
-                "الوحوش تفوز";
+                "الوحش يفوز";
 
             winnerMessage.textContent =
-                "تم الإمساك بجميع اللاعبين";
+                "تم إقصاء جميع اللاعبين";
 
 
             setWinnerAvatar("");
 
+            survivorsContainer.classList.add(
+                "hidden"
+            );
+
         }
 
         else {
+
+            playSound(
+                "win"
+            );
+
 
             winnerIcon.textContent =
                 "🏆";
@@ -1347,6 +1724,16 @@ socket.on(
 
             setWinnerAvatar("");
 
+
+            showSurvivors(
+                result.survivors ||
+                currentState?.players?.filter(
+                    player =>
+                        player.alive !== false
+                ) ||
+                []
+            );
+
         }
 
 
@@ -1356,6 +1743,223 @@ socket.on(
 
     }
 );
+
+
+/* =====================================================
+   PLAYER ELIMINATION
+===================================================== */
+
+socket.on(
+    "player_eliminated",
+    data => {
+
+        if (!data) return;
+
+        showElimination(
+            data
+        );
+
+    }
+);
+
+
+/* =====================================================
+   SHOW ELIMINATION
+===================================================== */
+
+function showElimination(
+    data
+) {
+
+    if (!eliminationOverlay) {
+        return;
+    }
+
+
+    clearTimeout(
+        eliminationTimer
+    );
+
+
+    const player =
+        data.player ||
+        data;
+
+
+    const nickname =
+        player.nickname ||
+        data.nickname ||
+        "اللاعب";
+
+
+    const avatar =
+        player.profilePictureUrl ||
+        data.profilePictureUrl ||
+        "";
+
+
+    eliminationName.textContent =
+        nickname;
+
+
+    if (avatar) {
+
+        eliminationAvatar.src =
+            avatar;
+
+        eliminationAvatar.style.display =
+            "block";
+
+    }
+
+    else {
+
+        eliminationAvatar.src =
+            createAvatarFallback();
+
+        eliminationAvatar.style.display =
+            "block";
+
+    }
+
+
+    eliminationOverlay.classList.remove(
+        "hidden"
+    );
+
+
+    playSound(
+        "elimination"
+    );
+
+
+    eliminationTimer =
+        setTimeout(
+            () => {
+
+                eliminationOverlay.classList.add(
+                    "hidden"
+                );
+
+            },
+            ELIMINATION_DURATION
+        );
+
+}
+
+
+/* =====================================================
+   SURVIVORS
+===================================================== */
+
+function showSurvivors(
+    players
+) {
+
+    if (
+        !survivorsContainer ||
+        !survivorsList
+    ) {
+        return;
+    }
+
+
+    const survivors =
+        Array.isArray(players)
+            ? players.filter(
+                player =>
+                    player &&
+                    player.alive !== false
+            )
+            : [];
+
+
+    if (!survivors.length) {
+
+        survivorsContainer.classList.add(
+            "hidden"
+        );
+
+        return;
+
+    }
+
+
+    survivorsList.innerHTML =
+        "";
+
+
+    survivors.forEach(
+        player => {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+            item.className =
+                "survivor-item";
+
+
+            const image =
+                document.createElement(
+                    "img"
+                );
+
+
+            if (
+                player.profilePictureUrl
+            ) {
+
+                image.src =
+                    player.profilePictureUrl;
+
+            }
+
+            else {
+
+                image.src =
+                    createAvatarFallback();
+
+            }
+
+
+            image.alt =
+                player.nickname ||
+                "ناجٍ";
+
+
+            const name =
+                document.createElement(
+                    "span"
+                );
+
+            name.textContent =
+                player.nickname ||
+                "ناجٍ";
+
+
+            item.appendChild(
+                image
+            );
+
+            item.appendChild(
+                name
+            );
+
+            survivorsList.appendChild(
+                item
+            );
+
+        }
+    );
+
+
+    survivorsContainer.classList.remove(
+        "hidden"
+    );
+
+}
 
 
 /* =====================================================
@@ -1394,6 +1998,17 @@ function setWinnerAvatar(url) {
 function showAvatarFallback() {
 
     winnerAvatar.src =
+        createAvatarFallback();
+
+    winnerAvatar.style.display =
+        "block";
+
+}
+
+
+function createAvatarFallback() {
+
+    return (
         "data:image/svg+xml," +
         encodeURIComponent(`
 
@@ -1421,7 +2036,345 @@ function showAvatarFallback() {
 
             </svg>
 
-        `);
+        `)
+    );
+
+}
+
+
+/* =====================================================
+   GAME STATUS
+===================================================== */
+
+function setGameStatus(
+    message
+) {
+
+    if (!gameStatus) return;
+
+    gameStatus.textContent =
+        message || "";
+
+}
+
+
+/* =====================================================
+   AUDIO SYSTEM
+   لا يحتاج ملفات صوتية خارجية حاليًا
+===================================================== */
+
+function getAudioContext() {
+
+    if (!audioContext) {
+
+        try {
+
+            audioContext =
+                new (
+                    window.AudioContext ||
+                    window.webkitAudioContext
+                )();
+
+        }
+
+        catch (error) {
+
+            return null;
+
+        }
+
+    }
+
+
+    if (
+        audioContext.state ===
+        "suspended"
+    ) {
+
+        audioContext.resume().catch(
+            () => {}
+        );
+
+    }
+
+
+    return audioContext;
+
+}
+
+
+function playTone(
+    frequency,
+    duration,
+    type = "sine",
+    volume = 0.05
+) {
+
+    const context =
+        getAudioContext();
+
+    if (!context) return;
+
+
+    const oscillator =
+        context.createOscillator();
+
+    const gain =
+        context.createGain();
+
+
+    oscillator.type =
+        type;
+
+    oscillator.frequency.value =
+        frequency;
+
+
+    gain.gain.setValueAtTime(
+        0.0001,
+        context.currentTime
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+        volume,
+        context.currentTime + 0.02
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        context.currentTime + duration
+    );
+
+
+    oscillator.connect(
+        gain
+    );
+
+    gain.connect(
+        context.destination
+    );
+
+
+    oscillator.start();
+
+    oscillator.stop(
+        context.currentTime +
+        duration +
+        0.03
+    );
+
+}
+
+
+function playSound(
+    type
+) {
+
+    try {
+
+        if (type === "countdown") {
+
+            playTone(
+                520,
+                0.12,
+                "sine",
+                0.045
+            );
+
+        }
+
+
+        else if (
+            type === "start"
+        ) {
+
+            playTone(
+                880,
+                0.15,
+                "sine",
+                0.07
+            );
+
+            setTimeout(
+                () => {
+
+                    playTone(
+                        1175,
+                        0.2,
+                        "sine",
+                        0.07
+                    );
+
+                },
+                120
+            );
+
+        }
+
+
+        else if (
+            type === "instruction"
+        ) {
+
+            playTone(
+                420,
+                0.12,
+                "sine",
+                0.035
+            );
+
+        }
+
+
+        else if (
+            type === "elimination"
+        ) {
+
+            playTone(
+                180,
+                0.16,
+                "sawtooth",
+                0.055
+            );
+
+            setTimeout(
+                () => {
+
+                    playTone(
+                        110,
+                        0.18,
+                        "sawtooth",
+                        0.045
+                    );
+
+                },
+                100
+            );
+
+        }
+
+
+        else if (
+            type === "win"
+        ) {
+
+            playTone(
+                660,
+                0.15,
+                "sine",
+                0.06
+            );
+
+            setTimeout(
+                () => {
+
+                    playTone(
+                        880,
+                        0.15,
+                        "sine",
+                        0.065
+                    );
+
+                },
+                130
+            );
+
+            setTimeout(
+                () => {
+
+                    playTone(
+                        1175,
+                        0.28,
+                        "sine",
+                        0.07
+                    );
+
+                },
+                260
+            );
+
+        }
+
+
+        else if (
+            type === "monsterWin"
+        ) {
+
+            playTone(
+                130,
+                0.25,
+                "sawtooth",
+                0.06
+            );
+
+            setTimeout(
+                () => {
+
+                    playTone(
+                        90,
+                        0.35,
+                        "sawtooth",
+                        0.055
+                    );
+
+                },
+                180
+            );
+
+        }
+
+
+        else if (
+            type === "nahroushWin"
+        ) {
+
+            playTone(
+                220,
+                0.2,
+                "triangle",
+                0.055
+            );
+
+            setTimeout(
+                () => {
+
+                    playTone(
+                        330,
+                        0.2,
+                        "triangle",
+                        0.06
+                    );
+
+                },
+                150
+            );
+
+            setTimeout(
+                () => {
+
+                    playTone(
+                        165,
+                        0.4,
+                        "sawtooth",
+                        0.05
+                    );
+
+                },
+                300
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            "Audio error:",
+            error
+        );
+
+    }
 
 }
 
@@ -1436,6 +2389,9 @@ resetButton.addEventListener(
 
         resetButton.disabled =
             true;
+
+
+        clearIntroductionTimers();
 
 
         socket.emit(
