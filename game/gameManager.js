@@ -1713,56 +1713,89 @@ function createGameManager({ io, settings }) {
     ===================================================== */
 
     function catchPlayersOnMonsterCell(
-        monster
+    function catchPlayersOnMonsterCell(
+    monster
+) {
+
+    for (
+        const player of players.values()
     ) {
 
-        for (
-            const player of players.values()
+        if (
+            player.alive === false
+        ) {
+            continue;
+        }
+
+
+        if (
+            player.isNahroush
+        ) {
+            continue;
+        }
+
+
+        if (
+            player.x === monster.x &&
+            player.y === monster.y
         ) {
 
-            if (
-                player.alive === false
-            ) {
-                continue;
-            }
+            player.alive = false;
+
+            player.caught = true;
 
 
-            if (
-                player.isNahroush
-            ) {
-                continue;
-            }
+            io.emit(
+                "player_caught",
+                {
+                    uniqueId:
+                        player.uniqueId,
+
+                    nickname:
+                        player.nickname,
+
+                    profilePictureUrl:
+                        player.profilePictureUrl
+                }
+            );
 
 
-            if (
-                player.x === monster.x &&
-                player.y === monster.y
-            ) {
+            /*
+             * التحقق فورًا:
+             * هل بقي لاعب حي؟
+             */
 
-                player.alive = false;
-
-                player.caught = true;
-
-
-                io.emit(
-                    "player_caught",
-                    {
-                        uniqueId:
-                            player.uniqueId,
-
-                        nickname:
-                            player.nickname,
-
-                        profilePictureUrl:
-                            player.profilePictureUrl
-                    }
+            const remainingPlayers =
+                Array.from(
+                    players.values()
+                ).filter(
+                    player =>
+                        player.alive !== false &&
+                        player.isNahroush !== true
                 );
 
 
-                broadcastState();
+            /*
+             * إذا لم يبق أي لاعب،
+             * الوحوش تفوز فورًا.
+             */
+
+            if (
+                remainingPlayers.length === 0
+            ) {
+
+                endChaseGame(
+                    "monsters"
+                );
+
+                return;
             }
+
+
+            broadcastState();
         }
     }
+}
 
 
     /* =====================================================
