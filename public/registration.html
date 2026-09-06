@@ -3,211 +3,149 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل اللاعبين - لعبة المتاهة</title>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>لعبة المتاهة التفاعلية - SAMI LIVE</title>
-
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div class="registration-page">
+<main class="registration-page">
 
-    <!-- =================================================
-         HEADER
-    ================================================== -->
-
+    <!-- ================= HEADER ================= -->
     <header class="registration-header">
 
-        <div class="header-right">
+        <div class="connection-status">
+            <span id="connectionDot" class="status-dot"></span>
+            <span id="connectionText">غير متصل</span>
+        </div>
+
+        <div class="registration-title">
+            <span>لعبة المتاهة التفاعلية</span>
+        </div>
+
+        <div class="brand-title">
             SAMI LIVE
-        </div>
-
-        <div class="header-center">
-            لعبة المتاهة التفاعلية
-        </div>
-
-        <div
-            id="connectionStatus"
-            class="header-left">
-
-            🟢 متصل
-
         </div>
 
     </header>
 
 
-    <!-- =================================================
-         MAIN
-    ================================================== -->
+    <!-- ================= CONTENT ================= -->
+    <section class="registration-content">
 
-    <main class="registration-content">
+        <!-- ================= GAME MODE ================= -->
+        <div class="game-mode-selector">
 
-
-        <!-- =================================================
-             GAME MODE
-        ================================================== -->
-
-        <section class="settings-card game-mode-card">
-
-            <div class="settings-title">
-                🎮
-                <span>اختيار نمط اللعبة</span>
+            <div class="section-heading">
+                <span class="section-icon">🎮</span>
+                <span>اختر وضع اللعبة</span>
             </div>
 
-            <div class="game-mode-selector">
+            <div class="game-mode-options">
 
-                <button
-                    type="button"
-                    class="game-mode-option active"
-                    data-mode="treasure">
-
-                    <span class="game-mode-icon">
-                        🏆
-                    </span>
-
-                    <span class="game-mode-name">
-                        مود الكنز
-                    </span>
-
-                    <span class="game-mode-description">
-                        الوصول إلى صندوق الكنز قبل الجميع
-                    </span>
-
-                </button>
-
-
+                <!-- TREASURE -->
                 <button
                     type="button"
                     class="game-mode-option"
-                    data-mode="chase">
+                    data-mode="treasure"
+                >
+                    <div class="game-mode-icon">💰</div>
 
-                    <span class="game-mode-icon">
-                        👹
-                    </span>
+                    <div class="game-mode-name">
+                        الكنز
+                    </div>
 
-                    <span class="game-mode-name">
-                        مود المطاردة
-                    </span>
-
-                    <span class="game-mode-description">
-                        الهروب من الوحوش والبقاء حتى النهاية
-                    </span>
-
+                    <div class="game-mode-description">
+                        الوصول إلى الكنز قبل اختفائه
+                    </div>
                 </button>
 
 
+                <!-- CHASE -->
                 <button
                     type="button"
-                    class="game-mode-option disabled-mode"
+                    class="game-mode-option"
+                    data-mode="chase"
+                >
+                    <div class="game-mode-icon">👹</div>
+
+                    <div class="game-mode-name">
+                        المطاردة
+                    </div>
+
+                    <div class="game-mode-description">
+                        اهرب من الوحوش حتى نهاية الوقت
+                    </div>
+                </button>
+
+
+                <!-- NAHROUSH -->
+                <button
+                    type="button"
+                    class="game-mode-option"
                     data-mode="nahroush"
-                    disabled>
+                >
+                    <div class="game-mode-icon">👑</div>
 
-                    <span class="game-mode-icon">
-                        🏃
-                    </span>
+                    <div class="game-mode-name">
+                        نهروش
+                    </div>
 
-                    <span class="game-mode-name">
-                        مود نهروش
-                    </span>
-
-                    <span class="game-mode-description">
-                        قريباً
-                    </span>
-
+                    <div class="game-mode-description">
+                        احمِ نهروش والوصول إليه قبل الوحش
+                    </div>
                 </button>
 
             </div>
 
-
-            <!-- Hidden real selector
-                 registration.js still uses it -->
-
-            <select
-                id="gameMode"
-                class="hidden-real-select">
-
-                <option value="treasure">
-                    مود الكنز
-                </option>
-
-                <option value="chase">
-                    مود المطاردة
-                </option>
-
-                <option value="nahroush">
-                    مود نهروش
-                </option>
-
+            <!-- REAL SELECT -->
+            <select id="gameMode" class="hidden-real-select">
+                <option value="treasure">treasure</option>
+                <option value="chase">chase</option>
+                <option value="nahroush">nahroush</option>
             </select>
 
-        </section>
+        </div>
 
 
+        <!-- ================= MODE SETTINGS ================= -->
+        <div class="mode-settings-card">
 
-        <!-- =================================================
-             MODE SETTINGS
-        ================================================== -->
-
-        <section
-            id="modeSettingsCard"
-            class="settings-card mode-settings-card">
-
-
-            <!-- TREASURE -->
-
-            <div
-                id="treasureSettings"
-                class="mode-settings">
-
-                <div class="settings-title mode-title">
-
-                    🏆
-                    <span>
-                        إعدادات مود الكنز
-                    </span>
-
-                </div>
+            <div class="section-heading">
+                <span class="section-icon">⚙️</span>
+                <span>إعدادات اللعبة</span>
+            </div>
 
 
-                <div class="setting-row premium-setting-row">
+            <!-- TREASURE SETTINGS -->
+            <div id="treasureSettings">
+
+                <div class="premium-setting-row">
 
                     <div class="setting-information">
 
-                        <strong>
-                            مدة ظهور صندوق الكنز
-                        </strong>
+                        <div class="setting-title">
+                            مدة ظهور الكنز
+                        </div>
 
-                        <small>
-                            المدة التي يبقى فيها الصندوق ظاهرًا
-                        </small>
+                        <div class="setting-description">
+                            المدة قبل اختفاء الكنز وظهوره في مكان جديد
+                        </div>
 
                     </div>
 
-
-                    <div class="number-control">
-
+                    <div class="setting-control">
                         <input
-                            id="treasureDuration"
                             type="number"
+                            id="treasureDuration"
                             min="1"
                             max="300"
                             value="10"
                         >
 
-                        <span>
-                            ثانية
-                        </span>
-
+                        <span>ثانية</span>
                     </div>
 
                 </div>
@@ -215,188 +153,170 @@
             </div>
 
 
+            <!-- CHASE SETTINGS -->
+            <div id="chaseSettings" class="hidden">
 
-            <!-- CHASE -->
-
-            <div
-                id="chaseSettings"
-                class="mode-settings hidden-mode">
-
-                <div class="settings-title mode-title">
-
-                    👹
-                    <span>
-                        إعدادات مود المطاردة
-                    </span>
-
-                </div>
-
-
-                <div class="setting-row premium-setting-row">
+                <div class="premium-setting-row">
 
                     <div class="setting-information">
 
-                        <strong>
+                        <div class="setting-title">
                             مدة الجولة
-                        </strong>
+                        </div>
 
-                        <small>
+                        <div class="setting-description">
                             الوقت المتاح للاعبين للهروب
-                        </small>
+                        </div>
 
                     </div>
 
-
-                    <div class="number-control">
-
+                    <div class="setting-control">
                         <input
-                            id="roundDuration"
                             type="number"
+                            id="roundDuration"
                             min="10"
-                            max="3600"
+                            max="600"
                             value="60"
                         >
 
-                        <span>
-                            ثانية
-                        </span>
-
+                        <span>ثانية</span>
                     </div>
 
                 </div>
 
 
-                <div class="setting-row premium-setting-row">
+                <div class="premium-setting-row">
 
                     <div class="setting-information">
 
-                        <strong>
+                        <div class="setting-title">
                             عدد الوحوش
-                        </strong>
+                        </div>
 
-                        <small>
-                            عدد الوحوش التي ستطارد اللاعبين
-                        </small>
+                        <div class="setting-description">
+                            عدد الوحوش التي تطارد اللاعبين
+                        </div>
 
                     </div>
 
-
-                    <div class="number-control">
-
+                    <div class="setting-control">
                         <input
-                            id="monsterCount"
                             type="number"
+                            id="monsterCount"
                             min="1"
                             max="10"
                             value="1"
                         >
 
-                        <span>
-                            وحش
-                        </span>
-
+                        <span>وحش</span>
                     </div>
 
                 </div>
 
 
-                <div class="setting-row premium-setting-row">
+                <div class="premium-setting-row">
 
                     <div class="setting-information">
 
-                        <strong>
+                        <div class="setting-title">
                             سرعة الوحش
-                        </strong>
+                        </div>
 
-                        <small>
+                        <div class="setting-description">
                             الزمن بين كل حركة للوحش
-                        </small>
+                        </div>
 
                     </div>
 
-
-                    <div class="number-control">
-
+                    <div class="setting-control">
                         <input
-                            id="monsterSpeed"
                             type="number"
-                            min="100"
-                            max="10000"
-                            step="100"
+                            id="monsterSpeed"
+                            min="200"
+                            max="5000"
                             value="1000"
                         >
 
-                        <span>
-                            ms
-                        </span>
-
+                        <span>ms</span>
                     </div>
-
-                </div>
-
-
-                <div class="settings-note">
-
-                    ⚡ كلما قل الرقم زادت سرعة الوحش
 
                 </div>
 
             </div>
 
-        </section>
+
+            <!-- NAHROUSH SETTINGS -->
+            <div id="nahroushSettings" class="hidden">
+
+                <div class="premium-setting-row">
+
+                    <div class="setting-information">
+
+                        <div class="setting-title">
+                            اسم مستخدم نهروش
+                        </div>
+
+                        <div class="setting-description">
+                            اكتب اسم حساب TikTok الخاص بنهروش
+                        </div>
+
+                    </div>
+
+                    <div class="setting-control nahroush-input-control">
+
+                        <span class="username-at">@</span>
+
+                        <input
+                            type="text"
+                            id="nahroushUsername"
+                            value="jordan_river13"
+                            autocomplete="off"
+                            spellcheck="false"
+                        >
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
 
 
+        <!-- ================= COMMON SETTINGS ================= -->
+        <div class="common-settings-card">
 
-        <!-- =================================================
-             COMMON SETTINGS
-        ================================================== -->
-
-        <section class="settings-card common-settings-card">
-
-            <div class="settings-title">
-
-                ⚙️
-                <span>
-                    الإعدادات المشتركة
-                </span>
-
+            <div class="section-heading">
+                <span class="section-icon">🛠️</span>
+                <span>إعدادات التسجيل</span>
             </div>
 
 
             <!-- JOIN KEYWORD -->
-
-            <div class="setting-row premium-setting-row">
+            <div class="premium-setting-row">
 
                 <div class="setting-information">
 
-                    <strong>
-                        🔑 كلمة التسجيل
-                    </strong>
+                    <div class="setting-title">
+                        كلمة الانضمام
+                    </div>
 
-                    <small>
-                        الكلمة التي يرسلها المشاهد للانضمام
-                    </small>
+                    <div class="setting-description">
+                        يكتب اللاعب هذه الكلمة في التعليقات للانضمام
+                    </div>
 
                 </div>
 
-
-                <div class="keyword-control">
+                <div class="setting-control">
 
                     <input
-                        id="joinKeyword"
                         type="text"
+                        id="joinKeyword"
                         value="JOIN"
                         maxlength="20"
                         autocomplete="off"
+                        spellcheck="false"
                     >
-
-                    <button
-                        id="saveKeywordButton"
-                        type="button">
-
-                        حفظ
-
-                    </button>
 
                 </div>
 
@@ -404,302 +324,200 @@
 
 
             <!-- REGISTRATION -->
+            <div class="premium-setting-row">
 
-            <div class="registration-control">
+                <div class="setting-information">
 
-                <div class="registration-info">
+                    <div class="setting-title">
+                        حالة التسجيل
+                    </div>
 
-                    <strong>
-                        👥 حالة التسجيل
-                    </strong>
-
-                    <small id="registrationStatusText">
-                        التسجيل مفتوح
-                    </small>
-
-                </div>
-
-
-                <button
-                    id="registrationToggle"
-                    class="registration-toggle open">
-
-                    🟢 التسجيل مفتوح
-
-                </button>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             JOIN COMMAND
-        ================================================== -->
-
-        <section class="join-section premium-join-section">
-
-            <div class="join-icon">
-                💬
-            </div>
-
-            <div class="join-content">
-
-                <span class="join-label">
-                    أمر الانضمام
-                </span>
-
-                <h1
-                    id="currentKeyword"
-                    class="join-command">
-
-                    JOIN
-
-                </h1>
-
-                <p>
-                    أرسل هذه الكلمة في شات TikTok للانضمام
-                </p>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             PLAYERS
-        ================================================== -->
-
-        <section class="players-section premium-players-section">
-
-            <div class="section-title">
-
-                <div class="players-title-content">
-
-                    <span class="players-title-icon">
-                        👥
-                    </span>
-
-                    <div>
-
-                        <strong>
-                            اللاعبون المشاركون
-                        </strong>
-
-                        <small>
-                            اللاعبون المسجلون في الجولة الحالية
-                        </small>
-
+                    <div class="setting-description">
+                        فتح أو إغلاق تسجيل اللاعبين
                     </div>
 
                 </div>
 
+                <div class="setting-control">
 
-                <span
-                    id="playerCount"
-                    class="player-count">
+                    <button
+                        type="button"
+                        id="registrationToggle"
+                        class="registration-toggle active"
+                    >
+                        التسجيل مفتوح
+                    </button>
 
-                    0 / 20
+                </div>
 
-                </span>
+            </div>
+
+
+            <!-- MAX PLAYERS -->
+            <div class="premium-setting-row">
+
+                <div class="setting-information">
+
+                    <div class="setting-title">
+                        الحد الأقصى للاعبين
+                    </div>
+
+                    <div class="setting-description">
+                        أقصى عدد مسموح به في الجولة
+                    </div>
+
+                </div>
+
+                <div class="setting-control">
+
+                    <input
+                        type="number"
+                        id="maxPlayers"
+                        value="20"
+                        min="1"
+                        max="20"
+                    >
+
+                    <span>لاعب</span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= JOIN INFO ================= -->
+        <div class="registration-info premium-join-section">
+
+            <div class="join-content">
+
+                <div class="join-label">
+                    كلمة الانضمام الحالية
+                </div>
+
+                <div id="joinKeywordDisplay" class="join-keyword-display">
+                    JOIN
+                </div>
+
+                <div class="join-hint">
+                    اكتب الكلمة في تعليقات TikTok للانضمام
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= PLAYERS ================= -->
+        <div class="premium-players-section">
+
+            <div class="players-title-content">
+
+                <div class="players-title-icon">
+                    👥
+                </div>
+
+                <div>
+                    <div class="section-title">
+                        اللاعبين
+                    </div>
+
+                    <div class="players-count">
+                        <span id="playersCount">0</span>
+                        /
+                        <span id="playersMax">20</span>
+                    </div>
+                </div>
 
             </div>
 
 
             <div
-                id="registrationPlayers"
-                class="registration-player-list">
-
-                <div class="empty-players">
-
-                    <span class="empty-icon">
-                        👤
-                    </span>
-
-                    <span>
-                        في انتظار اللاعبين...
-                    </span>
-
-                    <small>
-                        عندما يرسل أحد المشاهدين كلمة التسجيل سيظهر هنا
-                    </small>
-
-                </div>
-
+                id="playersList"
+                class="players-list"
+            >
+                <!-- players inserted by registration.js -->
             </div>
 
-        </section>
+        </div>
 
 
-
-        <!-- =================================================
-             MOVEMENT
-        ================================================== -->
-
-        <section class="movement-section premium-movement-section">
+        <!-- ================= MOVEMENT ================= -->
+        <div class="premium-movement-section">
 
             <div class="movement-header">
 
                 <div class="movement-title-icon">
-                    🎮
+                    🕹️
                 </div>
 
-                <div>
-
-                    <h2>
-                        طريقة الحركة
-                    </h2>
-
-                    <p>
-                        اللاعب يتحرك بإرسال أحد الأوامر التالية في الشات
-                    </p>
-
+                <div class="movement-title">
+                    التحكم باللاعبين
                 </div>
 
             </div>
 
 
-            <div class="movement-controls">
+            <div class="movement-content">
 
-                <!-- UP -->
+                <div class="movement-description">
+                    يتحرك اللاعبون من خلال كتابة الأوامر في تعليقات TikTok.
+                </div>
 
-                <div class="movement-row">
+                <div class="movement-commands">
 
-                    <div class="direction">
-
-                        <span class="arrow">
-                            ⬆️
-                        </span>
-
-                        <strong>
-                            U
-                        </strong>
-
-                        <small>
-                            أو «فوق»
-                        </small>
-
-                    </div>
+                    <span>⬆️ فوق</span>
+                    <span>⬇️ تحت</span>
+                    <span>➡️ يمين</span>
+                    <span>⬅️ يسار</span>
 
                 </div>
 
+                <div class="movement-english">
 
-                <!-- LEFT / RIGHT -->
-
-                <div class="movement-row horizontal">
-
-                    <div class="direction">
-
-                        <span class="arrow">
-                            ⬅️
-                        </span>
-
-                        <strong>
-                            L
-                        </strong>
-
-                        <small>
-                            أو «يسار»
-                        </small>
-
-                    </div>
-
-
-                    <div class="direction">
-
-                        <span class="arrow">
-                            ➡️
-                        </span>
-
-                        <strong>
-                            R
-                        </strong>
-
-                        <small>
-                            أو «يمين»
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-                <!-- DOWN -->
-
-                <div class="movement-row">
-
-                    <div class="direction">
-
-                        <span class="arrow">
-                            ⬇️
-                        </span>
-
-                        <strong>
-                            D
-                        </strong>
-
-                        <small>
-                            أو «تحت»
-                        </small>
-
-                    </div>
+                    <span>U</span>
+                    <span>D</span>
+                    <span>R</span>
+                    <span>L</span>
 
                 </div>
 
             </div>
 
-
-            <div class="movement-note">
-
-                💡 يمكنك استخدام الكلمات العربية أو الحروف الإنجليزية
-
-            </div>
-
-        </section>
+        </div>
 
 
-
-        <!-- =================================================
-             START
-        ================================================== -->
-
-        <section class="start-section premium-start-section">
+        <!-- ================= START ================= -->
+        <div class="premium-start-section">
 
             <button
-                id="startButton"
-                class="start-button"
-                disabled>
+                type="button"
+                id="startGameButton"
+                class="start-game-button"
+            >
+                <span class="start-game-icon">🚀</span>
 
                 <span>
-                    ▶️
+                    بدء اللعبة
                 </span>
-
-                بدء اللعبة
 
             </button>
 
-
             <div
-                id="registrationMessage"
-                class="registration-message">
+                id="startMessage"
+                class="start-message"
+            ></div>
 
-                في انتظار اللاعبين...
+        </div>
 
-            </div>
+    </section>
 
-        </section>
-
-    </main>
-
-</div>
+</main>
 
 
 <script src="/socket.io/socket.io.js"></script>
-
 <script src="registration.js"></script>
 
 </body>
-
 </html>
