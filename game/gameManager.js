@@ -145,11 +145,13 @@ function createGameManager({ io, settings }) {
             user.avatarMedium,
             user.avatarLarge,
             user.avatarJpg,
+
             data?.profilePictureUrl,
             data?.avatarThumb,
             data?.avatarMedium,
             data?.avatarLarge
         ];
+
 
         for (const source of sources) {
 
@@ -157,12 +159,14 @@ function createGameManager({ io, settings }) {
                 continue;
             }
 
+
             if (
                 typeof source === "string" &&
                 source.trim() !== ""
             ) {
                 return source;
             }
+
 
             if (
                 typeof source === "object"
@@ -184,6 +188,7 @@ function createGameManager({ io, settings }) {
                     }
                 }
 
+
                 if (
                     Array.isArray(source.urls)
                 ) {
@@ -200,6 +205,7 @@ function createGameManager({ io, settings }) {
                     }
                 }
 
+
                 if (
                     typeof source.url === "string" &&
                     source.url.startsWith("http")
@@ -208,6 +214,7 @@ function createGameManager({ io, settings }) {
                 }
             }
         }
+
 
         return "";
     }
@@ -267,6 +274,30 @@ function createGameManager({ io, settings }) {
 
     function broadcastState() {
 
+        /*
+         * DEBUG
+         * سنستخدمه الآن لمعرفة هل المتاهة
+         * تصل إلى Socket.IO أم لا.
+         */
+
+        console.log(
+            "[MAZE DEBUG]",
+            "started:",
+            gameStarted,
+            "mode:",
+            gameMode,
+            "rows:",
+            Array.isArray(maze)
+                ? maze.length
+                : "NOT_ARRAY",
+            "cols:",
+            Array.isArray(maze) &&
+            maze[0]
+                ? maze[0].length
+                : 0
+        );
+
+
         io.emit(
             "game_state",
             getGameState()
@@ -275,7 +306,7 @@ function createGameManager({ io, settings }) {
 
 
     /* =====================================================
-       FREE CELLS
+       FREE CELL
     ===================================================== */
 
     function isCellOccupied(x, y) {
@@ -292,12 +323,13 @@ function createGameManager({ io, settings }) {
 
 
     /* =====================================================
-       PLAYER SPAWN
+       EDGE CELL
     ===================================================== */
 
     function getRandomEdgeCell() {
 
         const candidates = [];
+
 
         for (
             let y = 0;
@@ -317,15 +349,18 @@ function createGameManager({ io, settings }) {
                     x === MAZE_SIZE - 1 ||
                     y === MAZE_SIZE - 1;
 
+
                 if (!isEdge) {
                     continue;
                 }
+
 
                 if (
                     isCellOccupied(x, y)
                 ) {
                     continue;
                 }
+
 
                 candidates.push({
                     x,
@@ -334,11 +369,13 @@ function createGameManager({ io, settings }) {
             }
         }
 
+
         if (
             candidates.length === 0
         ) {
 
             return {
+
                 x:
                     Math.floor(
                         Math.random() *
@@ -352,6 +389,7 @@ function createGameManager({ io, settings }) {
                     )
             };
         }
+
 
         return candidates[
             Math.floor(
@@ -373,6 +411,7 @@ function createGameManager({ io, settings }) {
                 MAZE_SIZE / 2
             );
 
+
         return {
             x: center,
             y: center
@@ -389,6 +428,7 @@ function createGameManager({ io, settings }) {
     ) {
 
         const candidates = [];
+
 
         for (
             let y = 0;
@@ -414,11 +454,13 @@ function createGameManager({ io, settings }) {
                     continue;
                 }
 
+
                 if (
                     isCellOccupied(x, y)
                 ) {
                     continue;
                 }
+
 
                 if (
                     monsters.some(
@@ -430,6 +472,7 @@ function createGameManager({ io, settings }) {
                     continue;
                 }
 
+
                 candidates.push({
                     x,
                     y
@@ -437,11 +480,14 @@ function createGameManager({ io, settings }) {
             }
         }
 
+
         if (
             candidates.length === 0
         ) {
+
             return getCenterCell();
         }
+
 
         return candidates[
             Math.floor(
@@ -467,6 +513,7 @@ function createGameManager({ io, settings }) {
             treasureTimer = null;
         }
 
+
         if (roundTimer) {
 
             clearInterval(
@@ -475,6 +522,7 @@ function createGameManager({ io, settings }) {
 
             roundTimer = null;
         }
+
 
         if (monsterTimer) {
 
@@ -502,6 +550,7 @@ function createGameManager({ io, settings }) {
             };
         }
 
+
         if (players.size === 0) {
 
             return {
@@ -511,9 +560,42 @@ function createGameManager({ io, settings }) {
             };
         }
 
+
         clearGameTimers();
 
+
+        /*
+         * IMPORTANT
+         * إنشاء المتاهة يبقى كما هو.
+         */
+
         maze = createMaze();
+
+
+        /* DEBUG */
+
+        console.log(
+            "[MAZE CREATED]",
+            {
+                isArray:
+                    Array.isArray(maze),
+
+                rows:
+                    Array.isArray(maze)
+                        ? maze.length
+                        : 0,
+
+                cols:
+                    Array.isArray(maze) &&
+                    maze[0]
+                        ? maze[0].length
+                        : 0,
+
+                size:
+                    MAZE_SIZE
+            }
+        );
+
 
         treasure = null;
 
@@ -563,7 +645,7 @@ function createGameManager({ io, settings }) {
 
 
         /* =================================================
-           NAHROUSH MODE
+           NAHROUSH
         ================================================= */
 
         if (
@@ -574,6 +656,7 @@ function createGameManager({ io, settings }) {
 
                 const center =
                     getCenterCell();
+
 
                 nahroush.x =
                     center.x;
@@ -592,6 +675,7 @@ function createGameManager({ io, settings }) {
                 const position =
                     getRandomEdgeCell();
 
+
                 player.x =
                     position.x;
 
@@ -603,10 +687,16 @@ function createGameManager({ io, settings }) {
             spawnNahroushMonster();
 
 
+            /*
+             * إرسال game_started
+             * بعد اكتمال كل شيء.
+             */
+
             io.emit(
                 "game_started",
                 getGameState()
             );
+
 
             broadcastState();
 
@@ -640,6 +730,7 @@ function createGameManager({ io, settings }) {
             const position =
                 getRandomEdgeCell();
 
+
             player.x =
                 position.x;
 
@@ -648,13 +739,30 @@ function createGameManager({ io, settings }) {
         }
 
 
+        /* =================================================
+           TREASURE
+        ================================================= */
+
         if (
             gameMode === "treasure"
         ) {
 
-            spawnTreasure(true);
+            /*
+             * لا نرسل state هنا.
+             * سنرسل state مرة واحدة بعد
+             * اكتمال startGame.
+             */
 
+            spawnTreasure(
+                true,
+                false
+            );
         }
+
+
+        /* =================================================
+           CHASE
+        ================================================= */
 
         else if (
             gameMode === "chase"
@@ -662,8 +770,10 @@ function createGameManager({ io, settings }) {
 
             spawnMonsters();
 
+
             roundTimeLeft =
                 chaseSettings.roundDuration;
+
 
             startRoundCountdown();
 
@@ -671,10 +781,15 @@ function createGameManager({ io, settings }) {
         }
 
 
+        /*
+         * الحالة النهائية.
+         */
+
         io.emit(
             "game_started",
             getGameState()
         );
+
 
         broadcastState();
 
@@ -690,12 +805,14 @@ function createGameManager({ io, settings }) {
     ===================================================== */
 
     function spawnTreasure(
-        firstSpawn = false
+        firstSpawn = false,
+        sendState = true
     ) {
 
         if (!gameStarted) {
             return;
         }
+
 
         if (
             gameMode !== "treasure"
@@ -719,11 +836,20 @@ function createGameManager({ io, settings }) {
         treasureTimeLeft =
             treasureSettings.duration;
 
-        broadcastState();
+
+        if (sendState) {
+
+            broadcastState();
+        }
+
 
         startTreasureCountdown();
     }
 
+
+    /* =====================================================
+       TREASURE TIMER
+    ===================================================== */
 
     function startTreasureCountdown() {
 
@@ -765,6 +891,7 @@ function createGameManager({ io, settings }) {
 
                         treasure = null;
 
+
                         broadcastState();
 
 
@@ -777,7 +904,10 @@ function createGameManager({ io, settings }) {
                                         "treasure"
                                 ) {
 
-                                    spawnTreasure(false);
+                                    spawnTreasure(
+                                        false,
+                                        true
+                                    );
                                 }
 
                             },
@@ -795,15 +925,24 @@ function createGameManager({ io, settings }) {
     }
 
 
-    function finishTreasureGame(player) {
+    /* =====================================================
+       TREASURE WINNER
+    ===================================================== */
+
+    function finishTreasureGame(
+        player
+    ) {
 
         if (!gameStarted) {
             return;
         }
 
+
         clearGameTimers();
 
+
         gameStarted = false;
+
 
         gameWinner = {
 
@@ -816,6 +955,7 @@ function createGameManager({ io, settings }) {
             profilePictureUrl:
                 player.profilePictureUrl
         };
+
 
         gameResult = {
 
@@ -834,6 +974,7 @@ function createGameManager({ io, settings }) {
             "game_winner",
             gameWinner
         );
+
 
         broadcastState();
     }
@@ -881,9 +1022,11 @@ function createGameManager({ io, settings }) {
 
                         roundTimeLeft = 0;
 
+
                         endChaseGame(
                             "players"
                         );
+
 
                         return;
                     }
@@ -905,6 +1048,7 @@ function createGameManager({ io, settings }) {
 
         monsters = [];
 
+
         const center =
             getCenterCell();
 
@@ -921,8 +1065,12 @@ function createGameManager({ io, settings }) {
             if (i === 0) {
 
                 position = {
-                    x: center.x,
-                    y: center.y
+
+                    x:
+                        center.x,
+
+                    y:
+                        center.y
                 };
 
             } else {
@@ -954,6 +1102,7 @@ function createGameManager({ io, settings }) {
 
         monsters = [];
 
+
         const center =
             getCenterCell();
 
@@ -979,6 +1128,7 @@ function createGameManager({ io, settings }) {
 
         const candidates = [];
 
+
         const center =
             getCenterCell();
 
@@ -1002,6 +1152,7 @@ function createGameManager({ io, settings }) {
                     continue;
                 }
 
+
                 if (
                     monsters.some(
                         monster =>
@@ -1011,6 +1162,7 @@ function createGameManager({ io, settings }) {
                 ) {
                     continue;
                 }
+
 
                 candidates.push({
                     x,
@@ -1091,7 +1243,9 @@ function createGameManager({ io, settings }) {
        FIND NEAREST PLAYER
     ===================================================== */
 
-    function findNearestPlayer(monster) {
+    function findNearestPlayer(
+        monster
+    ) {
 
         let alivePlayers;
 
@@ -1149,7 +1303,8 @@ function createGameManager({ io, settings }) {
 
             if (
                 path &&
-                path.length < shortestDistance
+                path.length <
+                    shortestDistance
             ) {
 
                 shortestDistance =
@@ -1166,7 +1321,7 @@ function createGameManager({ io, settings }) {
 
 
     /* =====================================================
-       BFS PATHFINDING
+       BFS
     ===================================================== */
 
     function findPath(
@@ -1187,8 +1342,12 @@ function createGameManager({ io, settings }) {
         const queue = [
 
             {
-                x: startX,
-                y: startY,
+                x:
+                    startX,
+
+                y:
+                    startY,
+
                 path: []
             }
 
@@ -1311,15 +1470,21 @@ function createGameManager({ io, settings }) {
 
                 queue.push({
 
-                    x: nx,
+                    x:
+                        nx,
 
-                    y: ny,
+                    y:
+                        ny,
 
                     path: [
                         ...current.path,
+
                         {
-                            x: nx,
-                            y: ny
+                            x:
+                                nx,
+
+                            y:
+                                ny
                         }
                     ]
                 });
@@ -1431,7 +1596,7 @@ function createGameManager({ io, settings }) {
 
 
     /* =====================================================
-       NAHROUSH MONSTERS
+       NAHROUSH MOVEMENT
     ===================================================== */
 
     function moveNahroushMonsters() {
@@ -1491,6 +1656,7 @@ function createGameManager({ io, settings }) {
                     const next =
                         path[0];
 
+
                     monster.x =
                         next.x;
 
@@ -1503,6 +1669,7 @@ function createGameManager({ io, settings }) {
             catchPlayersOnMonsterCell(
                 monster
             );
+
 
             catchNahroushOnMonsterCell(
                 monster
@@ -1558,6 +1725,7 @@ function createGameManager({ io, settings }) {
             ) {
                 continue;
             }
+
 
             if (
                 player.isNahroush
@@ -1662,7 +1830,9 @@ function createGameManager({ io, settings }) {
        END CHASE
     ===================================================== */
 
-    function endChaseGame(winner) {
+    function endChaseGame(
+        winner
+    ) {
 
         if (!gameStarted) {
             return;
@@ -1711,6 +1881,7 @@ function createGameManager({ io, settings }) {
             gameResult
         );
 
+
         broadcastState();
     }
 
@@ -1719,7 +1890,9 @@ function createGameManager({ io, settings }) {
        END NAHROUSH
     ===================================================== */
 
-    function endNahroushGame(winner) {
+    function endNahroushGame(
+        winner
+    ) {
 
         if (!gameStarted) {
             return;
@@ -1740,6 +1913,23 @@ function createGameManager({ io, settings }) {
             );
 
 
+        const nahroushData =
+            nahroush
+                ? {
+
+                    uniqueId:
+                        nahroush.uniqueId,
+
+                    nickname:
+                        nahroush.nickname,
+
+                    profilePictureUrl:
+                        nahroush.profilePictureUrl
+
+                }
+                : null;
+
+
         if (
             winner === "players"
         ) {
@@ -1756,18 +1946,7 @@ function createGameManager({ io, settings }) {
                     "تم القبض على نهروش",
 
                 nahroush:
-                    nahroush
-                        ? {
-                            uniqueId:
-                                nahroush.uniqueId,
-
-                            nickname:
-                                nahroush.nickname,
-
-                            profilePictureUrl:
-                                nahroush.profilePictureUrl
-                        }
-                        : null
+                    nahroushData
             };
 
         } else {
@@ -1784,18 +1963,7 @@ function createGameManager({ io, settings }) {
                     "تم إقصاء جميع اللاعبين",
 
                 nahroush:
-                    nahroush
-                        ? {
-                            uniqueId:
-                                nahroush.uniqueId,
-
-                            nickname:
-                                nahroush.nickname,
-
-                            profilePictureUrl:
-                                nahroush.profilePictureUrl
-                        }
-                        : null
+                    nahroushData
             };
         }
 
@@ -1804,6 +1972,7 @@ function createGameManager({ io, settings }) {
             "game_result",
             gameResult
         );
+
 
         broadcastState();
     }
@@ -1864,42 +2033,34 @@ function createGameManager({ io, settings }) {
 
             ny--;
 
-        }
-
-        else if (
+        } else if (
             command === "d" &&
             !cell.walls.bottom
         ) {
 
             ny++;
 
-        }
-
-        else if (
+        } else if (
             command === "r" &&
             !cell.walls.right
         ) {
 
             nx++;
 
-        }
-
-        else if (
+        } else if (
             command === "l" &&
             !cell.walls.left
         ) {
 
             /*
-             * IMPORTANT:
-             * Kept exactly as the current
-             * server.js implementation.
-             * We will fix it later.
+             * نبقي هذا كما هو حاليًا.
+             * سنصلحه لاحقًا بعد حل مشكلة المتاهة.
              */
+
             nx++;
 
-        }
+        } else {
 
-        else {
             return;
         }
 
@@ -1963,12 +2124,13 @@ function createGameManager({ io, settings }) {
 
 
     /* =====================================================
-       RESET GAME
+       RESET
     ===================================================== */
 
     function resetGame() {
 
         clearGameTimers();
+
 
         gameStarted = false;
 
@@ -1984,14 +2146,17 @@ function createGameManager({ io, settings }) {
 
         nahroushCaught = false;
 
+
         roundTimeLeft =
             chaseSettings.roundDuration;
+
 
         treasureTimeLeft =
             treasureSettings.duration;
 
 
         clearPlayers();
+
 
         registrationOpen = true;
 
@@ -2001,17 +2166,21 @@ function createGameManager({ io, settings }) {
 
 
     /* =====================================================
-       SETTINGS
+       REGISTRATION
     ===================================================== */
 
-    function setRegistration(value) {
+    function setRegistration(
+        value
+    ) {
 
         if (gameStarted) {
             return;
         }
 
+
         registrationOpen =
             Boolean(value);
+
 
         broadcastState();
     }
@@ -2023,18 +2192,23 @@ function createGameManager({ io, settings }) {
             return;
         }
 
+
         registrationOpen =
             !registrationOpen;
+
 
         broadcastState();
     }
 
 
-    function setMaxPlayers(value) {
+    function setMaxPlayers(
+        value
+    ) {
 
         if (gameStarted) {
             return;
         }
+
 
         const number =
             Number(value);
@@ -2049,16 +2223,24 @@ function createGameManager({ io, settings }) {
             maxPlayers =
                 Math.floor(number);
 
+
             broadcastState();
         }
     }
 
 
-    function setJoinKeyword(keyword) {
+    /* =====================================================
+       JOIN KEYWORD
+    ===================================================== */
+
+    function setJoinKeyword(
+        keyword
+    ) {
 
         if (gameStarted) {
             return;
         }
+
 
         keyword =
             String(keyword || "")
@@ -2085,7 +2267,13 @@ function createGameManager({ io, settings }) {
     }
 
 
-    function setGameMode(mode) {
+    /* =====================================================
+       GAME MODE
+    ===================================================== */
+
+    function setGameMode(
+        mode
+    ) {
 
         if (gameStarted) {
             return;
@@ -2115,7 +2303,13 @@ function createGameManager({ io, settings }) {
     }
 
 
-    function setTreasureSettings(settingsData) {
+    /* =====================================================
+       TREASURE SETTINGS
+    ===================================================== */
+
+    function setTreasureSettings(
+        settingsData
+    ) {
 
         if (gameStarted) {
             return;
@@ -2137,6 +2331,7 @@ function createGameManager({ io, settings }) {
             treasureSettings.duration =
                 duration;
 
+
             treasureTimeLeft =
                 duration;
         }
@@ -2146,7 +2341,13 @@ function createGameManager({ io, settings }) {
     }
 
 
-    function setChaseSettings(settingsData) {
+    /* =====================================================
+       CHASE SETTINGS
+    ===================================================== */
+
+    function setChaseSettings(
+        settingsData
+    ) {
 
         if (gameStarted) {
             return;
@@ -2158,10 +2359,12 @@ function createGameManager({ io, settings }) {
                 settingsData?.roundDuration
             );
 
+
         const monsterCount =
             Number(
                 settingsData?.monsterCount
             );
+
 
         const monsterSpeed =
             Number(
@@ -2187,7 +2390,9 @@ function createGameManager({ io, settings }) {
         ) {
 
             chaseSettings.monsterCount =
-                Math.floor(monsterCount);
+                Math.floor(
+                    monsterCount
+                );
         }
 
 
@@ -2210,25 +2415,17 @@ function createGameManager({ io, settings }) {
     }
 
 
-    function setRoundDuration(value) {
+    function setRoundDuration(
+        value
+    ) {
 
         setChaseSettings({
-            roundDuration: value,
+
+            roundDuration:
+                value,
+
             monsterCount:
                 chaseSettings.monsterCount,
-            monsterSpeed:
-                chaseSettings.monsterSpeed
-        });
-    }
-
-
-    function setMonsterCount(value) {
-
-        setChaseSettings({
-            roundDuration:
-                chaseSettings.roundDuration,
-
-            monsterCount: value,
 
             monsterSpeed:
                 chaseSettings.monsterSpeed
@@ -2236,29 +2433,60 @@ function createGameManager({ io, settings }) {
     }
 
 
-    function setMonsterSpeed(value) {
+    function setMonsterCount(
+        value
+    ) {
 
         setChaseSettings({
+
+            roundDuration:
+                chaseSettings.roundDuration,
+
+            monsterCount:
+                value,
+
+            monsterSpeed:
+                chaseSettings.monsterSpeed
+        });
+    }
+
+
+    function setMonsterSpeed(
+        value
+    ) {
+
+        setChaseSettings({
+
             roundDuration:
                 chaseSettings.roundDuration,
 
             monsterCount:
                 chaseSettings.monsterCount,
 
-            monsterSpeed: value
+            monsterSpeed:
+                value
         });
     }
 
 
-    function setTreasureDuration(value) {
+    function setTreasureDuration(
+        value
+    ) {
 
         setTreasureSettings({
-            duration: value
+            duration:
+                value
         });
     }
 
 
-    function setNahroushUsername(value) {
+    /* =====================================================
+       NAHROUSH USERNAME
+    ===================================================== */
+
+    function setNahroushUsername(
+        value
+    ) {
 
         if (gameStarted) {
             return;
@@ -2306,7 +2534,9 @@ function createGameManager({ io, settings }) {
        TIKTOK CHAT
     ===================================================== */
 
-    function handleTikTokChat(data) {
+    function handleTikTokChat(
+        data
+    ) {
 
         const rawComment =
             data.comment ||
@@ -2349,7 +2579,9 @@ function createGameManager({ io, settings }) {
         ) {
 
             avatar =
-                avatarCache.get(uniqueId);
+                avatarCache.get(
+                    uniqueId
+                );
         }
 
 
@@ -2395,15 +2627,23 @@ function createGameManager({ io, settings }) {
             registerPlayer(
                 user,
                 {
+
                     gameStarted,
+
                     registrationOpen,
+
                     maxPlayers,
+
                     nahroushUsername,
+
                     avatarCache,
+
                     io,
+
                     broadcastState
                 }
             );
+
 
             return;
         }
@@ -2411,17 +2651,29 @@ function createGameManager({ io, settings }) {
 
         const movementMap = {
 
-            "u": "u",
-            "فوق": "u",
+            "u":
+                "u",
 
-            "d": "d",
-            "تحت": "d",
+            "فوق":
+                "u",
 
-            "r": "r",
-            "يمين": "r",
+            "d":
+                "d",
 
-            "l": "l",
-            "يسار": "l"
+            "تحت":
+                "d",
+
+            "r":
+                "r",
+
+            "يمين":
+                "r",
+
+            "l":
+                "l",
+
+            "يسار":
+                "l"
         };
 
 
@@ -2459,21 +2711,36 @@ function createGameManager({ io, settings }) {
             socket.emit(
                 "tiktok_connected",
                 {
-                    success: false,
+
+                    success:
+                        false,
+
                     error:
                         "اسم المستخدم غير صحيح"
                 }
             );
 
+
             return;
         }
 
 
-        if (tiktokLiveConnection) {
+        if (
+            tiktokLiveConnection
+        ) {
 
             try {
-                tiktokLiveConnection.disconnect();
-            } catch (error) {}
+
+                tiktokLiveConnection
+                    .disconnect();
+
+            } catch (error) {
+
+                console.error(
+                    "TikTok disconnect error:",
+                    error
+                );
+            }
         }
 
 
@@ -2485,6 +2752,7 @@ function createGameManager({ io, settings }) {
             new TikTokLiveConnection(
                 username,
                 {
+
                     processInitialData:
                         true,
 
@@ -2506,7 +2774,10 @@ function createGameManager({ io, settings }) {
                 socket.emit(
                     "tiktok_connected",
                     {
-                        success: true,
+
+                        success:
+                            true,
+
                         roomInfo:
                             state.roomInfo
                     }
@@ -2527,7 +2798,9 @@ function createGameManager({ io, settings }) {
                 socket.emit(
                     "tiktok_connected",
                     {
-                        success: false,
+
+                        success:
+                            false,
 
                         error:
                             error.message
@@ -2684,6 +2957,7 @@ function createGameManager({ io, settings }) {
                             ) {
 
                                 callback({
+
                                     success:
                                         false,
 
