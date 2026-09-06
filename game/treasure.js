@@ -1,80 +1,125 @@
-function createTreasureManager(options) {
+function createTreasureManager(options = {}) {
 
     const {
         mazeSize,
         getMaze,
         getPlayers,
-        getGameState,
         broadcastState,
-        onWinner
+        onWinner,
+        duration = 10
     } = options;
 
     let treasure = null;
     let treasureTimer = null;
     let treasureTimeLeft = 0;
 
+
     function getTreasure() {
         return treasure;
     }
+
 
     function getTreasureTimeLeft() {
         return treasureTimeLeft;
     }
 
+
     function clearTreasureTimer() {
+
         if (treasureTimer) {
+
             clearInterval(treasureTimer);
             treasureTimer = null;
         }
     }
+
 
     function getRandomFreeCell() {
 
         const maze = getMaze();
         const players = getPlayers();
 
+        if (!maze || !maze.length)
+            return null;
+
+
         const occupied = new Set();
 
-        for (const player of players.values()) {
+
+        for (
+            const player
+            of players.values()
+        ) {
 
             if (
                 player.x !== null &&
                 player.y !== null
             ) {
-                occupied.add(`${player.x},${player.y}`);
+
+                occupied.add(
+                    `${player.x},${player.y}`
+                );
             }
         }
 
+
         const cells = [];
 
-        for (let y = 0; y < mazeSize; y++) {
 
-            for (let x = 0; x < mazeSize; x++) {
+        for (
+            let y = 0;
+            y < mazeSize;
+            y++
+        ) {
 
-                const key = `${x},${y}`;
+            for (
+                let x = 0;
+                x < mazeSize;
+                x++
+            ) {
 
-                if (!occupied.has(key)) {
-                    cells.push({ x, y });
+                const key =
+                    `${x},${y}`;
+
+                if (
+                    !occupied.has(key)
+                ) {
+
+                    cells.push({
+                        x,
+                        y
+                    });
                 }
             }
         }
 
-        if (cells.length === 0) {
+
+        if (!cells.length)
             return null;
-        }
+
 
         return cells[
-            Math.floor(Math.random() * cells.length)
+            Math.floor(
+                Math.random() *
+                cells.length
+            )
         ];
     }
 
-    function spawnTreasure(firstSpawn = false) {
+
+    function spawnTreasure(
+        firstSpawn = false
+    ) {
 
         clearTreasureTimer();
 
+
         if (firstSpawn) {
 
-            const center = Math.floor(mazeSize / 2);
+            const center =
+                Math.floor(
+                    mazeSize / 2
+                );
 
             treasure = {
                 x: center,
@@ -83,42 +128,56 @@ function createTreasureManager(options) {
 
         } else {
 
-            treasure = getRandomFreeCell();
+            treasure =
+                getRandomFreeCell();
         }
 
-        treasureTimeLeft = 10;
+
+        treasureTimeLeft =
+            duration;
+
 
         broadcastState();
 
-        treasureTimer = setInterval(() => {
 
-            treasureTimeLeft--;
+        treasureTimer =
+            setInterval(() => {
 
-            broadcastState();
-
-            if (treasureTimeLeft <= 0) {
-
-                clearTreasureTimer();
-
-                treasure = null;
+                treasureTimeLeft--;
 
                 broadcastState();
 
-                setTimeout(() => {
 
-                    spawnTreasure(false);
+                if (
+                    treasureTimeLeft <= 0
+                ) {
 
-                }, 250);
-            }
+                    clearTreasureTimer();
 
-        }, 1000);
+                    treasure = null;
+
+                    broadcastState();
+
+
+                    setTimeout(() => {
+
+                        spawnTreasure(false);
+
+                    }, 250);
+                }
+
+            }, 1000);
     }
+
 
     function checkTreasure(player) {
 
-        if (!treasure) {
+        if (!treasure)
             return false;
-        }
+
+        if (!player)
+            return false;
+
 
         if (
             player.x === treasure.x &&
@@ -127,35 +186,63 @@ function createTreasureManager(options) {
 
             clearTreasureTimer();
 
-            if (typeof onWinner === "function") {
-                onWinner(player);
+
+            const winner =
+                player;
+
+
+            treasure = null;
+
+            treasureTimeLeft = 0;
+
+
+            if (
+                typeof onWinner ===
+                "function"
+            ) {
+
+                onWinner(winner);
             }
+
+
+            broadcastState();
 
             return true;
         }
 
+
         return false;
     }
+
 
     function resetTreasure() {
 
         clearTreasureTimer();
 
         treasure = null;
+
         treasureTimeLeft = 0;
 
         broadcastState();
     }
 
+
     return {
+
         getTreasure,
+
         getTreasureTimeLeft,
+
         spawnTreasure,
+
         checkTreasure,
+
         resetTreasure,
+
         clearTreasureTimer
     };
 }
+
 
 module.exports = {
     createTreasureManager
