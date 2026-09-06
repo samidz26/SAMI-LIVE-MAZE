@@ -1,145 +1,239 @@
-function createNahroushManager(options) {
+function createNahroushManager(options = {}) {
 
     const {
         getPlayers,
-        getMonsters,
-        startMonsterAI,
-        stopMonsterAI,
         broadcastState,
+        username = "jordan_river13",
         onNahroushCaught,
         onPlayerCaught
     } = options;
 
+
     let running = false;
-    let nahroushCaught = false;
+    let caught = false;
+
+
+    function normalize(value) {
+
+        return String(value || "")
+            .trim()
+            .replace(/^@/, "")
+            .toLowerCase();
+    }
+
 
     function isRunning() {
         return running;
     }
 
+
     function isCaught() {
-        return nahroushCaught;
+        return caught;
     }
+
+
+    function findNahroush() {
+
+        const target =
+            normalize(username);
+
+
+        for (
+            const player
+            of getPlayers().values()
+        ) {
+
+            if (
+                normalize(
+                    player.uniqueId
+                ) === target
+            ) {
+
+                return player;
+            }
+        }
+
+
+        return null;
+    }
+
 
     function start() {
 
-        running = true;
-        nahroushCaught = false;
+        const nahroush =
+            findNahroush();
 
-        const players = getPlayers();
 
-        for (const player of players.values()) {
+        if (!nahroush) {
 
-            if (player.isNahroush) {
-
-                player.alive = true;
-                player.caught = false;
-            }
+            return false;
         }
 
+
+        running = true;
+        caught = false;
+
+
+        nahroush.isNahroush =
+            true;
+
+        nahroush.alive = true;
+        nahroush.caught = false;
+
+
         broadcastState();
+
+        return true;
     }
+
 
     function catchNahroush(player) {
 
-        if (!running) {
-            return;
-        }
+        if (!running)
+            return false;
 
-        if (!player || !player.isNahroush) {
-            return;
-        }
+        if (caught)
+            return false;
 
-        if (nahroushCaught) {
-            return;
-        }
 
-        nahroushCaught = true;
+        caught = true;
+        running = false;
 
-        player.caught = true;
-        player.alive = false;
 
-        if (typeof stopMonsterAI === "function") {
-            stopMonsterAI();
-        }
+        if (
+            typeof onNahroushCaught ===
+            "function"
+        ) {
 
-        if (typeof onNahroushCaught === "function") {
             onNahroushCaught(player);
         }
 
-        running = false;
 
         broadcastState();
+
+        return true;
     }
 
-    function catchPlayer(player, monster) {
 
-        if (!running) {
-            return;
-        }
+    function catchPlayer(player) {
 
-        if (!player || player.isNahroush) {
-            return;
-        }
+        if (!running)
+            return false;
 
-        if (player.caught === true) {
-            return;
-        }
 
-        player.caught = true;
+        if (!player)
+            return false;
+
+
+        if (player.isNahroush)
+            return false;
+
+
         player.alive = false;
+        player.caught = true;
 
-        if (typeof onPlayerCaught === "function") {
-            onPlayerCaught(player, monster);
+
+        if (
+            typeof onPlayerCaught ===
+            "function"
+        ) {
+
+            onPlayerCaught(player);
         }
+
 
         broadcastState();
+
+        return true;
     }
 
-    function checkMonsterCollision(monster) {
 
-        if (!running) {
-            return;
-        }
+    function checkCollision(player) {
 
-        const players = getPlayers();
+        if (!running)
+            return false;
 
-        for (const player of players.values()) {
+
+        if (!player)
+            return false;
+
+
+        const nahroush =
+            findNahroush();
+
+
+        if (!nahroush)
+            return false;
+
+
+        if (
+            nahroush.x === player.x &&
+            nahroush.y === player.y
+        ) {
 
             if (
-                player.x !== monster.x ||
-                player.y !== monster.y
+                player.isNahroush
             ) {
-                continue;
+
+                return false;
             }
 
-            if (player.isNahroush) {
 
-                catchNahroush(player);
-
-            } else {
-
-                catchPlayer(player, monster);
-            }
+            return catchPlayer(
+                player
+            );
         }
+
+
+        return false;
     }
+
 
     function reset() {
 
         running = false;
-        nahroushCaught = false;
+
+        caught = false;
+
+
+        const nahroush =
+            findNahroush();
+
+
+        if (nahroush) {
+
+            nahroush.isNahroush =
+                false;
+
+            nahroush.alive =
+                true;
+
+            nahroush.caught =
+                false;
+        }
+
 
         broadcastState();
     }
 
+
     return {
-        isRunning,
-        isCaught,
+
         start,
+
+        reset,
+
         catchNahroush,
+
         catchPlayer,
-        checkMonsterCollision,
-        reset
+
+        checkCollision,
+
+        findNahroush,
+
+        isRunning,
+
+        isCaught
     };
 }
 
