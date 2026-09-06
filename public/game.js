@@ -43,11 +43,6 @@ const resetButton =
 ===================================================== */
 
 const MAZE_SIZE = 12;
-
-/*
-   32px لكل خلية.
-   الـ SVG سيقوم بتصغيرها تلقائياً على الشاشات الصغيرة.
-*/
 const CELL_SIZE = 32;
 
 
@@ -59,16 +54,14 @@ let currentState = null;
 
 
 /* =====================================================
-   SVG HELPERS
+   SVG
 ===================================================== */
 
 const SVG_NS =
     "http://www.w3.org/2000/svg";
 
 
-function createSvgElement(
-    type
-) {
+function createSvgElement(type) {
 
     return document.createElementNS(
         SVG_NS,
@@ -88,16 +81,11 @@ socket.on(
 
         if (!state) return;
 
-        currentState =
-            state;
+        currentState = state;
 
-        renderMaze(
-            state
-        );
+        renderMaze(state);
 
-        updateTimer(
-            state
-        );
+        updateTimer(state);
 
     }
 );
@@ -117,16 +105,11 @@ socket.on(
             "hidden"
         );
 
-        currentState =
-            state;
+        currentState = state;
 
-        renderMaze(
-            state
-        );
+        renderMaze(state);
 
-        updateTimer(
-            state
-        );
+        updateTimer(state);
 
     }
 );
@@ -138,8 +121,7 @@ socket.on(
 
 function renderMaze(state) {
 
-    mazeSvg.innerHTML =
-        "";
+    mazeSvg.innerHTML = "";
 
     const maze =
         state.maze || [];
@@ -155,8 +137,7 @@ function renderMaze(state) {
 
 
     const size =
-        MAZE_SIZE *
-        CELL_SIZE;
+        MAZE_SIZE * CELL_SIZE;
 
 
     mazeSvg.setAttribute(
@@ -170,9 +151,7 @@ function renderMaze(state) {
     ====================================== */
 
     const background =
-        createSvgElement(
-            "rect"
-        );
+        createSvgElement("rect");
 
     background.setAttribute(
         "x",
@@ -227,17 +206,13 @@ function renderMaze(state) {
 
 
             const x =
-                col *
-                CELL_SIZE;
+                col * CELL_SIZE;
 
             const y =
-                row *
-                CELL_SIZE;
+                row * CELL_SIZE;
 
 
-            if (
-                cell.walls?.top
-            ) {
+            if (cell.walls?.top) {
 
                 drawWall(
                     x,
@@ -249,9 +224,7 @@ function renderMaze(state) {
             }
 
 
-            if (
-                cell.walls?.right
-            ) {
+            if (cell.walls?.right) {
 
                 drawWall(
                     x + CELL_SIZE,
@@ -263,9 +236,7 @@ function renderMaze(state) {
             }
 
 
-            if (
-                cell.walls?.bottom
-            ) {
+            if (cell.walls?.bottom) {
 
                 drawWall(
                     x,
@@ -277,9 +248,7 @@ function renderMaze(state) {
             }
 
 
-            if (
-                cell.walls?.left
-            ) {
+            if (cell.walls?.left) {
 
                 drawWall(
                     x,
@@ -296,12 +265,10 @@ function renderMaze(state) {
 
 
     /* =====================================
-       TREASURE CHEST
+       TREASURE
     ====================================== */
 
-    if (
-        treasure
-    ) {
+    if (treasure) {
 
         drawTreasure(
             treasure.x,
@@ -336,9 +303,7 @@ function renderMaze(state) {
             if (
                 player.alive === false
             ) {
-
                 return;
-
             }
 
             drawPlayer(
@@ -364,10 +329,7 @@ function drawWall(
 ) {
 
     const line =
-        createSvgElement(
-            "line"
-        );
-
+        createSvgElement("line");
 
     line.setAttribute(
         "x1",
@@ -389,12 +351,10 @@ function drawWall(
         y2
     );
 
-
     line.setAttribute(
         "class",
         "maze-wall"
     );
-
 
     mazeSvg.appendChild(
         line
@@ -413,22 +373,16 @@ function drawTreasure(
 ) {
 
     const x =
-        col *
-        CELL_SIZE +
+        col * CELL_SIZE +
         CELL_SIZE / 2;
 
-
     const y =
-        row *
-        CELL_SIZE +
+        row * CELL_SIZE +
         CELL_SIZE / 2;
 
 
     const group =
-        createSvgElement(
-            "g"
-        );
-
+        createSvgElement("g");
 
     group.setAttribute(
         "class",
@@ -436,14 +390,10 @@ function drawTreasure(
     );
 
 
-    /*
-       هالة حول الصندوق
-    */
+    /* GLOW */
 
     const glow =
-        createSvgElement(
-            "circle"
-        );
+        createSvgElement("circle");
 
     glow.setAttribute(
         "cx",
@@ -470,14 +420,10 @@ function drawTreasure(
     );
 
 
-    /*
-       ظل الصندوق
-    */
+    /* SHADOW */
 
     const shadow =
-        createSvgElement(
-            "ellipse"
-        );
+        createSvgElement("ellipse");
 
     shadow.setAttribute(
         "cx",
@@ -509,14 +455,10 @@ function drawTreasure(
     );
 
 
-    /*
-       جسم الصندوق
-    */
+    /* BODY */
 
     const body =
-        createSvgElement(
-            "rect"
-        );
+        createSvgElement("rect");
 
     body.setAttribute(
         "x",
@@ -553,14 +495,10 @@ function drawTreasure(
     );
 
 
-    /*
-       غطاء الصندوق
-    */
+    /* LID */
 
     const lid =
-        createSvgElement(
-            "path"
-        );
+        createSvgElement("path");
 
     lid.setAttribute(
         "d",
@@ -585,14 +523,10 @@ function drawTreasure(
     );
 
 
-    /*
-       الشريط الذهبي
-    */
+    /* BAND */
 
     const band =
-        createSvgElement(
-            "rect"
-        );
+        createSvgElement("rect");
 
     band.setAttribute(
         "x",
@@ -624,14 +558,10 @@ function drawTreasure(
     );
 
 
-    /*
-       القفل
-    */
+    /* LOCK */
 
     const lock =
-        createSvgElement(
-            "rect"
-        );
+        createSvgElement("rect");
 
     lock.setAttribute(
         "x",
@@ -668,14 +598,10 @@ function drawTreasure(
     );
 
 
-    /*
-       لمعان
-    */
+    /* SHINE */
 
     const shine =
-        createSvgElement(
-            "circle"
-        );
+        createSvgElement("circle");
 
     shine.setAttribute(
         "cx",
@@ -713,37 +639,27 @@ function drawTreasure(
    MONSTER
 ===================================================== */
 
-function drawMonster(
-    monster
-) {
+function drawMonster(monster) {
 
     if (
         monster.x === undefined ||
         monster.y === undefined
     ) {
-
         return;
-
     }
 
 
     const x =
-        monster.x *
-        CELL_SIZE +
+        monster.x * CELL_SIZE +
         CELL_SIZE / 2;
 
-
     const y =
-        monster.y *
-        CELL_SIZE +
+        monster.y * CELL_SIZE +
         CELL_SIZE / 2;
 
 
     const group =
-        createSvgElement(
-            "g"
-        );
-
+        createSvgElement("g");
 
     group.setAttribute(
         "class",
@@ -751,14 +667,10 @@ function drawMonster(
     );
 
 
-    /*
-       هالة الوحش
-    */
+    /* GLOW */
 
     const glow =
-        createSvgElement(
-            "circle"
-        );
+        createSvgElement("circle");
 
     glow.setAttribute(
         "cx",
@@ -785,19 +697,10 @@ function drawMonster(
     );
 
 
-    /*
-       صورة الوحش
-    */
+    /* MONSTER IMAGE */
 
     const image =
-        createSvgElement(
-            "image"
-        );
-
-
-    /*
-       أصبح أكبر ليتناسب مع 12×12
-    */
+        createSvgElement("image");
 
     image.setAttribute(
         "x",
@@ -819,12 +722,10 @@ function drawMonster(
         26
     );
 
-
     image.setAttribute(
         "preserveAspectRatio",
         "xMidYMid meet"
     );
-
 
     image.setAttribute(
         "href",
@@ -832,50 +733,46 @@ function drawMonster(
     );
 
 
-    image.onerror =
-        () => {
+    image.onerror = () => {
 
-            image.remove();
+        image.remove();
 
-            const fallback =
-                createSvgElement(
-                    "text"
-                );
+        const fallback =
+            createSvgElement("text");
 
-            fallback.setAttribute(
-                "x",
-                x
-            );
+        fallback.setAttribute(
+            "x",
+            x
+        );
 
-            fallback.setAttribute(
-                "y",
-                y + 7
-            );
+        fallback.setAttribute(
+            "y",
+            y + 7
+        );
 
-            fallback.setAttribute(
-                "text-anchor",
-                "middle"
-            );
+        fallback.setAttribute(
+            "text-anchor",
+            "middle"
+        );
 
-            fallback.setAttribute(
-                "class",
-                "monster-fallback"
-            );
+        fallback.setAttribute(
+            "class",
+            "monster-fallback"
+        );
 
-            fallback.textContent =
-                "👹";
+        fallback.textContent =
+            "👹";
 
-            group.appendChild(
-                fallback
-            );
+        group.appendChild(
+            fallback
+        );
 
-        };
+    };
 
 
     group.appendChild(
         image
     );
-
 
     mazeSvg.appendChild(
         group
@@ -897,44 +794,50 @@ function drawPlayer(
         player.x === undefined ||
         player.y === undefined
     ) {
-
         return;
-
     }
 
 
     const x =
-        player.x *
-        CELL_SIZE +
+        player.x * CELL_SIZE +
         CELL_SIZE / 2;
 
-
     const y =
-        player.y *
-        CELL_SIZE +
+        player.y * CELL_SIZE +
         CELL_SIZE / 2;
 
 
     const group =
-        createSvgElement(
-            "g"
-        );
-
-
-    group.setAttribute(
-        "class",
-        "maze-player"
-    );
+        createSvgElement("g");
 
 
     /*
-       هالة اللاعب
+       نهروش يحصل على class إضافي
     */
 
-    const glow =
-        createSvgElement(
-            "circle"
+    if (player.isNahroush) {
+
+        group.setAttribute(
+            "class",
+            "maze-player nahroush-maze-player"
         );
+
+    } else {
+
+        group.setAttribute(
+            "class",
+            "maze-player"
+        );
+
+    }
+
+
+    /* =====================================
+       PLAYER GLOW
+    ====================================== */
+
+    const glow =
+        createSvgElement("circle");
 
     glow.setAttribute(
         "cx",
@@ -948,12 +851,16 @@ function drawPlayer(
 
     glow.setAttribute(
         "r",
-        14
+        player.isNahroush
+            ? 17
+            : 14
     );
 
     glow.setAttribute(
         "class",
-        "player-glow"
+        player.isNahroush
+            ? "player-glow nahroush-glow"
+            : "player-glow"
     );
 
     group.appendChild(
@@ -961,15 +868,12 @@ function drawPlayer(
     );
 
 
-    /*
-       الإطار الخارجي
-    */
+    /* =====================================
+       OUTER RING
+    ====================================== */
 
     const circle =
-        createSvgElement(
-            "circle"
-        );
-
+        createSvgElement("circle");
 
     circle.setAttribute(
         "cx",
@@ -983,28 +887,31 @@ function drawPlayer(
 
     circle.setAttribute(
         "r",
-        13
+        player.isNahroush
+            ? 14
+            : 13
     );
-
 
     circle.setAttribute(
         "class",
-        "player-ring"
+        player.isNahroush
+            ? "player-ring nahroush-ring"
+            : "player-ring"
     );
-
 
     group.appendChild(
         circle
     );
 
 
-    /*
-       صورة اللاعب
-       تقريباً 75% من حجم الخلية
-    */
+    /* =====================================
+       AVATAR
+    ====================================== */
 
     const avatarSize =
-        22;
+        player.isNahroush
+            ? 24
+            : 22;
 
 
     if (
@@ -1012,9 +919,7 @@ function drawPlayer(
     ) {
 
         const image =
-            createSvgElement(
-                "image"
-            );
+            createSvgElement("image");
 
 
         image.setAttribute(
@@ -1027,7 +932,6 @@ function drawPlayer(
             y - avatarSize / 2
         );
 
-
         image.setAttribute(
             "width",
             avatarSize
@@ -1038,12 +942,10 @@ function drawPlayer(
             avatarSize
         );
 
-
         image.setAttribute(
             "preserveAspectRatio",
             "xMidYMid slice"
         );
-
 
         image.setAttribute(
             "href",
@@ -1056,16 +958,10 @@ function drawPlayer(
 
 
         const defs =
-            createSvgElement(
-                "defs"
-            );
-
+            createSvgElement("defs");
 
         const clipPath =
-            createSvgElement(
-                "clipPath"
-            );
-
+            createSvgElement("clipPath");
 
         clipPath.setAttribute(
             "id",
@@ -1074,10 +970,7 @@ function drawPlayer(
 
 
         const clipCircle =
-            createSvgElement(
-                "circle"
-            );
-
+            createSvgElement("circle");
 
         clipCircle.setAttribute(
             "cx",
@@ -1091,7 +984,9 @@ function drawPlayer(
 
         clipCircle.setAttribute(
             "r",
-            11
+            player.isNahroush
+                ? 12
+                : 11
         );
 
 
@@ -1099,11 +994,9 @@ function drawPlayer(
             clipCircle
         );
 
-
         defs.appendChild(
             clipPath
         );
-
 
         mazeSvg.appendChild(
             defs
@@ -1116,12 +1009,11 @@ function drawPlayer(
         );
 
 
-        image.onerror =
-            () => {
+        image.onerror = () => {
 
-                image.remove();
+            image.remove();
 
-            };
+        };
 
 
         group.appendChild(
@@ -1133,41 +1025,74 @@ function drawPlayer(
     else {
 
         const text =
-            createSvgElement(
-                "text"
-            );
-
+            createSvgElement("text");
 
         text.setAttribute(
             "x",
             x
         );
 
-
         text.setAttribute(
             "y",
             y + 7
         );
-
 
         text.setAttribute(
             "text-anchor",
             "middle"
         );
 
-
         text.setAttribute(
             "class",
             "player-fallback"
         );
 
-
         text.textContent =
-            "👤";
-
+            player.isNahroush
+                ? "👑"
+                : "👤";
 
         group.appendChild(
             text
+        );
+
+    }
+
+
+    /* =====================================
+       NAHROUSH CROWN
+    ====================================== */
+
+    if (player.isNahroush) {
+
+        const crown =
+            createSvgElement("text");
+
+        crown.setAttribute(
+            "x",
+            x + 10
+        );
+
+        crown.setAttribute(
+            "y",
+            y - 10
+        );
+
+        crown.setAttribute(
+            "text-anchor",
+            "middle"
+        );
+
+        crown.setAttribute(
+            "font-size",
+            "9"
+        );
+
+        crown.textContent =
+            "👑";
+
+        group.appendChild(
+            crown
         );
 
     }
@@ -1184,12 +1109,15 @@ function drawPlayer(
    TIMER
 ===================================================== */
 
-function updateTimer(
-    state
-) {
+function updateTimer(state) {
+
+    /*
+       وضع نهروش لا يعتمد على مؤقت
+    */
 
     if (
-        !state.gameStarted
+        !state.gameStarted ||
+        state.gameMode === "nahroush"
     ) {
 
         gameTimer.classList.add(
@@ -1210,13 +1138,8 @@ function updateTimer(
         state.gameMode === "treasure"
     ) {
 
-        /*
-           صندوق كنز بدل الجوهرة
-        */
-
         timerIcon.textContent =
             "🧰";
-
 
         timerValue.textContent =
             Math.max(
@@ -1235,7 +1158,6 @@ function updateTimer(
         timerIcon.textContent =
             "⏱️";
 
-
         timerValue.textContent =
             Math.max(
                 0,
@@ -1243,14 +1165,6 @@ function updateTimer(
                     state.roundTimeLeft || 0
                 )
             );
-
-    }
-
-    else {
-
-        gameTimer.classList.add(
-            "timer-hidden"
-        );
 
     }
 
@@ -1271,15 +1185,12 @@ socket.on(
         winnerIcon.textContent =
             "🏆";
 
-
         winnerSubtitle.textContent =
             "الفائز";
-
 
         winnerName.textContent =
             winner.nickname ||
             "الفائز";
-
 
         winnerMessage.textContent =
             "وصل إلى الكنز أولاً";
@@ -1299,7 +1210,7 @@ socket.on(
 
 
 /* =====================================================
-   CHASE RESULT
+   GAME RESULT
 ===================================================== */
 
 socket.on(
@@ -1309,29 +1220,113 @@ socket.on(
         if (!result) return;
 
 
+        /* =====================================
+           NAHROUSH
+        ====================================== */
+
         if (
-            result.winner === "monsters"
+            currentState?.gameMode ===
+            "nahroush"
+        ) {
+
+            /*
+               نهروش + الوحش
+            */
+
+            if (
+                result.winner ===
+                "nahroush"
+                ||
+                result.winner ===
+                "monsters"
+            ) {
+
+                winnerIcon.textContent =
+                    "👑";
+
+                winnerSubtitle.textContent =
+                    "انتهت اللعبة";
+
+                winnerName.textContent =
+                    "نهروش والوحش يفوزان";
+
+                winnerMessage.textContent =
+                    "تم إقصاء جميع اللاعبين";
+
+
+                const nahroush =
+                    currentState?.players?.find(
+                        player =>
+                            player.isNahroush
+                    );
+
+
+                setWinnerAvatar(
+                    nahroush?.profilePictureUrl ||
+                    ""
+                );
+
+            }
+
+
+            /*
+               اللاعبون
+            */
+
+            else {
+
+                winnerIcon.textContent =
+                    "🏆";
+
+                winnerSubtitle.textContent =
+                    "انتهت اللعبة";
+
+                winnerName.textContent =
+                    "اللاعبون يفوزون";
+
+                winnerMessage.textContent =
+                    "تم القبض على نهروش";
+
+
+                setWinnerAvatar(
+                    ""
+                );
+
+            }
+
+
+            winnerOverlay.classList.remove(
+                "hidden"
+            );
+
+            return;
+
+        }
+
+
+        /* =====================================
+           NORMAL CHASE
+        ====================================== */
+
+        if (
+            result.winner ===
+            "monsters"
         ) {
 
             winnerIcon.textContent =
                 "👹";
 
-
             winnerSubtitle.textContent =
                 "انتهت الجولة";
 
-
             winnerName.textContent =
                 "الوحوش تفوز";
-
 
             winnerMessage.textContent =
                 "تم الإمساك بجميع اللاعبين";
 
 
-            setWinnerAvatar(
-                ""
-            );
+            setWinnerAvatar("");
 
         }
 
@@ -1340,22 +1335,17 @@ socket.on(
             winnerIcon.textContent =
                 "🏆";
 
-
             winnerSubtitle.textContent =
                 "انتهت الجولة";
 
-
             winnerName.textContent =
                 "اللاعبون يفوزون";
-
 
             winnerMessage.textContent =
                 "انتهى الوقت وبقي لاعب واحد على الأقل";
 
 
-            setWinnerAvatar(
-                ""
-            );
+            setWinnerAvatar("");
 
         }
 
@@ -1372,9 +1362,7 @@ socket.on(
    WINNER AVATAR
 ===================================================== */
 
-function setWinnerAvatar(
-    url
-) {
+function setWinnerAvatar(url) {
 
     if (url) {
 
@@ -1383,6 +1371,7 @@ function setWinnerAvatar(
 
         winnerAvatar.style.display =
             "block";
+
 
         winnerAvatar.onerror =
             () => {
