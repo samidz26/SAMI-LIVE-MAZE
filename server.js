@@ -385,24 +385,121 @@ function createMaze() {
 
             {
                 dx: -1,
-                dy: 0,
-                wall: "left",
-                opposite: "right"
-            }
+/* =====================================================
+   ARENA MAZE GENERATION
+   12x12
+   - Connected
+   - Closed outer border
+   - Multiple loops
+   - Fewer dead ends
+   - Better for monster chase
+===================================================== */
 
-        ];
+function createMaze() {
 
-        for (
-            const direction of directions
-        ) {
+    const grid = [];
+
+    /* =====================================
+       CREATE CELLS
+    ====================================== */
+
+    for (let y = 0; y < MAZE_SIZE; y++) {
+
+        const row = [];
+
+        for (let x = 0; x < MAZE_SIZE; x++) {
+
+            row.push({
+
+                x,
+                y,
+
+                walls: {
+                    top: true,
+                    right: true,
+                    bottom: true,
+                    left: true
+                },
+
+                visited: false
+
+            });
+
+        }
+
+        grid.push(row);
+
+    }
+
+    /* =====================================
+       PERFECT MAZE FIRST
+       Randomized DFS
+    ====================================== */
+
+    const directions = [
+
+        {
+            dx: 0,
+            dy: -1,
+            wall: "top",
+            opposite: "bottom"
+        },
+
+        {
+            dx: 1,
+            dy: 0,
+            wall: "right",
+            opposite: "left"
+        },
+
+        {
+            dx: 0,
+            dy: 1,
+            wall: "bottom",
+            opposite: "top"
+        },
+
+        {
+            dx: -1,
+            dy: 0,
+            wall: "left",
+            opposite: "right"
+        }
+
+    ];
+
+    const stack = [];
+
+    const startX =
+        Math.floor(
+            Math.random() * MAZE_SIZE
+        );
+
+    const startY =
+        Math.floor(
+            Math.random() * MAZE_SIZE
+        );
+
+    grid[startY][startX].visited = true;
+
+    stack.push(
+        grid[startY][startX]
+    );
+
+    while (stack.length > 0) {
+
+        const current =
+            stack[stack.length - 1];
+
+        const neighbors = [];
+
+        for (const direction of directions) {
 
             const nx =
-                current.x +
-                direction.dx;
+                current.x + direction.dx;
 
             const ny =
-                current.y +
-                direction.dy;
+                current.y + direction.dy;
 
             if (
                 nx < 0 ||
@@ -421,19 +518,15 @@ function createMaze() {
             if (!neighbor.visited) {
 
                 neighbors.push({
-
                     neighbor,
                     direction
-
                 });
 
             }
 
         }
 
-        if (
-            neighbors.length === 0
-        ) {
+        if (neighbors.length === 0) {
 
             stack.pop();
 
@@ -465,9 +558,485 @@ function createMaze() {
 
         neighbor.visited = true;
 
-        stack.push(
-            neighbor
+        stack.push(neighbor);
+
+    }
+
+    /* =====================================
+       REMOVE INTERNAL WALL
+       Helper
+    ====================================== */
+
+    function openBetween(x1, y1, x2, y2) {
+
+        if (
+            x1 < 0 ||
+            x1 >= MAZE_SIZE ||
+            y1 < 0 ||
+            y1 >= MAZE_SIZE ||
+            x2 < 0 ||
+            x2 >= MAZE_SIZE ||
+            y2 < 0 ||
+            y2 >= MAZE_SIZE
+        ) {
+
+            return false;
+
+        }
+
+        const a = grid[y1][x1];
+        const b = grid[y2][x2];
+
+        if (x2 === x1 + 1) {
+
+            a.walls.right = false;
+            b.walls.left = false;
+
+        }
+
+        else if (x2 === x1 - 1) {
+
+            a.walls.left = false;
+            b.walls.right = false;
+
+        }
+
+        else if (y2 === y1 + 1) {
+
+            a.walls.bottom = false;
+            b.walls.top = false;
+
+        }
+
+        else if (y2 === y1 - 1) {
+
+            a.walls.top = false;
+            b.walls.bottom = false;
+
+        }
+
+        else {
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /* =====================================
+       COUNT OPEN CONNECTIONS
+    ====================================== */
+
+    function getDegree(x, y) {
+
+        const cell =
+            grid[y][x];
+
+        let degree = 0;
+
+        if (!cell.walls.top && y > 0)
+            degree++;
+
+        if (
+            !cell.walls.right &&
+            x < MAZE_SIZE - 1
+        )
+            degree++;
+
+        if (
+            !cell.walls.bottom &&
+            y < MAZE_SIZE - 1
+        )
+            degree++;
+
+        if (!cell.walls.left && x > 0)
+            degree++;
+
+        return degree;
+
+    }
+
+    /* =====================================
+       FIND INTERNAL WALLS
+    ====================================== */
+
+    function getClosedInternalWalls() {
+
+        const walls = [];
+
+        for (let y = 0; y < MAZE_SIZE; y++) {
+
+            for (let x = 0; x < MAZE_SIZE; x++) {
+
+                /*
+                   Only check RIGHT and BOTTOM
+                   so every wall is checked once.
+                */
+
+                if (x < MAZE_SIZE - 1) {
+
+                    if (
+                        grid[y][x].walls.right
+                    ) {
+
+                        walls.push({
+                            x1: x,
+                            y1: y,
+                            x2: x + 1,
+                            y2: y
+                        });
+
+                    }
+
+                }
+
+                if (y < MAZE_SIZE - 1) {
+
+                    if (
+                        grid[y][x].walls.bottom
+                    ) {
+
+                        walls.push({
+                            x1: x,
+                            y1: y,
+                            x2: x,
+                            y2: y + 1
+                        });
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        return walls;
+
+    }
+
+    /* =====================================
+       LOOP CREATION
+       Prefer walls between low-degree cells
+       This reduces dead ends naturally.
+    ====================================== */
+
+    let candidates =
+        getClosedInternalWalls();
+
+    /*
+       Shuffle candidates
+       for different layouts each game.
+    */
+
+    candidates.sort(
+        () => Math.random() - 0.5
+    );
+
+    let loopsCreated = 0;
+
+    const TARGET_LOOPS = 10;
+
+    for (
+        const wall of candidates
+    ) {
+
+        if (
+            loopsCreated >= TARGET_LOOPS
+        ) {
+
+            break;
+
+        }
+
+        const degreeA =
+            getDegree(
+                wall.x1,
+                wall.y1
+            );
+
+        const degreeB =
+            getDegree(
+                wall.x2,
+                wall.y2
+            );
+
+        /*
+           Prefer connecting cells that
+           currently have few exits.
+        */
+
+        const score =
+            degreeA +
+            degreeB;
+
+        if (score <= 4) {
+
+            openBetween(
+                wall.x1,
+                wall.y1,
+                wall.x2,
+                wall.y2
+            );
+
+            loopsCreated++;
+
+        }
+
+    }
+
+    /* =====================================
+       CENTER AREA
+       Keep monster spawn useful.
+       
+       12x12 has four central cells:
+       (5,5) (6,5)
+       (5,6) (6,6)
+    ====================================== */
+
+    const centerCells = [
+
+        [5, 5],
+        [6, 5],
+        [5, 6],
+        [6, 6]
+
+    ];
+
+    /*
+       Connect the four central cells.
+    */
+
+    openBetween(5, 5, 6, 5);
+
+    openBetween(5, 5, 5, 6);
+
+    openBetween(6, 5, 6, 6);
+
+    openBetween(5, 6, 6, 6);
+
+    /*
+       Give the center at least
+       one route toward the outside.
+    */
+
+    const centerConnections = [
+
+        [6, 6, 6, 5],
+        [6, 6, 7, 6],
+        [6, 6, 6, 7],
+        [6, 6, 5, 6]
+
+    ];
+
+    /*
+       Only open one additional connection
+       if the center is too enclosed.
+    */
+
+    if (
+        getDegree(6, 6) < 3
+    ) {
+
+        const valid =
+            centerConnections.filter(
+                connection => {
+
+                    const x1 = connection[0];
+                    const y1 = connection[1];
+                    const x2 = connection[2];
+                    const y2 = connection[3];
+
+                    return (
+                        x2 >= 0 &&
+                        x2 < MAZE_SIZE &&
+                        y2 >= 0 &&
+                        y2 < MAZE_SIZE
+                    );
+
+                }
+            );
+
+        if (valid.length > 0) {
+
+            const connection =
+                valid[
+                    Math.floor(
+                        Math.random() *
+                        valid.length
+                    )
+                ];
+
+            openBetween(
+                connection[0],
+                connection[1],
+                connection[2],
+                connection[3]
+            );
+
+        }
+
+    }
+
+    /* =====================================
+       REDUCE LONG DEAD ENDS
+       
+       Add a few extra openings from
+       cells that still have only one exit.
+    ====================================== */
+
+    let deadEndCandidates = [];
+
+    for (let y = 1; y < MAZE_SIZE - 1; y++) {
+
+        for (let x = 1; x < MAZE_SIZE - 1; x++) {
+
+            if (
+                getDegree(x, y) === 1
+            ) {
+
+                deadEndCandidates.push({
+                    x,
+                    y
+                });
+
+            }
+
+        }
+
+    }
+
+    deadEndCandidates.sort(
+        () => Math.random() - 0.5
+    );
+
+    let deadEndsOpened = 0;
+
+    const MAX_DEAD_END_OPENINGS = 8;
+
+    for (
+        const cell of deadEndCandidates
+    ) {
+
+        if (
+            deadEndsOpened >=
+            MAX_DEAD_END_OPENINGS
+        ) {
+
+            break;
+
+        }
+
+        const possibleWalls =
+            getClosedInternalWalls()
+                .filter(
+                    wall =>
+                        (
+                            wall.x1 === cell.x &&
+                            wall.y1 === cell.y
+                        ) ||
+                        (
+                            wall.x2 === cell.x &&
+                            wall.y2 === cell.y
+                        )
+                );
+
+        if (
+            possibleWalls.length === 0
+        ) {
+
+            continue;
+
+        }
+
+        /*
+           Prefer an opening that connects
+           to another low-degree area.
+        */
+
+        possibleWalls.sort(
+            (a, b) => {
+
+                const aOther =
+                    a.x1 === cell.x &&
+                    a.y1 === cell.y
+                        ? [a.x2, a.y2]
+                        : [a.x1, a.y1];
+
+                const bOther =
+                    b.x1 === cell.x &&
+                    b.y1 === cell.y
+                        ? [b.x2, b.y2]
+                        : [b.x1, b.y1];
+
+                return (
+                    getDegree(
+                        aOther[0],
+                        aOther[1]
+                    ) -
+                    getDegree(
+                        bOther[0],
+                        bOther[1]
+                    )
+                );
+
+            }
         );
+
+        const selected =
+            possibleWalls[0];
+
+        if (!selected) continue;
+
+        openBetween(
+            selected.x1,
+            selected.y1,
+            selected.x2,
+            selected.y2
+        );
+
+        deadEndsOpened++;
+
+    }
+
+    /* =====================================
+       FORCE OUTER BORDER CLOSED
+       
+       Important:
+       Players/monsters must never leave maze.
+    ====================================== */
+
+    for (let x = 0; x < MAZE_SIZE; x++) {
+
+        grid[0][x].walls.top = true;
+
+        grid[MAZE_SIZE - 1][x]
+            .walls.bottom = true;
+
+    }
+
+    for (let y = 0; y < MAZE_SIZE; y++) {
+
+        grid[y][0].walls.left = true;
+
+        grid[y][MAZE_SIZE - 1]
+            .walls.right = true;
+
+    }
+
+    /* =====================================
+       CLEAN VISITED FLAG
+    ====================================== */
+
+    for (let y = 0; y < MAZE_SIZE; y++) {
+
+        for (let x = 0; x < MAZE_SIZE; x++) {
+
+            grid[y][x].visited = false;
+
+        }
 
     }
 
