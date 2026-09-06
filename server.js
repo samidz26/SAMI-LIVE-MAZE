@@ -44,11 +44,9 @@ const avatarCache = new Map();
 
 let registrationOpen = true;
 
-let joinKeyword =
-    DEFAULT_JOIN_KEYWORD;
+let joinKeyword = DEFAULT_JOIN_KEYWORD;
 
-let gameMode =
-    "treasure";
+let gameMode = "treasure";
 
 let gameStarted = false;
 
@@ -56,8 +54,7 @@ let gameWinner = null;
 
 let gameResult = null;
 
-let players =
-    new Map();
+let players = new Map();
 
 let maze = [];
 
@@ -69,11 +66,9 @@ let roundTimer = null;
 
 let monsterTimer = null;
 
-let roundTimeLeft =
-    DEFAULT_ROUND_DURATION;
+let roundTimeLeft = DEFAULT_ROUND_DURATION;
 
-let treasureTimeLeft =
-    DEFAULT_TREASURE_DURATION;
+let treasureTimeLeft = DEFAULT_TREASURE_DURATION;
 
 let monsters = [];
 
@@ -82,23 +77,13 @@ let monsters = [];
 ===================================================== */
 
 let treasureSettings = {
-
-    duration:
-        DEFAULT_TREASURE_DURATION
-
+    duration: DEFAULT_TREASURE_DURATION
 };
 
 let chaseSettings = {
-
-    roundDuration:
-        DEFAULT_ROUND_DURATION,
-
-    monsterCount:
-        DEFAULT_MONSTER_COUNT,
-
-    monsterSpeed:
-        DEFAULT_MONSTER_SPEED
-
+    roundDuration: DEFAULT_ROUND_DURATION,
+    monsterCount: DEFAULT_MONSTER_COUNT,
+    monsterSpeed: DEFAULT_MONSTER_SPEED
 };
 
 /* =====================================================
@@ -107,11 +92,9 @@ let chaseSettings = {
 
 function extractAvatar(data) {
 
-    const user =
-        data?.user || {};
+    const user = data?.user || {};
 
     const sources = [
-
         user.profilePictureUrl,
         user.avatarThumb,
         user.avatarMedium,
@@ -122,7 +105,6 @@ function extractAvatar(data) {
         data?.avatarThumb,
         data?.avatarMedium,
         data?.avatarLarge
-
     ];
 
     for (const source of sources) {
@@ -133,64 +115,43 @@ function extractAvatar(data) {
             typeof source === "string" &&
             source.trim() !== ""
         ) {
-
             return source;
-
         }
 
-        if (
-            typeof source === "object"
-        ) {
+        if (typeof source === "object") {
 
-            if (
-                Array.isArray(
-                    source.urlList
-                )
-            ) {
+            if (Array.isArray(source.urlList)) {
 
-                const url =
-                    source.urlList.find(
-                        item =>
-                            typeof item === "string" &&
-                            item.startsWith("http")
-                    );
+                const url = source.urlList.find(
+                    item =>
+                        typeof item === "string" &&
+                        item.startsWith("http")
+                );
 
                 if (url) return url;
-
             }
 
-            if (
-                Array.isArray(
-                    source.urls
-                )
-            ) {
+            if (Array.isArray(source.urls)) {
 
-                const url =
-                    source.urls.find(
-                        item =>
-                            typeof item === "string" &&
-                            item.startsWith("http")
-                    );
+                const url = source.urls.find(
+                    item =>
+                        typeof item === "string" &&
+                        item.startsWith("http")
+                );
 
                 if (url) return url;
-
             }
 
             if (
                 typeof source.url === "string" &&
                 source.url.startsWith("http")
             ) {
-
                 return source.url;
-
             }
-
         }
-
     }
 
     return "";
-
 }
 
 /* =====================================================
@@ -199,30 +160,22 @@ function extractAvatar(data) {
 
 function getPlayersArray() {
 
-    return Array.from(
-        players.values()
-    ).map(player => ({
+    return Array.from(players.values()).map(player => ({
 
-        uniqueId:
-            player.uniqueId,
+        uniqueId: player.uniqueId,
 
-        nickname:
-            player.nickname,
+        nickname: player.nickname,
 
         profilePictureUrl:
             player.profilePictureUrl,
 
-        x:
-            player.x,
+        x: player.x,
 
-        y:
-            player.y,
+        y: player.y,
 
-        alive:
-            player.alive !== false,
+        alive: player.alive !== false,
 
-        caught:
-            player.caught === true
+        caught: player.caught === true
 
     }));
 
@@ -240,8 +193,7 @@ function getGameState() {
 
         treasure,
 
-        players:
-            getPlayersArray(),
+        players: getPlayersArray(),
 
         monsters,
 
@@ -285,114 +237,7 @@ function broadcastState() {
 }
 
 /* =====================================================
-   MAZE GENERATION
-===================================================== */
-
-function createMaze() {
-
-    const grid = [];
-
-    for (
-        let y = 0;
-        y < MAZE_SIZE;
-        y++
-    ) {
-
-        const row = [];
-
-        for (
-            let x = 0;
-            x < MAZE_SIZE;
-            x++
-        ) {
-
-            row.push({
-
-                x,
-                y,
-
-                walls: {
-
-                    top: true,
-                    right: true,
-                    bottom: true,
-                    left: true
-
-                },
-
-                visited: false
-
-            });
-
-        }
-
-        grid.push(row);
-
-    }
-
-    const stack = [];
-
-    const startX =
-        Math.floor(
-            Math.random() *
-            MAZE_SIZE
-        );
-
-    const startY =
-        Math.floor(
-            Math.random() *
-            MAZE_SIZE
-        );
-
-    grid[startY][startX].visited =
-        true;
-
-    stack.push(
-        grid[startY][startX]
-    );
-
-    while (stack.length > 0) {
-
-        const current =
-            stack[
-                stack.length - 1
-            ];
-
-        const neighbors = [];
-
-        const directions = [
-
-            {
-                dx: 0,
-                dy: -1,
-                wall: "top",
-                opposite: "bottom"
-            },
-
-            {
-                dx: 1,
-                dy: 0,
-                wall: "right",
-                opposite: "left"
-            },
-
-            {
-                dx: 0,
-                dy: 1,
-                wall: "bottom",
-                opposite: "top"
-            },
-
-            {
-                dx: -1,
-/* =====================================================
    ARENA MAZE GENERATION
-   12x12
-   - Connected
-   - Closed outer border
-   - Multiple loops
-   - Fewer dead ends
-   - Better for monster chase
 ===================================================== */
 
 function createMaze() {
@@ -400,7 +245,7 @@ function createMaze() {
     const grid = [];
 
     /* =====================================
-       CREATE CELLS
+       CREATE GRID
     ====================================== */
 
     for (let y = 0; y < MAZE_SIZE; y++) {
@@ -415,10 +260,12 @@ function createMaze() {
                 y,
 
                 walls: {
+
                     top: true,
                     right: true,
                     bottom: true,
                     left: true
+
                 },
 
                 visited: false
@@ -432,8 +279,7 @@ function createMaze() {
     }
 
     /* =====================================
-       PERFECT MAZE FIRST
-       Randomized DFS
+       DIRECTIONS
     ====================================== */
 
     const directions = [
@@ -467,6 +313,10 @@ function createMaze() {
         }
 
     ];
+
+    /* =====================================
+       RANDOMIZED DFS
+    ====================================== */
 
     const stack = [];
 
@@ -507,9 +357,7 @@ function createMaze() {
                 ny < 0 ||
                 ny >= MAZE_SIZE
             ) {
-
                 continue;
-
             }
 
             const neighbor =
@@ -563,11 +411,15 @@ function createMaze() {
     }
 
     /* =====================================
-       REMOVE INTERNAL WALL
-       Helper
+       OPEN BETWEEN CELLS
     ====================================== */
 
-    function openBetween(x1, y1, x2, y2) {
+    function openBetween(
+        x1,
+        y1,
+        x2,
+        y2
+    ) {
 
         if (
             x1 < 0 ||
@@ -579,13 +431,14 @@ function createMaze() {
             y2 < 0 ||
             y2 >= MAZE_SIZE
         ) {
-
             return false;
-
         }
 
-        const a = grid[y1][x1];
-        const b = grid[y2][x2];
+        const a =
+            grid[y1][x1];
+
+        const b =
+            grid[y2][x2];
 
         if (x2 === x1 + 1) {
 
@@ -626,7 +479,7 @@ function createMaze() {
     }
 
     /* =====================================
-       COUNT OPEN CONNECTIONS
+       CELL DEGREE
     ====================================== */
 
     function getDegree(x, y) {
@@ -636,30 +489,40 @@ function createMaze() {
 
         let degree = 0;
 
-        if (!cell.walls.top && y > 0)
+        if (
+            !cell.walls.top &&
+            y > 0
+        ) {
             degree++;
+        }
 
         if (
             !cell.walls.right &&
             x < MAZE_SIZE - 1
-        )
+        ) {
             degree++;
+        }
 
         if (
             !cell.walls.bottom &&
             y < MAZE_SIZE - 1
-        )
+        ) {
             degree++;
+        }
 
-        if (!cell.walls.left && x > 0)
+        if (
+            !cell.walls.left &&
+            x > 0
+        ) {
             degree++;
+        }
 
         return degree;
 
     }
 
     /* =====================================
-       FIND INTERNAL WALLS
+       CLOSED INTERNAL WALLS
     ====================================== */
 
     function getClosedInternalWalls() {
@@ -670,11 +533,6 @@ function createMaze() {
 
             for (let x = 0; x < MAZE_SIZE; x++) {
 
-                /*
-                   Only check RIGHT and BOTTOM
-                   so every wall is checked once.
-                */
-
                 if (x < MAZE_SIZE - 1) {
 
                     if (
@@ -682,10 +540,13 @@ function createMaze() {
                     ) {
 
                         walls.push({
+
                             x1: x,
                             y1: y,
+
                             x2: x + 1,
                             y2: y
+
                         });
 
                     }
@@ -699,10 +560,13 @@ function createMaze() {
                     ) {
 
                         walls.push({
+
                             x1: x,
                             y1: y,
+
                             x2: x,
                             y2: y + 1
+
                         });
 
                     }
@@ -718,20 +582,13 @@ function createMaze() {
     }
 
     /* =====================================
-       LOOP CREATION
-       Prefer walls between low-degree cells
-       This reduces dead ends naturally.
+       CREATE LOOPS
     ====================================== */
 
-    let candidates =
+    let loopCandidates =
         getClosedInternalWalls();
 
-    /*
-       Shuffle candidates
-       for different layouts each game.
-    */
-
-    candidates.sort(
+    loopCandidates.sort(
         () => Math.random() - 0.5
     );
 
@@ -740,15 +597,13 @@ function createMaze() {
     const TARGET_LOOPS = 10;
 
     for (
-        const wall of candidates
+        const wall of loopCandidates
     ) {
 
         if (
             loopsCreated >= TARGET_LOOPS
         ) {
-
             break;
-
         }
 
         const degreeA =
@@ -764,15 +619,14 @@ function createMaze() {
             );
 
         /*
-           Prefer connecting cells that
-           currently have few exits.
+           Prefer low-degree cells.
+           This creates alternative routes
+           without opening the maze too much.
         */
 
-        const score =
-            degreeA +
-            degreeB;
-
-        if (score <= 4) {
+        if (
+            degreeA + degreeB <= 4
+        ) {
 
             openBetween(
                 wall.x1,
@@ -788,110 +642,159 @@ function createMaze() {
     }
 
     /* =====================================
-       CENTER AREA
-       Keep monster spawn useful.
+       CENTRAL ARENA
        
-       12x12 has four central cells:
-       (5,5) (6,5)
-       (5,6) (6,6)
+       12x12 center:
+       5,5  6,5
+       5,6  6,6
     ====================================== */
 
-    const centerCells = [
+    openBetween(
+        5, 5,
+        6, 5
+    );
 
-        [5, 5],
-        [6, 5],
-        [5, 6],
-        [6, 6]
+    openBetween(
+        5, 5,
+        5, 6
+    );
+
+    openBetween(
+        6, 5,
+        6, 6
+    );
+
+    openBetween(
+        5, 6,
+        6, 6
+    );
+
+    /* =====================================
+       CENTER ESCAPE ROUTES
+    ====================================== */
+
+    const centerRoutes = [
+
+        {
+            x1: 6,
+            y1: 6,
+            x2: 7,
+            y2: 6
+        },
+
+        {
+            x1: 6,
+            y1: 6,
+            x2: 6,
+            y2: 7
+        },
+
+        {
+            x1: 5,
+            y1: 5,
+            x2: 4,
+            y2: 5
+        },
+
+        {
+            x1: 5,
+            y1: 5,
+            x2: 5,
+            y2: 4
+        }
 
     ];
 
-    /*
-       Connect the four central cells.
-    */
+    centerRoutes.sort(
+        () => Math.random() - 0.5
+    );
 
-    openBetween(5, 5, 6, 5);
+    let centerConnections = 0;
 
-    openBetween(5, 5, 5, 6);
-
-    openBetween(6, 5, 6, 6);
-
-    openBetween(5, 6, 6, 6);
-
-    /*
-       Give the center at least
-       one route toward the outside.
-    */
-
-    const centerConnections = [
-
-        [6, 6, 6, 5],
-        [6, 6, 7, 6],
-        [6, 6, 6, 7],
-        [6, 6, 5, 6]
-
-    ];
-
-    /*
-       Only open one additional connection
-       if the center is too enclosed.
-    */
-
-    if (
-        getDegree(6, 6) < 3
+    for (
+        const route of centerRoutes
     ) {
 
-        const valid =
-            centerConnections.filter(
-                connection => {
+        if (
+            centerConnections >= 2
+        ) {
+            break;
+        }
 
-                    const x1 = connection[0];
-                    const y1 = connection[1];
-                    const x2 = connection[2];
-                    const y2 = connection[3];
+        if (
+            route.x2 >= 0 &&
+            route.x2 < MAZE_SIZE &&
+            route.y2 >= 0 &&
+            route.y2 < MAZE_SIZE
+        ) {
 
-                    return (
-                        x2 >= 0 &&
-                        x2 < MAZE_SIZE &&
-                        y2 >= 0 &&
-                        y2 < MAZE_SIZE
-                    );
+            const cell =
+                grid[route.y1][route.x1];
 
-                }
-            );
+            let alreadyOpen = false;
 
-        if (valid.length > 0) {
+            if (
+                route.x2 === route.x1 + 1
+            ) {
+                alreadyOpen =
+                    !cell.walls.right;
+            }
 
-            const connection =
-                valid[
-                    Math.floor(
-                        Math.random() *
-                        valid.length
-                    )
-                ];
+            else if (
+                route.x2 === route.x1 - 1
+            ) {
+                alreadyOpen =
+                    !cell.walls.left;
+            }
 
-            openBetween(
-                connection[0],
-                connection[1],
-                connection[2],
-                connection[3]
-            );
+            else if (
+                route.y2 === route.y1 + 1
+            ) {
+                alreadyOpen =
+                    !cell.walls.bottom;
+            }
+
+            else if (
+                route.y2 === route.y1 - 1
+            ) {
+                alreadyOpen =
+                    !cell.walls.top;
+            }
+
+            if (!alreadyOpen) {
+
+                openBetween(
+                    route.x1,
+                    route.y1,
+                    route.x2,
+                    route.y2
+                );
+
+                centerConnections++;
+
+            }
 
         }
 
     }
 
     /* =====================================
-       REDUCE LONG DEAD ENDS
-       
-       Add a few extra openings from
-       cells that still have only one exit.
+       REDUCE DEAD ENDS
     ====================================== */
 
     let deadEndCandidates = [];
 
-    for (let y = 1; y < MAZE_SIZE - 1; y++) {
+    for (
+        let y = 1;
+        y < MAZE_SIZE - 1;
+        y++
+    ) {
 
-        for (let x = 1; x < MAZE_SIZE - 1; x++) {
+        for (
+            let x = 1;
+            x < MAZE_SIZE - 1;
+            x++
+        ) {
 
             if (
                 getDegree(x, y) === 1
@@ -924,9 +827,7 @@ function createMaze() {
             deadEndsOpened >=
             MAX_DEAD_END_OPENINGS
         ) {
-
             break;
-
         }
 
         const possibleWalls =
@@ -946,15 +847,8 @@ function createMaze() {
         if (
             possibleWalls.length === 0
         ) {
-
             continue;
-
         }
-
-        /*
-           Prefer an opening that connects
-           to another low-degree area.
-        */
 
         possibleWalls.sort(
             (a, b) => {
@@ -988,7 +882,9 @@ function createMaze() {
         const selected =
             possibleWalls[0];
 
-        if (!selected) continue;
+        if (!selected) {
+            continue;
+        }
 
         openBetween(
             selected.x1,
@@ -1003,12 +899,13 @@ function createMaze() {
 
     /* =====================================
        FORCE OUTER BORDER CLOSED
-       
-       Important:
-       Players/monsters must never leave maze.
     ====================================== */
 
-    for (let x = 0; x < MAZE_SIZE; x++) {
+    for (
+        let x = 0;
+        x < MAZE_SIZE;
+        x++
+    ) {
 
         grid[0][x].walls.top = true;
 
@@ -1017,7 +914,11 @@ function createMaze() {
 
     }
 
-    for (let y = 0; y < MAZE_SIZE; y++) {
+    for (
+        let y = 0;
+        y < MAZE_SIZE;
+        y++
+    ) {
 
         grid[y][0].walls.left = true;
 
@@ -1027,12 +928,20 @@ function createMaze() {
     }
 
     /* =====================================
-       CLEAN VISITED FLAG
+       RESET VISITED
     ====================================== */
 
-    for (let y = 0; y < MAZE_SIZE; y++) {
+    for (
+        let y = 0;
+        y < MAZE_SIZE;
+        y++
+    ) {
 
-        for (let x = 0; x < MAZE_SIZE; x++) {
+        for (
+            let x = 0;
+            x < MAZE_SIZE;
+            x++
+        ) {
 
             grid[y][x].visited = false;
 
@@ -1066,7 +975,6 @@ function isCellOccupied(
 
 /* =====================================================
    PLAYER SPAWN
-   Around the edges
 ===================================================== */
 
 function getRandomEdgeCell() {
@@ -1096,9 +1004,7 @@ function getRandomEdgeCell() {
             if (
                 isCellOccupied(x, y)
             ) {
-
                 continue;
-
             }
 
             candidates.push({
@@ -1289,7 +1195,7 @@ function startGame() {
     registrationOpen = false;
 
     /* =====================================
-       PLAYERS ON EDGES
+       PLAYERS
     ====================================== */
 
     for (
@@ -1312,21 +1218,19 @@ function startGame() {
     }
 
     /* =====================================
-       TREASURE MODE
+       TREASURE
     ====================================== */
 
     if (
         gameMode === "treasure"
     ) {
 
-        spawnTreasure(
-            true
-        );
+        spawnTreasure(true);
 
     }
 
     /* =====================================
-       CHASE MODE
+       CHASE
     ====================================== */
 
     else if (
@@ -1345,16 +1249,12 @@ function startGame() {
     }
 
     /* =====================================
-       NAHROUSH
+       NAHROUSH RESERVED
     ====================================== */
 
     else if (
         gameMode === "nahroush"
     ) {
-
-        /*
-            Reserved for future mode.
-        */
 
         gameStarted = false;
 
@@ -1408,9 +1308,7 @@ function spawnTreasure(
     else {
 
         treasure =
-            getRandomFreeCell(
-                false
-            );
+            getRandomFreeCell(false);
 
     }
 
@@ -1476,9 +1374,7 @@ function startTreasureCountdown() {
                                 gameMode === "treasure"
                             ) {
 
-                                spawnTreasure(
-                                    false
-                                );
+                                spawnTreasure(false);
 
                             }
 
@@ -2054,11 +1950,13 @@ function catchPlayersOnMonsterCell(
             io.emit(
                 "player_caught",
                 {
+
                     uniqueId:
                         player.uniqueId,
 
                     nickname:
                         player.nickname
+
                 }
             );
 
@@ -2134,9 +2032,7 @@ function movePlayer(
     command
 ) {
 
-    if (
-        !gameStarted
-    ) {
+    if (!gameStarted) {
 
         return;
 
@@ -2222,11 +2118,6 @@ function movePlayer(
         return;
 
     }
-
-    /*
-        اللاعبون يستطيعون الوقوف
-        فوق بعضهم البعض.
-    */
 
     player.x =
         nx;
@@ -2502,9 +2393,12 @@ io.on(
                     socket.emit(
                         "tiktok_connected",
                         {
+
                             success: false,
+
                             error:
                                 "اسم المستخدم غير صحيح"
+
                         }
                     );
 
@@ -2646,9 +2540,7 @@ io.on(
 
                         }
 
-                        if (
-                            avatar
-                        ) {
+                        if (avatar) {
 
                             avatarCache.set(
                                 uniqueId,
@@ -2686,8 +2578,7 @@ io.on(
 
                         if (
                             comment ===
-                            joinKeyword
-                                .toLowerCase()
+                            joinKeyword.toLowerCase()
                         ) {
 
                             registerPlayer(
@@ -2700,18 +2591,34 @@ io.on(
 
                         /* =====================================
                            MOVEMENT
+                           
+                           Exact standalone commands only.
                         ====================================== */
 
-                        if (
-                            comment === "u" ||
-                            comment === "d" ||
-                            comment === "r" ||
-                            comment === "l"
-                        ) {
+                        const movementMap = {
+
+                            "u": "u",
+                            "فوق": "u",
+
+                            "d": "d",
+                            "تحت": "d",
+
+                            "r": "r",
+                            "يمين": "r",
+
+                            "l": "l",
+                            "يسار": "l"
+
+                        };
+
+                        const direction =
+                            movementMap[comment];
+
+                        if (direction) {
 
                             movePlayer(
                                 uniqueId,
-                                comment
+                                direction
                             );
 
                         }
