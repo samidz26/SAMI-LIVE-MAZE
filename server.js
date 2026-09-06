@@ -2372,7 +2372,145 @@ io.on(
             "game_state",
             getGameState()
         );
+/* =====================================================
+   REGISTRATION
+===================================================== */
 
+socket.on(
+    "set_registration",
+    value => {
+
+        if (gameStarted) return;
+
+        registrationOpen = Boolean(value);
+
+        broadcastState();
+    }
+);
+
+
+/* =====================================================
+   MAX PLAYERS
+===================================================== */
+
+socket.on(
+    "set_max_players",
+    value => {
+
+        if (gameStarted) return;
+
+        // MAX_PLAYERS ثابت حاليًا = 20
+        // نحتفظ بالقيمة في الواجهة فقط
+        broadcastState();
+    }
+);
+
+
+/* =====================================================
+   TREASURE DURATION
+===================================================== */
+
+socket.on(
+    "set_treasure_duration",
+    value => {
+
+        if (gameStarted) return;
+
+        const duration = Number(value);
+
+        if (
+            Number.isFinite(duration) &&
+            duration >= 1 &&
+            duration <= 300
+        ) {
+
+            treasureSettings.duration = duration;
+            treasureTimeLeft = duration;
+
+            broadcastState();
+        }
+    }
+);
+
+
+/* =====================================================
+   CHASE ROUND DURATION
+===================================================== */
+
+socket.on(
+    "set_round_duration",
+    value => {
+
+        if (gameStarted) return;
+
+        const duration = Number(value);
+
+        if (
+            Number.isFinite(duration) &&
+            duration >= 10 &&
+            duration <= 3600
+        ) {
+
+            chaseSettings.roundDuration = duration;
+            roundTimeLeft = duration;
+
+            broadcastState();
+        }
+    }
+);
+
+
+/* =====================================================
+   MONSTER COUNT
+===================================================== */
+
+socket.on(
+    "set_monster_count",
+    value => {
+
+        if (gameStarted) return;
+
+        const count = Number(value);
+
+        if (
+            Number.isFinite(count) &&
+            count >= 1 &&
+            count <= 10
+        ) {
+
+            chaseSettings.monsterCount =
+                Math.floor(count);
+
+            broadcastState();
+        }
+    }
+);
+
+
+/* =====================================================
+   MONSTER SPEED
+===================================================== */
+
+socket.on(
+    "set_monster_speed",
+    value => {
+
+        if (gameStarted) return;
+
+        const speed = Number(value);
+
+        if (
+            Number.isFinite(speed) &&
+            speed >= 200 &&
+            speed <= 5000
+        ) {
+
+            chaseSettings.monsterSpeed = speed;
+
+            broadcastState();
+        }
+    }
+);
         /* =====================================
            TIKTOK CONNECT
         ====================================== */
