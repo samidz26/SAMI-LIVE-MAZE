@@ -2878,27 +2878,38 @@ io.on(
         ====================================== */
 
         socket.on(
-            "start_game",
-            () => {
+    "start_game",
+    (callback) => {
 
-                const result =
-                    startGame();
+        const result = startGame();
 
-                if (
-                    !result.success
-                ) {
+        if (
+            !result.success
+        ) {
 
-                    socket.emit(
-                        "game_error",
-                        result.message
-                    );
-
-                    return;
-
-                }
-
+            if (typeof callback === "function") {
+                callback({
+                    success: false,
+                    message: result.message
+                });
             }
-        );
+
+            socket.emit(
+                "game_error",
+                result.message
+            );
+
+            return;
+        }
+
+        if (typeof callback === "function") {
+            callback({
+                success: true
+            });
+        }
+
+    }
+); 
 
         /* =====================================
            RESET
