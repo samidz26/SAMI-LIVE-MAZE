@@ -2071,7 +2071,7 @@ function createGameManager({ io, settings }) {
             !cell.walls.bottom
         ) {
 
-            ny++;
+            ny--;
 
         } else if (
             command === "r" &&
@@ -2090,7 +2090,7 @@ function createGameManager({ io, settings }) {
              * سنصلحه لاحقًا بعد حل مشكلة المتاهة.
              */
 
-            nx++;
+            nx--;
 
         } else {
 
