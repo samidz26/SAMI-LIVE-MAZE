@@ -1,11 +1,29 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
+
 const {
     TikTokLiveConnection,
     WebcastEvent,
     ControlEvent
 } = require("tiktok-live-connector");
+
+const {
+    createMaze,
+    MAZE_SIZE
+} = require("./game/maze");
+
+const {
+    getPlayers,
+    getPlayersArray,
+    hasPlayer,
+    getPlayer,
+    addPlayer,
+    removePlayer,
+    clearPlayers,
+    getPlayerCount,
+    registerPlayer
+} = require("./game/players");
 
 const app = express();
 const server = http.createServer(app);
@@ -13,43 +31,51 @@ const io = new Server(server);
 
 app.use(express.static(__dirname + "/public"));
 
+/* =====================================================
+   SETTINGS
+===================================================== */
+
 const PORT = process.env.PORT || 3000;
 
-const MAZE_SIZE = 12;
-
 const DEFAULT_MAX_PLAYERS = 20;
+
 const DEFAULT_JOIN_KEYWORD = "JOIN";
 
 const DEFAULT_TREASURE_DURATION = 10;
 
 const DEFAULT_ROUND_DURATION = 60;
+
 const DEFAULT_MONSTER_COUNT = 1;
+
 const DEFAULT_MONSTER_SPEED = 1000;
 
-const DEFAULT_NAHROUSH_USERNAME = "jordan_river13";
+const DEFAULT_NAHROUSH_USERNAME =
+    "jordan_river13";
+
+/* =====================================================
+   TIKTOK
+===================================================== */
 
 let tiktokLiveConnection = null;
+
 let connectedUsername = "";
 
 const avatarCache = new Map();
 
-/* =========================================
-   GAME SETTINGS
-========================================= */
+/* =====================================================
+   GAME STATE
+===================================================== */
 
 let registrationOpen = true;
 
-let joinKeyword = DEFAULT_JOIN_KEYWORD;
+let joinKeyword =
+    DEFAULT_JOIN_KEYWORD;
 
-let gameMode = "treasure";
+let maxPlayers =
+    DEFAULT_MAX_PLAYERS;
 
-let maxPlayers = DEFAULT_MAX_PLAYERS;
-
-let nahroushUsername = DEFAULT_NAHROUSH_USERNAME;
-
-/* =========================================
-   GAME STATE
-========================================= */
+let gameMode =
+    "treasure";
 
 let gameStarted = false;
 
@@ -57,7 +83,7 @@ let gameWinner = null;
 
 let gameResult = null;
 
-let players = new Map();
+const players = getPlayers();
 
 let maze = [];
 
@@ -69,37 +95,51 @@ let roundTimer = null;
 
 let monsterTimer = null;
 
-let roundTimeLeft = DEFAULT_ROUND_DURATION;
+let roundTimeLeft =
+    DEFAULT_ROUND_DURATION;
 
-let treasureTimeLeft = DEFAULT_TREASURE_DURATION;
+let treasureTimeLeft =
+    DEFAULT_TREASURE_DURATION;
 
 let monsters = [];
 
-let movementLockedUntil = 0;
+/* =====================================================
+   NAHROUSH
+===================================================== */
+
+let nahroushUsername =
+    DEFAULT_NAHROUSH_USERNAME;
 
 let nahroushCaught = false;
 
-/* =========================================
-   SETTINGS OBJECTS
-========================================= */
+/* =====================================================
+   MODE SETTINGS
+===================================================== */
 
 let treasureSettings = {
-    duration: DEFAULT_TREASURE_DURATION
+    duration:
+        DEFAULT_TREASURE_DURATION
 };
 
 let chaseSettings = {
-    roundDuration: DEFAULT_ROUND_DURATION,
-    monsterCount: DEFAULT_MONSTER_COUNT,
-    monsterSpeed: DEFAULT_MONSTER_SPEED
+    roundDuration:
+        DEFAULT_ROUND_DURATION,
+
+    monsterCount:
+        DEFAULT_MONSTER_COUNT,
+
+    monsterSpeed:
+        DEFAULT_MONSTER_SPEED
 };
 
-/* =========================================
+/* =====================================================
    AVATAR
-========================================= */
+===================================================== */
 
 function extractAvatar(data) {
 
-    const user = data?.user || {};
+    const user =
+        data?.user || {};
 
     const sources = [
         user.profilePictureUrl,
@@ -107,7 +147,6 @@ function extractAvatar(data) {
         user.avatarMedium,
         user.avatarLarge,
         user.avatarJpg,
-
         data?.profilePictureUrl,
         data?.avatarThumb,
         data?.avatarMedium,
@@ -116,7 +155,9 @@ function extractAvatar(data) {
 
     for (const source of sources) {
 
-        if (!source) continue;
+        if (!source) {
+            continue;
+        }
 
         if (
             typeof source === "string" &&
@@ -125,28 +166,44 @@ function extractAvatar(data) {
             return source;
         }
 
-        if (typeof source === "object") {
+        if (
+            typeof source === "object"
+        ) {
 
-            if (Array.isArray(source.urlList)) {
+            if (
+                Array.isArray(
+                    source.urlList
+                )
+            ) {
 
-                const url = source.urlList.find(
-                    item =>
-                        typeof item === "string" &&
-                        item.startsWith("http")
-                );
+                const url =
+                    source.urlList.find(
+                        item =>
+                            typeof item === "string" &&
+                            item.startsWith("http")
+                    );
 
-                if (url) return url;
+                if (url) {
+                    return url;
+                }
             }
 
-            if (Array.isArray(source.urls)) {
+            if (
+                Array.isArray(
+                    source.urls
+                )
+            ) {
 
-                const url = source.urls.find(
-                    item =>
-                        typeof item === "string" &&
-                        item.startsWith("http")
-                );
+                const url =
+                    source.urls.find(
+                        item =>
+                            typeof item === "string" &&
+                            item.startsWith("http")
+                    );
 
-                if (url) return url;
+                if (url) {
+                    return url;
+                }
             }
 
             if (
@@ -161,50 +218,9 @@ function extractAvatar(data) {
     return "";
 }
 
-/* =========================================
-   NAHROUSH CHECK
-========================================= */
-
-function isNahroushId(id) {
-
-    return String(id || "")
-        .replace(/^@/, "")
-        .toLowerCase() ===
-
-        String(nahroushUsername || "")
-            .replace(/^@/, "")
-            .toLowerCase();
-}
-
-/* =========================================
-   PLAYERS ARRAY
-========================================= */
-
-function getPlayersArray() {
-
-    return Array.from(players.values()).map(p => ({
-
-        uniqueId: p.uniqueId,
-
-        nickname: p.nickname,
-
-        profilePictureUrl: p.profilePictureUrl,
-
-        x: p.x,
-
-        y: p.y,
-
-        alive: p.alive !== false,
-
-        caught: p.caught === true,
-
-        isNahroush: p.isNahroush === true
-    }));
-}
-
-/* =========================================
+/* =====================================================
    GAME STATE
-========================================= */
+===================================================== */
 
 function getGameState() {
 
@@ -214,7 +230,8 @@ function getGameState() {
 
         treasure,
 
-        players: getPlayersArray(),
+        players:
+            getPlayersArray(),
 
         monsters,
 
@@ -227,6 +244,8 @@ function getGameState() {
         registrationOpen,
 
         joinKeyword,
+
+        maxPlayers,
 
         gameMode,
 
@@ -242,614 +261,48 @@ function getGameState() {
 
         nahroushUsername,
 
-        maxPlayers,
-
-        movementLockedUntil
+        nahroushCaught
     };
 }
 
-/* =========================================
+/* =====================================================
    BROADCAST
-========================================= */
+===================================================== */
 
 function broadcastState() {
 
-    io.emit("game_state", getGameState());
-}
-
-/* =========================================
-   MAZE GENERATOR
-   لا تغير هذا الجزء
-========================================= */
-
-function createMaze() {
-
-    const grid = [];
-
-    for (let y = 0; y < MAZE_SIZE; y++) {
-
-        const row = [];
-
-        for (let x = 0; x < MAZE_SIZE; x++) {
-
-            row.push({
-
-                x,
-                y,
-
-                walls: {
-                    top: true,
-                    right: true,
-                    bottom: true,
-                    left: true
-                },
-
-                visited: false
-            });
-        }
-
-        grid.push(row);
-    }
-
-    const directions = [
-
-        {
-            dx: 0,
-            dy: -1,
-            wall: "top",
-            opposite: "bottom"
-        },
-
-        {
-            dx: 1,
-            dy: 0,
-            wall: "right",
-            opposite: "left"
-        },
-
-        {
-            dx: 0,
-            dy: 1,
-            wall: "bottom",
-            opposite: "top"
-        },
-
-        {
-            dx: -1,
-            dy: 0,
-            wall: "left",
-            opposite: "right"
-        }
-    ];
-
-    const stack = [];
-
-    const sx =
-        Math.floor(Math.random() * MAZE_SIZE);
-
-    const sy =
-        Math.floor(Math.random() * MAZE_SIZE);
-
-    grid[sy][sx].visited = true;
-
-    stack.push(grid[sy][sx]);
-
-    /* =====================================
-       RANDOMIZED DFS
-    ===================================== */
-
-    while (stack.length) {
-
-        const current =
-            stack[stack.length - 1];
-
-        const neighbors = [];
-
-        for (const direction of directions) {
-
-            const nx =
-                current.x + direction.dx;
-
-            const ny =
-                current.y + direction.dy;
-
-            if (
-                nx < 0 ||
-                nx >= MAZE_SIZE ||
-                ny < 0 ||
-                ny >= MAZE_SIZE
-            ) {
-                continue;
-            }
-
-            const neighbor =
-                grid[ny][nx];
-
-            if (!neighbor.visited) {
-
-                neighbors.push({
-                    neighbor,
-                    direction
-                });
-            }
-        }
-
-        if (!neighbors.length) {
-
-            stack.pop();
-
-            continue;
-        }
-
-        const chosen =
-            neighbors[
-                Math.floor(
-                    Math.random() * neighbors.length
-                )
-            ];
-
-        current.walls[
-            chosen.direction.wall
-        ] = false;
-
-        chosen.neighbor.walls[
-            chosen.direction.opposite
-        ] = false;
-
-        chosen.neighbor.visited = true;
-
-        stack.push(chosen.neighbor);
-    }
-
-    /* =====================================
-       OPEN BETWEEN
-    ===================================== */
-
-    function openBetween(x1, y1, x2, y2) {
-
-        if (
-            x1 < 0 ||
-            x1 >= MAZE_SIZE ||
-            y1 < 0 ||
-            y1 >= MAZE_SIZE ||
-
-            x2 < 0 ||
-            x2 >= MAZE_SIZE ||
-            y2 < 0 ||
-            y2 >= MAZE_SIZE
-        ) {
-            return false;
-        }
-
-        const a = grid[y1][x1];
-
-        const b = grid[y2][x2];
-
-        if (x2 === x1 + 1) {
-
-            a.walls.right = false;
-
-            b.walls.left = false;
-        }
-
-        else if (x2 === x1 - 1) {
-
-            a.walls.left = false;
-
-            b.walls.right = false;
-        }
-
-        else if (y2 === y1 + 1) {
-
-            a.walls.bottom = false;
-
-            b.walls.top = false;
-        }
-
-        else if (y2 === y1 - 1) {
-
-            a.walls.top = false;
-
-            b.walls.bottom = false;
-        }
-
-        else {
-
-            return false;
-        }
-
-        return true;
-    }
-
-    /* =====================================
-       DEGREE
-    ===================================== */
-
-    function getDegree(x, y) {
-
-        const c = grid[y][x];
-
-        let degree = 0;
-
-        if (!c.walls.top && y > 0)
-            degree++;
-
-        if (
-            !c.walls.right &&
-            x < MAZE_SIZE - 1
-        )
-            degree++;
-
-        if (
-            !c.walls.bottom &&
-            y < MAZE_SIZE - 1
-        )
-            degree++;
-
-        if (!c.walls.left && x > 0)
-            degree++;
-
-        return degree;
-    }
-
-    /* =====================================
-       CLOSED INTERNAL WALLS
-    ===================================== */
-
-    function getClosedInternalWalls() {
-
-        const walls = [];
-
-        for (let y = 0; y < MAZE_SIZE; y++) {
-
-            for (let x = 0; x < MAZE_SIZE; x++) {
-
-                if (
-                    x < MAZE_SIZE - 1 &&
-                    grid[y][x].walls.right
-                ) {
-
-                    walls.push({
-                        x1: x,
-                        y1: y,
-                        x2: x + 1,
-                        y2: y
-                    });
-                }
-
-                if (
-                    y < MAZE_SIZE - 1 &&
-                    grid[y][x].walls.bottom
-                ) {
-
-                    walls.push({
-                        x1: x,
-                        y1: y,
-                        x2: x,
-                        y2: y + 1
-                    });
-                }
-            }
-        }
-
-        return walls;
-    }
-
-    /* =====================================
-       10 EXTRA LOOP OPENINGS
-    ===================================== */
-
-    let loopCandidates =
-        getClosedInternalWalls()
-            .sort(() => Math.random() - 0.5);
-
-    let loopsCreated = 0;
-
-    for (const wall of loopCandidates) {
-
-        if (loopsCreated >= 10)
-            break;
-
-        const degree =
-            getDegree(wall.x1, wall.y1) +
-            getDegree(wall.x2, wall.y2);
-
-        if (degree <= 4) {
-
-            openBetween(
-                wall.x1,
-                wall.y1,
-                wall.x2,
-                wall.y2
-            );
-
-            loopsCreated++;
-        }
-    }
-
-    /* =====================================
-       CENTER 2x2 OPENING
-    ===================================== */
-
-    openBetween(5, 5, 6, 5);
-
-    openBetween(5, 5, 5, 6);
-
-    openBetween(6, 5, 6, 6);
-
-    openBetween(5, 6, 6, 6);
-
-    /* =====================================
-       UP TO 2 CENTER ESCAPE ROUTES
-    ===================================== */
-
-    const centerRoutes = [
-
-        {
-            x1: 6,
-            y1: 6,
-            x2: 7,
-            y2: 6
-        },
-
-        {
-            x1: 6,
-            y1: 6,
-            x2: 6,
-            y2: 7
-        },
-
-        {
-            x1: 5,
-            y1: 5,
-            x2: 4,
-            y2: 5
-        },
-
-        {
-            x1: 5,
-            y1: 5,
-            x2: 5,
-            y2: 4
-        }
-    ]
-        .sort(() => Math.random() - 0.5);
-
-    let centerConnections = 0;
-
-    for (const route of centerRoutes) {
-
-        if (centerConnections >= 2)
-            break;
-
-        const c =
-            grid[route.y1][route.x1];
-
-        let alreadyOpen = false;
-
-        if (route.x2 === route.x1 + 1)
-            alreadyOpen = !c.walls.right;
-
-        else if (route.x2 === route.x1 - 1)
-            alreadyOpen = !c.walls.left;
-
-        else if (route.y2 === route.y1 + 1)
-            alreadyOpen = !c.walls.bottom;
-
-        else if (route.y2 === route.y1 - 1)
-            alreadyOpen = !c.walls.top;
-
-        if (!alreadyOpen) {
-
-            openBetween(
-                route.x1,
-                route.y1,
-                route.x2,
-                route.y2
-            );
-
-            centerConnections++;
-        }
-    }
-
-    /* =====================================
-       UP TO 8 DEAD-END OPENINGS
-    ===================================== */
-
-    let deadEndCandidates = [];
-
-    for (
-        let y = 1;
-        y < MAZE_SIZE - 1;
-        y++
-    ) {
-
-        for (
-            let x = 1;
-            x < MAZE_SIZE - 1;
-            x++
-        ) {
-
-            if (getDegree(x, y) === 1) {
-
-                deadEndCandidates.push({
-                    x,
-                    y
-                });
-            }
-        }
-    }
-
-    deadEndCandidates.sort(
-        () => Math.random() - 0.5
+    io.emit(
+        "game_state",
+        getGameState()
     );
-
-    let deadEndsOpened = 0;
-
-    for (const cell of deadEndCandidates) {
-
-        if (deadEndsOpened >= 8)
-            break;
-
-        const possible =
-            getClosedInternalWalls().filter(
-                wall =>
-                    (
-                        wall.x1 === cell.x &&
-                        wall.y1 === cell.y
-                    ) ||
-                    (
-                        wall.x2 === cell.x &&
-                        wall.y2 === cell.y
-                    )
-            );
-
-        if (!possible.length)
-            continue;
-
-        possible.sort((a, b) => {
-
-            const ao =
-                a.x1 === cell.x &&
-                a.y1 === cell.y
-
-                    ? [a.x2, a.y2]
-
-                    : [a.x1, a.y1];
-
-            const bo =
-                b.x1 === cell.x &&
-                b.y1 === cell.y
-
-                    ? [b.x2, b.y2]
-
-                    : [b.x1, b.y1];
-
-            return (
-                getDegree(ao[0], ao[1]) -
-                getDegree(bo[0], bo[1])
-            );
-        });
-
-        const selected = possible[0];
-
-        openBetween(
-            selected.x1,
-            selected.y1,
-            selected.x2,
-            selected.y2
-        );
-
-        deadEndsOpened++;
-    }
-
-    /* =====================================
-       FORCE OUTER BORDER CLOSED
-    ===================================== */
-
-    for (let x = 0; x < MAZE_SIZE; x++) {
-
-        grid[0][x].walls.top = true;
-
-        grid[MAZE_SIZE - 1][x]
-            .walls.bottom = true;
-    }
-
-    for (let y = 0; y < MAZE_SIZE; y++) {
-
-        grid[y][0].walls.left = true;
-
-        grid[y][MAZE_SIZE - 1]
-            .walls.right = true;
-    }
-
-    /* =====================================
-       RESET VISITED
-    ===================================== */
-
-    for (let y = 0; y < MAZE_SIZE; y++) {
-
-        for (let x = 0; x < MAZE_SIZE; x++) {
-
-            grid[y][x].visited = false;
-        }
-    }
-
-    return grid;
 }
 
-/* =========================================
-   CLEAR TIMERS
-========================================= */
-
-function clearGameTimers() {
-
-    if (treasureTimer) {
-
-        clearInterval(treasureTimer);
-
-        treasureTimer = null;
-    }
-
-    if (roundTimer) {
-
-        clearInterval(roundTimer);
-
-        roundTimer = null;
-    }
-
-    if (monsterTimer) {
-
-        clearInterval(monsterTimer);
-
-        monsterTimer = null;
-    }
-}
-
-/* =========================================
-   CENTER CELL
-========================================= */
-
-function centerCell() {
-
-    return {
-
-        x: Math.floor(MAZE_SIZE / 2),
-
-        y: Math.floor(MAZE_SIZE / 2)
-    };
-}
-
-/* =========================================
-   OCCUPIED CELL
-========================================= */
+/* =====================================================
+   FREE CELLS
+===================================================== */
 
 function isCellOccupied(
     x,
-    y,
-    ignoreId = null
+    y
 ) {
 
     return Array.from(
         players.values()
     ).some(
-        p =>
-            p.uniqueId !== ignoreId &&
-            p.alive !== false &&
-            p.x === x &&
-            p.y === y
+        player =>
+            player.x === x &&
+            player.y === y &&
+            player.alive !== false
     );
 }
 
-/* =========================================
-   RANDOM EDGE CELL
-========================================= */
+/* =====================================================
+   PLAYER SPAWN
+===================================================== */
 
-function getRandomEdgeCell(
-    ignoreId = null
-) {
+function getRandomEdgeCell() {
 
-    const cells = [];
+    const candidates = [];
 
     for (
         let y = 0;
@@ -863,52 +316,82 @@ function getRandomEdgeCell(
             x++
         ) {
 
-            const edge =
+            const isEdge =
                 x === 0 ||
                 y === 0 ||
                 x === MAZE_SIZE - 1 ||
                 y === MAZE_SIZE - 1;
 
-            if (!edge)
+            if (!isEdge) {
                 continue;
+            }
 
             if (
-                isCellOccupied(
-                    x,
-                    y,
-                    ignoreId
-                )
-            )
+                isCellOccupied(x, y)
+            ) {
                 continue;
+            }
 
-            cells.push({ x, y });
+            candidates.push({
+                x,
+                y
+            });
         }
     }
 
-    if (cells.length) {
+    if (
+        candidates.length === 0
+    ) {
 
-        return cells[
-            Math.floor(
-                Math.random() * cells.length
-            )
-        ];
+        return {
+            x:
+                Math.floor(
+                    Math.random() *
+                    MAZE_SIZE
+                ),
+
+            y:
+                Math.floor(
+                    Math.random() *
+                    MAZE_SIZE
+                )
+        };
     }
 
+    return candidates[
+        Math.floor(
+            Math.random() *
+            candidates.length
+        )
+    ];
+}
+
+/* =====================================================
+   CENTER CELL
+===================================================== */
+
+function getCenterCell() {
+
+    const center =
+        Math.floor(
+            MAZE_SIZE / 2
+        );
+
     return {
-        x: 0,
-        y: 0
+        x: center,
+        y: center
     };
 }
 
-/* =========================================
+/* =====================================================
    RANDOM FREE CELL
-========================================= */
+===================================================== */
 
 function getRandomFreeCell(
     avoidCenter = false
 ) {
 
-    const cells = [];
+    const candidates = [];
 
     for (
         let y = 0;
@@ -924,18 +407,21 @@ function getRandomFreeCell(
 
             if (
                 avoidCenter &&
-                x === 6 &&
-                y === 6
-            )
+                x === Math.floor(
+                    MAZE_SIZE / 2
+                ) &&
+                y === Math.floor(
+                    MAZE_SIZE / 2
+                )
+            ) {
                 continue;
+            }
 
             if (
-                isCellOccupied(
-                    x,
-                    y
-                )
-            )
+                isCellOccupied(x, y)
+            ) {
                 continue;
+            }
 
             if (
                 monsters.some(
@@ -943,594 +429,34 @@ function getRandomFreeCell(
                         monster.x === x &&
                         monster.y === y
                 )
-            )
+            ) {
                 continue;
+            }
 
-            cells.push({
+            candidates.push({
                 x,
                 y
             });
         }
     }
 
-    if (cells.length) {
-
-        return cells[
-            Math.floor(
-                Math.random() * cells.length
-            )
-        ];
-    }
-
-    return centerCell();
-}
-
-/* =========================================
-   TREASURE
-========================================= */
-
-function spawnTreasure(first = false) {
-
-    if (first) {
-
-        treasure = centerCell();
-
-    } else {
-
-        treasure =
-            getRandomFreeCell(false);
-    }
-
-    treasureTimeLeft =
-        treasureSettings.duration;
-
-    if (treasureTimer)
-        clearInterval(treasureTimer);
-
-    treasureTimer = setInterval(() => {
-
-        if (
-            !gameStarted ||
-            gameMode !== "treasure"
-        ) {
-
-            clearInterval(
-                treasureTimer
-            );
-
-            treasureTimer = null;
-
-            return;
-        }
-
-        treasureTimeLeft--;
-
-        if (treasureTimeLeft <= 0) {
-
-            treasure =
-                getRandomFreeCell(false);
-
-            treasureTimeLeft =
-                treasureSettings.duration;
-        }
-
-        broadcastState();
-
-    }, 1000);
-}
-
-/* =========================================
-   CHASE TIMER
-========================================= */
-
-function startRoundTimer() {
-
-    roundTimeLeft =
-        chaseSettings.roundDuration;
-
-    if (roundTimer)
-        clearInterval(roundTimer);
-
-    roundTimer = setInterval(() => {
-
-        if (
-            !gameStarted ||
-            gameMode === "nahroush"
-        ) {
-
-            clearInterval(roundTimer);
-
-            roundTimer = null;
-
-            return;
-        }
-
-        roundTimeLeft--;
-
-        if (roundTimeLeft <= 0) {
-
-            const alive =
-                Array.from(
-                    players.values()
-                ).filter(
-                    p =>
-                        p.alive &&
-                        !p.isNahroush
-                );
-
-            endChaseGame(
-                alive.length
-                    ? "players"
-                    : "monsters"
-            );
-
-            return;
-        }
-
-        broadcastState();
-
-    }, 1000);
-}
-
-/* =========================================
-   MONSTER SPAWN
-========================================= */
-
-function getMonsterSpawnCell(index) {
-
-    if (index === 0) {
-
-        return centerCell();
-    }
-
-    const cell =
-        getRandomFreeCell(false);
-
-    const center =
-        centerCell();
-
-    const distance =
-        Math.abs(
-            cell.x - center.x
-        ) +
-        Math.abs(
-            cell.y - center.y
-        );
-
-    if (distance <= 2) {
-
-        return {
-
-            x: Math.min(
-                MAZE_SIZE - 1,
-                center.x +
-                (index % 2 ? 1 : -1)
-            ),
-
-            y: center.y
-        };
-    }
-
-    return cell;
-}
-
-/* =========================================
-   SPAWN MONSTERS
-========================================= */
-
-function spawnMonsters() {
-
-    monsters = [];
-
-    for (
-        let i = 0;
-        i < chaseSettings.monsterCount;
-        i++
-    ) {
-
-        const position =
-            getMonsterSpawnCell(i);
-
-        monsters.push({
-
-            id: `monster-${i + 1}`,
-
-            x: position.x,
-
-            y: position.y
-        });
-    }
-}
-
-/* =========================================
-   MAZE NEIGHBORS
-========================================= */
-
-function getNeighbors(x, y) {
-
-    const cell =
-        maze[y]?.[x];
-
-    const output = [];
-
-    if (!cell)
-        return output;
-
-    if (!cell.walls.top) {
-
-        output.push({
-            x,
-            y: y - 1
-        });
-    }
-
-    if (!cell.walls.right) {
-
-        output.push({
-            x: x + 1,
-            y
-        });
-    }
-
-    if (!cell.walls.bottom) {
-
-        output.push({
-            x,
-            y: y + 1
-        });
-    }
-
-    if (!cell.walls.left) {
-
-        output.push({
-            x: x - 1,
-            y
-        });
-    }
-
-    return output.filter(
-        p =>
-            p.x >= 0 &&
-            p.x < MAZE_SIZE &&
-            p.y >= 0 &&
-            p.y < MAZE_SIZE
-    );
-}
-
-/* =========================================
-   BFS PATHFINDING
-========================================= */
-
-function findPath(
-    sx,
-    sy,
-    tx,
-    ty
-) {
-
     if (
-        sx === tx &&
-        sy === ty
+        candidates.length === 0
     ) {
-        return [];
+        return getCenterCell();
     }
 
-    const queue = [
-        {
-            x: sx,
-            y: sy
-        }
+    return candidates[
+        Math.floor(
+            Math.random() *
+            candidates.length
+        )
     ];
-
-    const visited =
-        new Set([
-            `${sx},${sy}`
-        ]);
-
-    const previous =
-        new Map();
-
-    while (queue.length) {
-
-        const current =
-            queue.shift();
-
-        for (
-            const next
-            of getNeighbors(
-                current.x,
-                current.y
-            )
-        ) {
-
-            const key =
-                `${next.x},${next.y}`;
-
-            if (visited.has(key))
-                continue;
-
-            visited.add(key);
-
-            previous.set(
-                key,
-                current
-            );
-
-            if (
-                next.x === tx &&
-                next.y === ty
-            ) {
-
-                const path = [];
-
-                let position = next;
-
-                while (
-                    !(
-                        position.x === sx &&
-                        position.y === sy
-                    )
-                ) {
-
-                    path.unshift(position);
-
-                    position =
-                        previous.get(
-                            `${position.x},${position.y}`
-                        );
-                }
-
-                return path;
-            }
-
-            queue.push(next);
-        }
-    }
-
-    return [];
 }
 
-/* =========================================
-   MONSTER CATCH
-   مهم:
-   الوحش يستهدف اللاعبين العاديين فقط
-   ولا يستهدف نهروش أبداً
-========================================= */
-
-function catchRegularPlayersOnMonsterCells() {
-
-    let changed = false;
-
-    for (const monster of monsters) {
-
-        for (const player of players.values()) {
-
-            /* نهروش محمي تماماً من الوحش */
-
-            if (
-                !player.alive ||
-                player.isNahroush
-            ) {
-                continue;
-            }
-
-            if (
-                player.x === monster.x &&
-                player.y === monster.y
-            ) {
-
-                player.alive = false;
-
-                player.caught = true;
-
-                changed = true;
-
-                io.emit(
-                    "player_eliminated",
-                    {
-                        uniqueId:
-                            player.uniqueId,
-
-                        nickname:
-                            player.nickname,
-
-                        profilePictureUrl:
-                            player.profilePictureUrl,
-
-                        reason: "monster"
-                    }
-                );
-            }
-        }
-    }
-
-    return changed;
-}
-
-/* =========================================
-   MOVE MONSTERS
-========================================= */
-
-function moveMonsters() {
-
-    if (
-        !gameStarted ||
-        !monsters.length
-    ) {
-        return;
-    }
-
-    /*
-       الوحش يبحث فقط عن اللاعبين
-       العاديين الأحياء.
-       
-       نهروش مستبعد تماماً.
-    */
-
-    const targets =
-        Array.from(
-            players.values()
-        ).filter(
-            p =>
-                p.alive &&
-                !p.isNahroush
-        );
-
-    /* =====================================
-       لا يوجد لاعبون عاديون
-       نهروش + الوحش يفوزان
-    ===================================== */
-
-    if (!targets.length) {
-
-        if (gameMode === "nahroush") {
-
-            endNahroushGame(
-                "monsters"
-            );
-
-        } else {
-
-            endChaseGame(
-                "monsters"
-            );
-        }
-
-        return;
-    }
-
-    /* =====================================
-       تحريك كل وحش
-    ===================================== */
-
-    for (const monster of monsters) {
-
-        let bestPlayer = null;
-
-        let bestPath = null;
-
-        for (
-            const player
-            of targets
-        ) {
-
-            const path =
-                findPath(
-                    monster.x,
-                    monster.y,
-                    player.x,
-                    player.y
-                );
-
-            if (
-                path.length &&
-                (
-                    bestPath === null ||
-                    path.length <
-                    bestPath.length
-                )
-            ) {
-
-                bestPlayer = player;
-
-                bestPath = path;
-            }
-        }
-
-        if (
-            bestPlayer &&
-            bestPath &&
-            bestPath.length
-        ) {
-
-            const step =
-                bestPath[0];
-
-            monster.x = step.x;
-
-            monster.y = step.y;
-        }
-    }
-
-    /* =====================================
-       اصطياد اللاعبين فقط
-    ===================================== */
-
-    const changed =
-        catchRegularPlayersOnMonsterCells();
-
-    /* =====================================
-       تحقق من نهاية مود نهروش
-    ===================================== */
-
-    if (gameMode === "nahroush") {
-
-        const aliveRegularPlayers =
-            Array.from(
-                players.values()
-            ).some(
-                p =>
-                    p.alive &&
-                    !p.isNahroush
-            );
-
-        if (!aliveRegularPlayers) {
-
-            endNahroushGame(
-                "monsters"
-            );
-
-            return;
-        }
-
-    } else {
-
-        const alivePlayers =
-            Array.from(
-                players.values()
-            ).some(
-                p =>
-                    p.alive &&
-                    !p.isNahroush
-            );
-
-        if (!alivePlayers) {
-
-            endChaseGame(
-                "monsters"
-            );
-
-            return;
-        }
-    }
-
-    if (
-        changed ||
-        gameStarted
-    ) {
-
-        broadcastState();
-    }
-}
-
-/* =========================================
-   MONSTER LOOP
-========================================= */
-
-function startMonsterLoop() {
-
-    if (monsterTimer)
-        clearInterval(monsterTimer);
-
-    monsterTimer = setInterval(
-        moveMonsters,
-        chaseSettings.monsterSpeed
-    );
-}
-
-/* =========================================
+/* =====================================================
    START GAME
-========================================= */
+===================================================== */
 
 function startGame() {
 
@@ -1538,11 +464,14 @@ function startGame() {
 
         return {
             success: false,
-            message: "اللعبة بدأت بالفعل"
+            message:
+                "اللعبة بدأت بالفعل"
         };
     }
 
-    if (!players.size) {
+    if (
+        players.size === 0
+    ) {
 
         return {
             success: false,
@@ -1551,25 +480,14 @@ function startGame() {
         };
     }
 
-    /* =====================================
-       NAHROUSH MUST BE PRESENT
-    ===================================== */
-
-    if (
-        gameMode === "nahroush" &&
-        !playersHasNahroush()
-    ) {
-
-        return {
-
-            success: false,
-
-            message:
-                `يجب أن يدخل نهروش أولاً: @${nahroushUsername}`
-        };
-    }
-
     clearGameTimers();
+
+    maze =
+        createMaze();
+
+    treasure = null;
+
+    monsters = [];
 
     gameWinner = null;
 
@@ -1577,163 +495,136 @@ function startGame() {
 
     nahroushCaught = false;
 
-    maze = createMaze();
+    gameStarted = true;
 
-    monsters = [];
+    registrationOpen = false;
 
-    const center =
-        centerCell();
+    const normalPlayers =
+        Array.from(
+            players.values()
+        ).filter(
+            player =>
+                !player.isNahroush
+        );
 
-    /* =====================================
-       RESET PLAYERS
-    ===================================== */
+    const nahroush =
+        Array.from(
+            players.values()
+        ).find(
+            player =>
+                player.isNahroush
+        );
 
     for (
-        const player
-        of players.values()
+        const player of players.values()
     ) {
 
         player.alive = true;
 
         player.caught = false;
 
-        player.isNahroush =
-            isNahroushId(
-                player.uniqueId
-            );
+        player.x = null;
+
+        player.y = null;
     }
 
-    /* =====================================
-       TREASURE
-    ===================================== */
+    if (
+        gameMode === "nahroush"
+    ) {
 
-    if (gameMode === "treasure") {
+        if (nahroush) {
 
-        for (
-            const player
-            of players.values()
-        ) {
+            const center =
+                getCenterCell();
 
-            const spawn =
-                getRandomEdgeCell(
-                    player.uniqueId
-                );
+            nahroush.x =
+                center.x;
 
-            player.x = spawn.x;
+            nahroush.y =
+                center.y;
 
-            player.y = spawn.y;
+            nahroush.alive = true;
         }
 
-        gameStarted = true;
+        for (
+            const player of normalPlayers
+        ) {
 
-        movementLockedUntil =
-            Date.now() + 5000;
+            const position =
+                getRandomEdgeCell();
+
+            player.x =
+                position.x;
+
+            player.y =
+                position.y;
+        }
+
+        spawnNahroushMonster();
+
+        io.emit(
+            "game_started",
+            getGameState()
+        );
+
+        broadcastState();
+
+        if (!nahroush) {
+
+            endNahroushGame(
+                "monsters"
+            );
+
+        }
+        else {
+
+            startMonsterAI();
+        }
+
+        return {
+            success: true
+        };
+    }
+
+    for (
+        const player of players.values()
+    ) {
+
+        const position =
+            getRandomEdgeCell();
+
+        player.x =
+            position.x;
+
+        player.y =
+            position.y;
+    }
+
+    if (
+        gameMode === "treasure"
+    ) {
 
         spawnTreasure(true);
+
     }
-
-    /* =====================================
-       CHASE
-    ===================================== */
-
-    else if (gameMode === "chase") {
-
-        for (
-            const player
-            of players.values()
-        ) {
-
-            const spawn =
-                getRandomEdgeCell(
-                    player.uniqueId
-                );
-
-            player.x = spawn.x;
-
-            player.y = spawn.y;
-        }
+    else if (
+        gameMode === "chase"
+    ) {
 
         spawnMonsters();
 
-        gameStarted = true;
+        roundTimeLeft =
+            chaseSettings.roundDuration;
 
-        movementLockedUntil =
-            Date.now() + 5000;
+        startRoundCountdown();
 
-        startRoundTimer();
-
-        startMonsterLoop();
+        startMonsterAI();
     }
 
-    /* =====================================
-       NAHROUSH
-    ===================================== */
-
-    else if (gameMode === "nahroush") {
-
-        /* =================================
-           نهروش يبدأ في المركز
-        ================================= */
-
-        for (
-            const player
-            of players.values()
-        ) {
-
-            if (player.isNahroush) {
-
-                player.x =
-                    center.x;
-
-                player.y =
-                    center.y;
-            }
-        }
-
-        /* =================================
-           اللاعبون العاديون على الحواف
-        ================================= */
-
-        for (
-            const player
-            of players.values()
-        ) {
-
-            if (player.isNahroush)
-                continue;
-
-            const spawn =
-                getRandomEdgeCell(
-                    player.uniqueId
-                );
-
-            player.x = spawn.x;
-
-            player.y = spawn.y;
-        }
-
-        /*
-           أول وحش يبدأ في المركز أيضاً.
-           
-           مهم:
-           وجود الوحش في نفس خلية نهروش
-           لا يعني أن نهروش سيتم اصطياده.
-           الوحش يتجاهل نهروش تماماً.
-        */
-
-        spawnMonsters();
-
-        gameStarted = true;
-
-        movementLockedUntil =
-            Date.now() + 5000;
-
-        /*
-           لا يوجد round timer في مود نهروش.
-        */
-
-        startMonsterLoop();
-    }
+    io.emit(
+        "game_started",
+        getGameState()
+    );
 
     broadcastState();
 
@@ -1742,55 +633,909 @@ function startGame() {
     };
 }
 
-/* =========================================
-   CHECK NAHROUSH
-========================================= */
+/* =====================================================
+   TREASURE SPAWN
+===================================================== */
 
-function playersHasNahroush() {
+function spawnTreasure(
+    firstSpawn = false
+) {
 
-    return Array.from(
-        players.values()
-    ).some(
-        player =>
-            player.isNahroush ||
-            isNahroushId(
-                player.uniqueId
-            )
-    );
+    if (!gameStarted) {
+        return;
+    }
+
+    if (
+        gameMode !== "treasure"
+    ) {
+        return;
+    }
+
+    if (firstSpawn) {
+
+        treasure =
+            getCenterCell();
+
+    }
+    else {
+
+        treasure =
+            getRandomFreeCell(false);
+    }
+
+    treasureTimeLeft =
+        treasureSettings.duration;
+
+    broadcastState();
+
+    startTreasureCountdown();
 }
 
-/* =========================================
-   END CHASE
-========================================= */
+/* =====================================================
+   TREASURE COUNTDOWN
+===================================================== */
 
-function endChaseGame(winner) {
+function startTreasureCountdown() {
 
-    if (!gameStarted)
+    if (treasureTimer) {
+
+        clearInterval(
+            treasureTimer
+        );
+    }
+
+    treasureTimer =
+        setInterval(
+            () => {
+
+                if (
+                    !gameStarted ||
+                    gameMode !== "treasure"
+                ) {
+
+                    clearInterval(
+                        treasureTimer
+                    );
+
+                    treasureTimer = null;
+
+                    return;
+                }
+
+                treasureTimeLeft--;
+
+                if (
+                    treasureTimeLeft <= 0
+                ) {
+
+                    treasureTimeLeft = 0;
+
+                    treasure = null;
+
+                    broadcastState();
+
+                    setTimeout(
+                        () => {
+
+                            if (
+                                gameStarted &&
+                                gameMode ===
+                                    "treasure"
+                            ) {
+
+                                spawnTreasure(false);
+                            }
+
+                        },
+                        250
+                    );
+
+                }
+                else {
+
+                    broadcastState();
+                }
+
+            },
+            1000
+        );
+}
+
+/* =====================================================
+   ROUND COUNTDOWN
+===================================================== */
+
+function startRoundCountdown() {
+
+    if (roundTimer) {
+
+        clearInterval(
+            roundTimer
+        );
+    }
+
+    roundTimer =
+        setInterval(
+            () => {
+
+                if (
+                    !gameStarted ||
+                    gameMode !== "chase"
+                ) {
+
+                    clearInterval(
+                        roundTimer
+                    );
+
+                    roundTimer = null;
+
+                    return;
+                }
+
+                roundTimeLeft--;
+
+                if (
+                    roundTimeLeft <= 0
+                ) {
+
+                    roundTimeLeft = 0;
+
+                    endChaseGame(
+                        "players"
+                    );
+
+                    return;
+                }
+
+                broadcastState();
+
+            },
+            1000
+        );
+}
+
+/* =====================================================
+   MONSTERS
+===================================================== */
+
+function spawnMonsters() {
+
+    monsters = [];
+
+    const center =
+        getCenterCell();
+
+    for (
+        let i = 0;
+        i < chaseSettings.monsterCount;
+        i++
+    ) {
+
+        let position;
+
+        if (i === 0) {
+
+            position = {
+                x: center.x,
+                y: center.y
+            };
+
+        }
+        else {
+
+            position =
+                getMonsterSpawnCell();
+        }
+
+        monsters.push({
+
+            id:
+                `monster_${Date.now()}_${i}`,
+
+            x:
+                position.x,
+
+            y:
+                position.y,
+
+            targetId:
+                null
+        });
+    }
+}
+
+/* =====================================================
+   NAHROUSH MONSTER
+===================================================== */
+
+function spawnNahroushMonster() {
+
+    monsters = [];
+
+    const center =
+        getCenterCell();
+
+    monsters.push({
+
+        id:
+            `nahroush_monster_${Date.now()}`,
+
+        x:
+            center.x,
+
+        y:
+            center.y,
+
+        targetId:
+            null
+    });
+}
+
+/* =====================================================
+   MONSTER SPAWN
+===================================================== */
+
+function getMonsterSpawnCell() {
+
+    const candidates = [];
+
+    const center =
+        getCenterCell();
+
+    for (
+        let y = 0;
+        y < MAZE_SIZE;
+        y++
+    ) {
+
+        for (
+            let x = 0;
+            x < MAZE_SIZE;
+            x++
+        ) {
+
+            if (
+                x === center.x &&
+                y === center.y
+            ) {
+                continue;
+            }
+
+            if (
+                monsters.some(
+                    monster =>
+                        monster.x === x &&
+                        monster.y === y
+                )
+            ) {
+                continue;
+            }
+
+            candidates.push({
+                x,
+                y
+            });
+        }
+    }
+
+    return candidates[
+        Math.floor(
+            Math.random() *
+            candidates.length
+        )
+    ];
+}
+
+/* =====================================================
+   MONSTER AI
+===================================================== */
+
+function startMonsterAI() {
+
+    if (monsterTimer) {
+
+        clearInterval(
+            monsterTimer
+        );
+    }
+
+    monsterTimer =
+        setInterval(
+            () => {
+
+                if (
+                    !gameStarted
+                ) {
+
+                    clearInterval(
+                        monsterTimer
+                    );
+
+                    monsterTimer = null;
+
+                    return;
+                }
+
+                if (
+                    gameMode !== "chase" &&
+                    gameMode !== "nahroush"
+                ) {
+
+                    clearInterval(
+                        monsterTimer
+                    );
+
+                    monsterTimer = null;
+
+                    return;
+                }
+
+                moveMonsters();
+
+            },
+            Math.max(
+                100,
+                Number(
+                    chaseSettings.monsterSpeed
+                )
+            )
+        );
+}
+
+/* =====================================================
+   FIND NEAREST PLAYER
+===================================================== */
+
+function findNearestPlayer(
+    monster
+) {
+
+    let alivePlayers;
+
+    if (
+        gameMode === "nahroush"
+    ) {
+
+        alivePlayers =
+            Array.from(
+                players.values()
+            ).filter(
+                player =>
+                    player.alive !== false &&
+                    player.isNahroush !== true
+            );
+
+    }
+    else {
+
+        alivePlayers =
+            Array.from(
+                players.values()
+            ).filter(
+                player =>
+                    player.alive !== false
+            );
+    }
+
+    if (
+        alivePlayers.length === 0
+    ) {
+        return null;
+    }
+
+    let nearest = null;
+
+    let shortestDistance =
+        Infinity;
+
+    for (
+        const player of alivePlayers
+    ) {
+
+        const path =
+            findPath(
+                monster.x,
+                monster.y,
+                player.x,
+                player.y
+            );
+
+        if (
+            path &&
+            path.length < shortestDistance
+        ) {
+
+            shortestDistance =
+                path.length;
+
+            nearest =
+                player;
+        }
+    }
+
+    return nearest;
+}
+
+/* =====================================================
+   PATHFINDING
+===================================================== */
+
+function findPath(
+    startX,
+    startY,
+    targetX,
+    targetY
+) {
+
+    if (
+        !maze[startY] ||
+        !maze[targetY]
+    ) {
+        return null;
+    }
+
+    const queue = [
+        {
+            x: startX,
+            y: startY,
+            path: []
+        }
+    ];
+
+    const visited =
+        new Set();
+
+    visited.add(
+        `${startX},${startY}`
+    );
+
+    while (
+        queue.length > 0
+    ) {
+
+        const current =
+            queue.shift();
+
+        if (
+            current.x === targetX &&
+            current.y === targetY
+        ) {
+
+            return current.path;
+        }
+
+        const cell =
+            maze[current.y]?.[
+                current.x
+            ];
+
+        if (!cell) {
+            continue;
+        }
+
+        const directions = [
+            {
+                dx: 0,
+                dy: -1,
+                blocked:
+                    cell.walls.top
+            },
+            {
+                dx: 1,
+                dy: 0,
+                blocked:
+                    cell.walls.right
+            },
+            {
+                dx: 0,
+                dy: 1,
+                blocked:
+                    cell.walls.bottom
+            },
+            {
+                dx: -1,
+                dy: 0,
+                blocked:
+                    cell.walls.left
+            }
+        ];
+
+        for (
+            const direction of directions
+        ) {
+
+            if (
+                direction.blocked
+            ) {
+                continue;
+            }
+
+            const nx =
+                current.x +
+                direction.dx;
+
+            const ny =
+                current.y +
+                direction.dy;
+
+            if (
+                nx < 0 ||
+                nx >= MAZE_SIZE ||
+                ny < 0 ||
+                ny >= MAZE_SIZE
+            ) {
+                continue;
+            }
+
+            const key =
+                `${nx},${ny}`;
+
+            if (
+                visited.has(key)
+            ) {
+                continue;
+            }
+
+            visited.add(key);
+
+            queue.push({
+
+                x: nx,
+
+                y: ny,
+
+                path: [
+                    ...current.path,
+                    {
+                        x: nx,
+                        y: ny
+                    }
+                ]
+            });
+        }
+    }
+
+    return null;
+}
+
+/* =====================================================
+   MOVE MONSTERS
+===================================================== */
+
+function moveMonsters() {
+
+    if (
+        gameMode === "nahroush"
+    ) {
+
+        moveNahroushMonsters();
+
         return;
+    }
+
+    for (
+        const monster of monsters
+    ) {
+
+        const target =
+            findNearestPlayer(
+                monster
+            );
+
+        if (!target) {
+            continue;
+        }
+
+        monster.targetId =
+            target.uniqueId;
+
+        const path =
+            findPath(
+                monster.x,
+                monster.y,
+                target.x,
+                target.y
+            );
+
+        if (
+            !path ||
+            path.length === 0
+        ) {
+
+            catchPlayersOnMonsterCell(
+                monster
+            );
+
+            continue;
+        }
+
+        const next =
+            path[0];
+
+        monster.x =
+            next.x;
+
+        monster.y =
+            next.y;
+
+        catchPlayersOnMonsterCell(
+            monster
+        );
+    }
+
+    const alivePlayers =
+        Array.from(
+            players.values()
+        ).filter(
+            player =>
+                player.alive !== false
+        );
+
+    if (
+        alivePlayers.length === 0
+    ) {
+
+        endChaseGame(
+            "monsters"
+        );
+
+        return;
+    }
+
+    broadcastState();
+}
+
+/* =====================================================
+   MOVE MONSTERS - NAHROUSH
+===================================================== */
+
+function moveNahroushMonsters() {
+
+    const normalPlayers =
+        Array.from(
+            players.values()
+        ).filter(
+            player =>
+                player.alive !== false &&
+                player.isNahroush !== true
+        );
+
+    if (
+        normalPlayers.length === 0
+    ) {
+
+        endNahroushGame(
+            "monsters"
+        );
+
+        return;
+    }
+
+    for (
+        const monster of monsters
+    ) {
+
+        const target =
+            findNearestPlayer(
+                monster
+            );
+
+        if (target) {
+
+            monster.targetId =
+                target.uniqueId;
+
+            const path =
+                findPath(
+                    monster.x,
+                    monster.y,
+                    target.x,
+                    target.y
+                );
+
+            if (
+                path &&
+                path.length > 0
+            ) {
+
+                const next =
+                    path[0];
+
+                monster.x =
+                    next.x;
+
+                monster.y =
+                    next.y;
+            }
+        }
+
+        catchPlayersOnMonsterCell(
+            monster
+        );
+
+        catchNahroushOnMonsterCell(
+            monster
+        );
+
+        if (
+            !gameStarted
+        ) {
+            return;
+        }
+    }
+
+    const remainingPlayers =
+        Array.from(
+            players.values()
+        ).filter(
+            player =>
+                player.alive !== false &&
+                player.isNahroush !== true
+        );
+
+    if (
+        remainingPlayers.length === 0
+    ) {
+
+        endNahroushGame(
+            "monsters"
+        );
+
+        return;
+    }
+
+    broadcastState();
+}
+
+/* =====================================================
+   CATCH PLAYER
+===================================================== */
+
+function catchPlayersOnMonsterCell(
+    monster
+) {
+
+    for (
+        const player of players.values()
+    ) {
+
+        if (
+            player.alive === false
+        ) {
+            continue;
+        }
+
+        if (
+            player.isNahroush
+        ) {
+            continue;
+        }
+
+        if (
+            player.x === monster.x &&
+            player.y === monster.y
+        ) {
+
+            player.alive = false;
+
+            player.caught = true;
+
+            io.emit(
+                "player_caught",
+                {
+                    uniqueId:
+                        player.uniqueId,
+
+                    nickname:
+                        player.nickname,
+
+                    profilePictureUrl:
+                        player.profilePictureUrl
+                }
+            );
+
+            broadcastState();
+        }
+    }
+}
+
+/* =====================================================
+   CATCH NAHROUSH
+===================================================== */
+
+function catchNahroushOnMonsterCell(
+    monster
+) {
+
+    const nahroush =
+        Array.from(
+            players.values()
+        ).find(
+            player =>
+                player.isNahroush
+        );
+
+    if (!nahroush) {
+        return;
+    }
+
+    if (
+        nahroush.alive === false
+    ) {
+        return;
+    }
+
+    if (
+        nahroush.x === monster.x &&
+        nahroush.y === monster.y
+    ) {
+
+        nahroush.alive = false;
+
+        nahroushCaught = true;
+
+        io.emit(
+            "nahroush_caught",
+            {
+                uniqueId:
+                    nahroush.uniqueId,
+
+                nickname:
+                    nahroush.nickname,
+
+                profilePictureUrl:
+                    nahroush.profilePictureUrl
+            }
+        );
+
+        endNahroushGame(
+            "players"
+        );
+    }
+}
+
+/* =====================================================
+   END CHASE
+===================================================== */
+
+function endChaseGame(
+    winner
+) {
+
+    if (!gameStarted) {
+        return;
+    }
 
     clearGameTimers();
 
     gameStarted = false;
 
-    if (winner === "monsters") {
+    if (
+        winner === "monsters"
+    ) {
 
         gameResult = {
 
-            winner: "monsters",
+            winner:
+                "monsters",
 
-            title: "👹 الوحوش تفوز",
+            title:
+                "👹 الوحوش تفوز",
 
             message:
                 "تم الإمساك بجميع اللاعبين"
         };
 
-    } else {
+    }
+    else {
 
         gameResult = {
 
-            winner: "players",
+            winner:
+                "players",
 
-            title: "🏆 اللاعبون يفوزون",
+            title:
+                "🏆 اللاعبون يفوزون",
 
             message:
                 "انتهى الوقت وبقي لاعب واحد على الأقل"
@@ -1805,116 +1550,1076 @@ function endChaseGame(winner) {
     broadcastState();
 }
 
-/* =========================================
+/* =====================================================
    END NAHROUSH
-========================================= */
+===================================================== */
 
-function endNahroushGame(winner) {
+function endNahroushGame(
+    winner
+) {
 
-    if (!gameStarted)
+    if (!gameStarted) {
         return;
+    }
 
     clearGameTimers();
 
     gameStarted = false;
 
-    /* =====================================
-       PLAYERS WIN
-       لاعب وصل إلى نهروش
-    ===================================== */
+    const nahroush =
+        Array.from(
+            players.values()
+        ).find(
+            player =>
+                player.isNahroush
+        );
 
-    if (winner === "players") {
-
-        const nahroush =
-            Array.from(
-                players.values()
-            ).find(
-                p =>
-                    p.isNahroush
-            );
-
-        let winnerPlayer = null;
-
-        if (nahroush) {
-
-            winnerPlayer =
-                Array.from(
-                    players.values()
-                ).find(
-                    p =>
-                        p.alive &&
-                        !p.isNahroush &&
-                        p.x === nahroush.x &&
-                        p.y === nahroush.y
-                );
-        }
-
-        gameWinner =
-            winnerPlayer
-                ? {
-
-                    uniqueId:
-                        winnerPlayer.uniqueId,
-
-                    nickname:
-                        winnerPlayer.nickname,
-
-                    profilePictureUrl:
-                        winnerPlayer.profilePictureUrl
-
-                }
-                : null;
+    if (
+        winner === "players"
+    ) {
 
         gameResult = {
 
-            winner: "players",
+            winner:
+                "players",
 
             title:
                 "🏆 اللاعبون يفوزون",
 
             message:
-                winnerPlayer
-                    ? `${winnerPlayer.nickname} أمسك نهروش!`
-                    : "تم القبض على نهروش!"
+                "تم القبض على نهروش",
+
+            nahroush:
+                nahroush
+                    ? {
+                        uniqueId:
+                            nahroush.uniqueId,
+
+                        nickname:
+                            nahroush.nickname,
+
+                        profilePictureUrl:
+                            nahroush.profilePictureUrl
+                    }
+                    : null
         };
+
     }
-
-    /* =====================================
-       NAHROUSH + MONSTER WIN
-    ===================================== */
-
     else {
-
-        const nahroush =
-            Array.from(
-                players.values()
-            ).find(
-                p =>
-                    p.isNahroush
-            );
-
-        gameWinner =
-            nahroush
-                ? {
-
-                    uniqueId:
-                        nahroush.uniqueId,
-
-                    nickname:
-                        nahroush.nickname,
-
-                    profilePictureUrl:
-                        nahroush.profilePictureUrl
-
-                }
-                : null;
 
         gameResult = {
 
-            winner: "nahroush",
+            winner:
+                "nahroush",
 
             title:
-                "👹 نهروش والوحش يفوزان",
+                "👑 نهروش والوحش يفوزان",
 
             message:
-                "تم إقصاء جميع اللاعبين
+                "تم إقصاء جميع اللاعبين",
+
+            nahroush:
+                nahroush
+                    ? {
+                        uniqueId:
+                            nahroush.uniqueId,
+
+                        nickname:
+                            nahroush.nickname,
+
+                        profilePictureUrl:
+                            nahroush.profilePictureUrl
+                    }
+                    : null
+        };
+    }
+
+    io.emit(
+        "game_result",
+        gameResult
+    );
+
+    broadcastState();
+}
+
+/* =====================================================
+   MOVE PLAYER
+===================================================== */
+
+function movePlayer(
+    uniqueId,
+    command
+) {
+
+    if (!gameStarted) {
+        return;
+    }
+
+    const player =
+        players.get(
+            uniqueId
+        );
+
+    if (!player) {
+        return;
+    }
+
+    if (
+        player.alive === false
+    ) {
+        return;
+    }
+
+    const cell =
+        maze[player.y]?.[
+            player.x
+        ];
+
+    if (!cell) {
+        return;
+    }
+
+    let nx =
+        player.x;
+
+    let ny =
+        player.y;
+
+    if (
+        command === "u" &&
+        !cell.walls.top
+    ) {
+
+        ny--;
+
+    }
+    else if (
+        command === "d" &&
+        !cell.walls.bottom
+    ) {
+
+        ny++;
+
+    }
+    else if (
+        command === "r" &&
+        !cell.walls.right
+    ) {
+
+        nx++;
+
+    }
+    else if (
+        command === "l" &&
+        !cell.walls.left
+    ) {
+
+        nx++;
+
+    }
+    else {
+        return;
+    }
+
+    if (
+        nx < 0 ||
+        nx >= MAZE_SIZE ||
+        ny < 0 ||
+        ny >= MAZE_SIZE
+    ) {
+        return;
+    }
+
+    player.x =
+        nx;
+
+    player.y =
+        ny;
+
+    if (
+        gameMode === "treasure" &&
+        treasure &&
+        player.x === treasure.x &&
+        player.y === treasure.y
+    ) {
+
+        finishTreasureGame(
+            player
+        );
+
+        return;
+    }
+
+    broadcastState();
+}
+
+/* =====================================================
+   TREASURE WINNER
+===================================================== */
+
+function finishTreasureGame(
+    player
+) {
+
+    if (!gameStarted) {
+        return;
+    }
+
+    clearGameTimers();
+
+    gameStarted = false;
+
+    gameWinner = {
+
+        uniqueId:
+            player.uniqueId,
+
+        nickname:
+            player.nickname,
+
+        profilePictureUrl:
+            player.profilePictureUrl
+    };
+
+    gameResult = {
+
+        winner:
+            "player",
+
+        title:
+            "🏆 الفائز",
+
+        message:
+            player.nickname
+    };
+
+    io.emit(
+        "game_winner",
+        gameWinner
+    );
+
+    broadcastState();
+}
+
+/* =====================================================
+   REMOVE PLAYER
+===================================================== */
+
+function removePlayerFromGame(
+    uniqueId
+) {
+
+    if (gameStarted) {
+        return;
+    }
+
+    removePlayer(
+        uniqueId
+    );
+
+    broadcastState();
+}
+
+/* =====================================================
+   CLEAR TIMERS
+===================================================== */
+
+function clearGameTimers() {
+
+    if (treasureTimer) {
+
+        clearInterval(
+            treasureTimer
+        );
+
+        treasureTimer = null;
+    }
+
+    if (roundTimer) {
+
+        clearInterval(
+            roundTimer
+        );
+
+        roundTimer = null;
+    }
+
+    if (monsterTimer) {
+
+        clearInterval(
+            monsterTimer
+        );
+
+        monsterTimer = null;
+    }
+}
+
+/* =====================================================
+   RESET GAME
+===================================================== */
+
+function resetGame() {
+
+    clearGameTimers();
+
+    gameStarted = false;
+
+    gameWinner = null;
+
+    gameResult = null;
+
+    maze = [];
+
+    treasure = null;
+
+    monsters = [];
+
+    nahroushCaught = false;
+
+    roundTimeLeft =
+        chaseSettings.roundDuration;
+
+    treasureTimeLeft =
+        treasureSettings.duration;
+
+    clearPlayers();
+
+    registrationOpen = true;
+
+    broadcastState();
+}
+
+/* =====================================================
+   SOCKET.IO
+===================================================== */
+
+io.on(
+    "connection",
+    socket => {
+
+        console.log(
+            "Client connected to UI"
+        );
+
+        socket.emit(
+            "game_state",
+            getGameState()
+        );
+
+        socket.on(
+            "set_registration",
+            value => {
+
+                if (gameStarted) {
+                    return;
+                }
+
+                registrationOpen =
+                    Boolean(value);
+
+                broadcastState();
+            }
+        );
+
+        socket.on(
+            "set_max_players",
+            value => {
+
+                if (gameStarted) {
+                    return;
+                }
+
+                const valueNumber =
+                    Number(value);
+
+                if (
+                    Number.isFinite(
+                        valueNumber
+                    ) &&
+                    valueNumber >= 1 &&
+                    valueNumber <= 20
+                ) {
+
+                    maxPlayers =
+                        Math.floor(
+                            valueNumber
+                        );
+
+                    broadcastState();
+                }
+            }
+        );
+
+        socket.on(
+            "set_treasure_duration",
+            value => {
+
+                if (gameStarted) {
+                    return;
+                }
+
+                const duration =
+                    Number(value);
+
+                if (
+                    Number.isFinite(
+                        duration
+                    ) &&
+                    duration >= 1 &&
+                    duration <= 300
+                ) {
+
+                    treasureSettings.duration =
+                        duration;
+
+                    treasureTimeLeft =
+                        duration;
+
+                    broadcastState();
+                }
+            }
+        );
+
+        socket.on(
+            "set_round_duration",
+            value => {
+
+                if (gameStarted) {
+                    return;
+                }
+
+                const duration =
+                    Number(value);
+
+                if (
+                    Number.isFinite(
+                        duration
+                    ) &&
+                    duration >= 10 &&
+                    duration <= 3600
+                ) {
+
+                    chaseSettings.roundDuration =
+                        duration;
+
+                    roundTimeLeft =
+                        duration;
+
+                    broadcastState();
+                }
+            }
+        );
+
+        socket.on(
+            "set_monster_count",
+            value => {
+
+                if (gameStarted) {
+                    return;
+                }
+
+                const count =
+                    Number(value);
+
+                if (
+                    Number.isFinite(
+                        count
+                    ) &&
+                    count >= 1 &&
+                    count <= 10
+                ) {
+
+                    chaseSettings.monsterCount =
+                        Math.floor(count);
+
+                    broadcastState();
+                }
+            }
+        );
+
+        socket.on(
+            "set_monster_speed",
+            value => {
+
+                if (gameStarted) {
+                    return;
+                }
+
+                const speed =
+                    Number(value);
+
+                if (
+                    Number.isFinite(
+                        speed
+                    ) &&
+                    speed >= 100 &&
+                    speed <= 10000
+                ) {
+
+                    chaseSettings.monsterSpeed =
+                        speed;
+
+                    broadcastState();
+                }
+            }
+        );
+
+        socket.on(
+            "set_nahroush_username",
+            value => {
+
+                if (gameStarted) {
+                    return;
+                }
+
+                const username =
+                    String(
+                        value || ""
+                    )
+                    .trim()
+                    .replace(/^@/, "");
+
+                if (!username) {
+                    return;
+                }
+
+                nahroushUsername =
+                    username;
+
+                for (
+                    const player of players.values()
+                ) {
+
+                    const same =
+                        String(
+                            player.uniqueId
+                        )
+                        .trim()
+                        .toLowerCase() ===
+                        username.toLowerCase();
+
+                    player.isNahroush =
+                        same;
+                }
+
+                broadcastState();
+            }
+        );
+
+        socket.on(
+            "connect_tiktok",
+            username => {
+
+                username =
+                    String(
+                        username || ""
+                    )
+                    .trim()
+                    .replace(/^@/, "");
+
+                if (!username) {
+
+                    socket.emit(
+                        "tiktok_connected",
+                        {
+                            success:
+                                false,
+
+                            error:
+                                "اسم المستخدم غير صحيح"
+                        }
+                    );
+
+                    return;
+                }
+
+                if (
+                    tiktokLiveConnection
+                ) {
+
+                    try {
+
+                        tiktokLiveConnection.disconnect();
+
+                    }
+                    catch (error) {}
+                }
+
+                connectedUsername =
+                    username;
+
+                tiktokLiveConnection =
+                    new TikTokLiveConnection(
+                        username,
+                        {
+                            processInitialData:
+                                true,
+
+                            fetchRoomInfoOnConnect:
+                                true
+                        }
+                    );
+
+                tiktokLiveConnection
+                    .connect()
+                    .then(
+                        state => {
+
+                            console.log(
+                                `Connected to TikTok Live: @${username}, Room ID: ${state.roomId}`
+                            );
+
+                            socket.emit(
+                                "tiktok_connected",
+                                {
+                                    success:
+                                        true,
+
+                                    roomInfo:
+                                        state.roomInfo
+                                }
+                            );
+
+                            broadcastState();
+                        }
+                    )
+                    .catch(
+                        error => {
+
+                            console.error(
+                                "Failed to connect to TikTok Live:",
+                                error
+                            );
+
+                            socket.emit(
+                                "tiktok_connected",
+                                {
+                                    success:
+                                        false,
+
+                                    error:
+                                        error.message
+                                }
+                            );
+                        }
+                    );
+
+                tiktokLiveConnection.on(
+                    WebcastEvent.CHAT,
+                    data => {
+
+                        const rawComment =
+                            data.comment ||
+                            data.content ||
+                            "";
+
+                        const comment =
+                            typeof rawComment ===
+                                "string"
+                                ? rawComment
+                                    .trim()
+                                    .toLowerCase()
+                                : "";
+
+                        const tikUser =
+                            data.user || {};
+
+                        const uniqueId =
+                            tikUser.uniqueId ||
+                            tikUser.displayId ||
+                            data.uniqueId ||
+                            "unknown";
+
+                        const nickname =
+                            tikUser.nickname ||
+                            data.nickname ||
+                            "مستخدم";
+
+                        let avatar =
+                            extractAvatar(
+                                data
+                            );
+
+                        if (
+                            !avatar &&
+                            avatarCache.has(
+                                uniqueId
+                            )
+                        ) {
+
+                            avatar =
+                                avatarCache.get(
+                                    uniqueId
+                                );
+                        }
+
+                        if (avatar) {
+
+                            avatarCache.set(
+                                uniqueId,
+                                avatar
+                            );
+                        }
+
+                        const user = {
+
+                            uniqueId,
+
+                            nickname,
+
+                            profilePictureUrl:
+                                avatar
+                        };
+
+                        console.log(
+                            `[CHAT] ${uniqueId} (${nickname}): ${comment}`
+                        );
+
+                        io.emit(
+                            "tiktok_comment",
+                            {
+                                user,
+                                comment
+                            }
+                        );
+
+                        if (
+                            comment ===
+                            joinKeyword
+                                .toLowerCase()
+                        ) {
+
+                            registerPlayer(
+                                user,
+                                {
+                                    gameStarted,
+                                    registrationOpen,
+                                    maxPlayers,
+                                    nahroushUsername,
+                                    avatarCache,
+                                    io,
+                                    broadcastState
+                                }
+                            );
+
+                            return;
+                        }
+
+                        const movementMap = {
+
+                            "u":
+                                "u",
+
+                            "فوق":
+                                "u",
+
+                            "d":
+                                "d",
+
+                            "تحت":
+                                "d",
+
+                            "r":
+                                "r",
+
+                            "يمين":
+                                "r",
+
+                            "l":
+                                "l",
+
+                            "يسار":
+                                "l"
+                        };
+
+                        const direction =
+                            movementMap[
+                                comment
+                            ];
+
+                        if (direction) {
+
+                            movePlayer(
+                                uniqueId,
+                                direction
+                            );
+                        }
+                    }
+                );
+
+                tiktokLiveConnection.on(
+                    ControlEvent.ERROR,
+                    error => {
+
+                        console.error(
+                            "TikTok Live Error:",
+                            error
+                        );
+                    }
+                );
+            }
+        );
+
+        socket.on(
+            "remove_player",
+            uniqueId => {
+
+                removePlayerFromGame(
+                    uniqueId
+                );
+            }
+        );
+
+        socket.on(
+            "toggle_registration",
+            () => {
+
+                if (gameStarted) {
+                    return;
+                }
+
+                registrationOpen =
+                    !registrationOpen;
+
+                broadcastState();
+            }
+        );
+
+        socket.on(
+            "set_join_keyword",
+            keyword => {
+
+                if (gameStarted) {
+                    return;
+                }
+
+                keyword =
+                    String(
+                        keyword || ""
+                    )
+                    .trim()
+                    .toUpperCase();
+
+                if (!keyword) {
+                    return;
+                }
+
+                joinKeyword =
+                    keyword;
+
+                io.emit(
+                    "join_keyword_updated",
+                    joinKeyword
+                );
+
+                broadcastState();
+            }
+        );
+
+        socket.on(
+            "set_game_mode",
+            mode => {
+
+                if (gameStarted) {
+                    return;
+                }
+
+                if (
+                    mode !== "treasure" &&
+                    mode !== "chase" &&
+                    mode !== "nahroush"
+                ) {
+                    return;
+                }
+
+                gameMode =
+                    mode;
+
+                io.emit(
+                    "game_mode_updated",
+                    gameMode
+                );
+
+                broadcastState();
+            }
+        );
+
+        socket.on(
+            "set_treasure_settings",
+            settings => {
+
+                if (gameStarted) {
+                    return;
+                }
+
+                const duration =
+                    Number(
+                        settings?.duration
+                    );
+
+                if (
+                    Number.isFinite(
+                        duration
+                    ) &&
+                    duration >= 1 &&
+                    duration <= 300
+                ) {
+
+                    treasureSettings.duration =
+                        duration;
+
+                    treasureTimeLeft =
+                        duration;
+                }
+
+                broadcastState();
+            }
+        );
+
+        socket.on(
+            "set_chase_settings",
+            settings => {
+
+                if (gameStarted) {
+                    return;
+                }
+
+                const roundDuration =
+                    Number(
+                        settings?.roundDuration
+                    );
+
+                const monsterCount =
+                    Number(
+                        settings?.monsterCount
+                    );
+
+                const monsterSpeed =
+                    Number(
+                        settings?.monsterSpeed
+                    );
+
+                if (
+                    Number.isFinite(
+                        roundDuration
+                    ) &&
+                    roundDuration >= 10 &&
+                    roundDuration <= 3600
+                ) {
+
+                    chaseSettings.roundDuration =
+                        roundDuration;
+                }
+
+                if (
+                    Number.isFinite(
+                        monsterCount
+                    ) &&
+                    monsterCount >= 1 &&
+                    monsterCount <= 10
+                ) {
+
+                    chaseSettings.monsterCount =
+                        Math.floor(
+                            monsterCount
+                        );
+                }
+
+                if (
+                    Number.isFinite(
+                        monsterSpeed
+                    ) &&
+                    monsterSpeed >= 100 &&
+                    monsterSpeed <= 10000
+                ) {
+
+                    chaseSettings.monsterSpeed =
+                        monsterSpeed;
+                }
+
+                roundTimeLeft =
+                    chaseSettings.roundDuration;
+
+                broadcastState();
+            }
+        );
+
+        socket.on(
+            "start_game",
+            callback => {
+
+                const result =
+                    startGame();
+
+                if (
+                    !result.success
+                ) {
+
+                    if (
+                        typeof callback ===
+                        "function"
+                    ) {
+
+                        callback({
+                            success:
+                                false,
+
+                            message:
+                                result.message
+                        });
+                    }
+
+                    socket.emit(
+                        "game_error",
+                        result.message
+                    );
+
+                    return;
+                }
+
+                if (
+                    typeof callback ===
+                    "function"
+                ) {
+
+                    callback({
+                        success:
+                            true
+                    });
+                }
+            }
+        );
+
+        socket.on(
+            "reset_game",
+            () => {
+
+                resetGame();
+            }
+        );
+
+        socket.on(
+            "disconnect",
+            () => {
+
+                console.log(
+                    "Client disconnected from UI"
+                );
+            }
+        );
+    }
+);
+
+/* =====================================================
+   START SERVER
+===================================================== */
+
+server.listen(
+    PORT,
+    () => {
+
+        console.log(
+            `SAMI LIVE Maze running on port ${PORT}`
+        );
+    }
+);
