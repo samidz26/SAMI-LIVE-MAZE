@@ -25,6 +25,8 @@ const {
     registerPlayer
 } = require("./game/players");
 
+const SETTINGS = require("./config/settings");
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
@@ -35,22 +37,28 @@ app.use(express.static(__dirname + "/public"));
    SETTINGS
 ===================================================== */
 
-const PORT = process.env.PORT || 3000;
+const PORT = SETTINGS.server.port;
 
-const DEFAULT_MAX_PLAYERS = 20;
+const DEFAULT_MAX_PLAYERS =
+    SETTINGS.players.maxPlayers;
 
-const DEFAULT_JOIN_KEYWORD = "JOIN";
+const DEFAULT_JOIN_KEYWORD =
+    SETTINGS.players.joinKeyword;
 
-const DEFAULT_TREASURE_DURATION = 10;
+const DEFAULT_TREASURE_DURATION =
+    SETTINGS.treasure.duration;
 
-const DEFAULT_ROUND_DURATION = 60;
+const DEFAULT_ROUND_DURATION =
+    SETTINGS.game.roundDuration;
 
-const DEFAULT_MONSTER_COUNT = 1;
+const DEFAULT_MONSTER_COUNT =
+    SETTINGS.monsters.count;
 
-const DEFAULT_MONSTER_SPEED = 1000;
+const DEFAULT_MONSTER_SPEED =
+    SETTINGS.monsters.speed;
 
 const DEFAULT_NAHROUSH_USERNAME =
-    "jordan_river13";
+    SETTINGS.nahroush.username;
 
 /* =====================================================
    TIKTOK
@@ -75,7 +83,7 @@ let maxPlayers =
     DEFAULT_MAX_PLAYERS;
 
 let gameMode =
-    "treasure";
+    SETTINGS.game.defaultMode;
 
 let gameStarted = false;
 
