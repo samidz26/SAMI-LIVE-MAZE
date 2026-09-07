@@ -6,15 +6,14 @@ const modeButtons = document.querySelectorAll(".game-mode-option");
 
 const treasureSettings = document.getElementById("treasureSettings");
 const chaseSettings = document.getElementById("chaseSettings");
-const nahroushSettings = document.getElementById("nahroushSettings");
+
 
 const treasureDuration = document.getElementById("treasureDuration");
 const roundDuration = document.getElementById("roundDuration");
 const monsterCount = document.getElementById("monsterCount");
 const monsterSpeed = document.getElementById("monsterSpeed");
 
-const nahroushUsername =
-    document.getElementById("nahroushUsername");
+
 
 const joinKeyword =
     document.getElementById("joinKeyword");
@@ -121,8 +120,7 @@ modeButtons.forEach(button => {
 
         if (
             mode !== "treasure" &&
-            mode !== "chase" &&
-            mode !== "nahroush"
+            mode !== "chase"   
         ) {
             return;
         }
@@ -173,10 +171,6 @@ function updateModeUI() {
     );
 
 
-    nahroushSettings.classList.toggle(
-        "hidden",
-        currentGameMode !== "nahroush"
-    );
 }
 
 
@@ -324,34 +318,7 @@ if (monsterSpeed) {
 }
 
 
-/* =========================================
-   NAHROUSH USERNAME
-========================================= */
 
-if (nahroushUsername) {
-
-    nahroushUsername.addEventListener(
-        "input",
-        () => {
-
-            let value =
-                nahroushUsername.value
-                    .trim()
-                    .replace(/^@+/, "")
-                    .toLowerCase();
-
-            nahroushUsername.value =
-                value;
-
-            socket.emit(
-                "set_nahroush_username",
-                value
-            );
-
-        }
-    );
-
-}
 
 
 /* =========================================
@@ -438,11 +405,7 @@ function renderPlayers(players) {
         item.className =
             "player-item";
 
-        if (player.isNahroush) {
-            item.classList.add(
-                "nahroush-player"
-            );
-        }
+       
 
 
         const avatar =
@@ -503,20 +466,7 @@ function renderPlayers(players) {
         information.appendChild(username);
 
 
-        if (player.isNahroush) {
-
-            const role =
-                document.createElement("div");
-
-            role.className =
-                "player-role";
-
-            role.textContent =
-                "👑 نهروش";
-
-            information.appendChild(role);
-
-        }
+        
 
 
         const deleteButton =
@@ -668,14 +618,7 @@ socket.on(
         }
 
 
-        if (
-            state.nahroushUsername
-        ) {
-
-            nahroushUsername.value =
-                state.nahroushUsername;
-
-        }
+       
 
 
         if (
