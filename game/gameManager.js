@@ -1749,18 +1749,13 @@ function createGameManager({ io, settings }) {
 
 
             io.emit(
-                "player_caught",
-                {
-                    uniqueId:
-                        player.uniqueId,
-
-                    nickname:
-                        player.nickname,
-
-                    profilePictureUrl:
-                        player.profilePictureUrl
-                }
-            );
+    "player_eliminated",
+    {
+        uniqueId: player.uniqueId,
+        nickname: player.nickname,
+        profilePictureUrl: player.profilePictureUrl
+    }
+);
 
 
             /*
