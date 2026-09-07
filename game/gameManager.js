@@ -1,16 +1,15 @@
 const {
     movePlayer: movePlayerModule
-} = require("./movement");    
+} = require("./movement");
 
 const {
     createMaze,
-    MAZE_SIZE 
+    MAZE_SIZE
 } = require("./maze");
 
 const {
     getPlayers,
     getPlayersArray,
-    getPlayer,
     removePlayer,
     clearPlayers,
     registerPlayer
@@ -46,8 +45,6 @@ function createGameManager({ io, settings }) {
 
     const DEFAULT_MONSTER_SPEED =
         settings.monsters.speed;
-
-
 
 
     /* =====================================================
@@ -100,9 +97,6 @@ function createGameManager({ io, settings }) {
         DEFAULT_TREASURE_DURATION;
 
     let monsters = [];
-
-
-   
 
 
     /* =====================================================
@@ -256,8 +250,6 @@ function createGameManager({ io, settings }) {
             treasureSettings,
 
             chaseSettings
-
-           
         };
     }
 
@@ -604,7 +596,6 @@ function createGameManager({ io, settings }) {
         registrationOpen = false;
 
 
-
         for (
             const player of players.values()
         ) {
@@ -618,8 +609,6 @@ function createGameManager({ io, settings }) {
             player.y = null;
         }
 
-
-       
 
         /* =================================================
            NORMAL MODES
@@ -1000,9 +989,6 @@ function createGameManager({ io, settings }) {
     }
 
 
-   
-
-
     function getMonsterSpawnCell() {
 
         const candidates = [];
@@ -1091,8 +1077,7 @@ function createGameManager({ io, settings }) {
 
 
                     if (
-                        gameMode !== "chase" 
-                        
+                        gameMode !== "chase"
                     ) {
 
                         clearInterval(
@@ -1126,32 +1111,13 @@ function createGameManager({ io, settings }) {
         monster
     ) {
 
-        let alivePlayers;
-
-
-        if (
-            gameMode === "nahroush"
-        ) {
-
-            alivePlayers =
-                Array.from(
-                    players.values()
-                ).filter(
-                    player =>
-                        player.alive !== false &&
-                        player.isNahroush !== true
-                );
-
-        } else {
-
-            alivePlayers =
-                Array.from(
-                    players.values()
-                ).filter(
-                    player =>
-                        player.alive !== false
-                );
-        }
+        const alivePlayers =
+            Array.from(
+                players.values()
+            ).filter(
+                player =>
+                    player.alive !== false
+            );
 
 
         if (
@@ -1381,8 +1347,6 @@ function createGameManager({ io, settings }) {
 
     function moveMonsters() {
 
-
-
         for (
             const monster of monsters
         ) {
@@ -1466,189 +1430,124 @@ function createGameManager({ io, settings }) {
     }
 
 
-   
-
     /* =====================================================
        CATCH PLAYER
     ===================================================== */
 
-    function catchPlayersOnMonsterCell(monster) {
-
-    if (!gameStarted || gameMode !== "chase") {
-        return;
-    }
-
-    let eliminatedPlayer = null;
-
-    for (const player of players.values()) {
-
-        if (player.alive === false) {
-            continue;
-        }
-
-       
+    function catchPlayersOnMonsterCell(
+        monster
+    ) {
 
         if (
-            player.x === monster.x &&
-            player.y === monster.y
+            !gameStarted ||
+            gameMode !== "chase"
+        ) {
+            return;
+        }
+
+
+        let eliminatedPlayer = null;
+
+
+        for (
+            const player of players.values()
         ) {
 
-            player.alive = false;
-            player.caught = true;
+            if (
+                player.alive === false
+            ) {
+                continue;
+            }
 
-            eliminatedPlayer = {
-                uniqueId: player.uniqueId,
-                nickname: player.nickname,
-                profilePictureUrl:
-                    player.profilePictureUrl || ""
-            };
 
-            break;
+            if (
+                player.x === monster.x &&
+                player.y === monster.y
+            ) {
+
+                player.alive = false;
+
+                player.caught = true;
+
+
+                eliminatedPlayer = {
+
+                    uniqueId:
+                        player.uniqueId,
+
+                    nickname:
+                        player.nickname,
+
+                    profilePictureUrl:
+                        player.profilePictureUrl ||
+                        ""
+                };
+
+
+                break;
+            }
         }
-    }
 
-    if (!eliminatedPlayer) {
-        return;
-    }
 
-    /*
-     * إعلام الواجهة بإقصاء اللاعب
-     */
-    io.emit(
-        "player_eliminated",
-        eliminatedPlayer
-    );
+        if (!eliminatedPlayer) {
+            return;
+        }
 
-    /*
-     * حساب اللاعبين الذين ما زالوا أحياء
-     */
-    const survivors =
-        Array.from(players.values()).filter(
-            player =>
-                player.alive !== false &&
-                player.isNahroush !== true
+
+        /*
+         * إعلام الواجهة بإقصاء اللاعب
+         */
+
+        io.emit(
+            "player_eliminated",
+            eliminatedPlayer
         );
 
-    /*
-     * لا يوجد أي لاعب حي
-     * الوحوش تفوز فورًا
-     */
-    if (survivors.length === 0) {
 
-        endChaseGame("monsters");
+        /*
+         * حساب اللاعبين الذين ما زالوا أحياء
+         */
 
-        return;
+        const survivors =
+            Array.from(
+                players.values()
+            ).filter(
+                player =>
+                    player.alive !== false
+            );
+
+
+        /*
+         * لا يوجد أي لاعب حي
+         * الوحوش تفوز فورًا
+         */
+
+        if (
+            survivors.length === 0
+        ) {
+
+            endChaseGame(
+                "monsters"
+            );
+
+            return;
+        }
+
+
+        /*
+         * ما زال هناك لاعبون أحياء
+         * الجولة مستمرة
+         */
+
+        broadcastState();
     }
 
-    /*
-     * ما زال هناك لاعبون أحياء
-     * الجولة مستمرة
-     */
-    broadcastState();
-}
-    
-
-
-
-   
 
     /* =====================================================
        END CHASE
     ===================================================== */
 
-    function endChaseGame(winner) {
-
-    if (!gameStarted) {
-        return;
-    }
-
-    clearGameTimers();
-
-    gameStarted = false;
-
-    /*
-     * حساب الناجين لحظة انتهاء الجولة
-     */
-    const survivors =
-        Array.from(players.values())
-            .filter(
-                player =>
-                    player.alive !== false &&
-                    player.isNahroush !== true
-            )
-            .map(player => ({
-                uniqueId: player.uniqueId,
-                nickname: player.nickname,
-                profilePictureUrl:
-                    player.profilePictureUrl || ""
-            }));
-
-
-    /*
-     * الوحوش تفوز
-     */
-    if (
-        winner === "monsters" ||
-        survivors.length === 0
-    ) {
-
-        gameResult = {
-
-            winner: "monsters",
-
-            title:
-                "👹 الوحوش تفوز",
-
-            message:
-                "تم إقصاء جميع اللاعبين",
-
-            survivors: []
-        };
-
-    }
-
-    /*
-     * اللاعبون يفوزون
-     */
-    else {
-
-        gameResult = {
-
-            winner: "players",
-
-            title:
-                "🏆 اللاعبون يفوزون",
-
-            message:
-                "انتهى الوقت وبقي لاعب واحد على الأقل",
-
-            survivors
-        };
-    }
-
-
-    /*
-     * إرسال النتيجة كحدث مباشر
-     */
-    io.emit(
-        "game_result",
-        gameResult
-    );
-
-
-    /*
-     * والأهم:
-     * إرسال الحالة النهائية أيضًا
-     */
-    broadcastState();
-}
-
-
-    /* =====================================================
-       END NAHROUSH
-    ===================================================== */
-
-    function endNahroushGame(
+    function endChaseGame(
         winner
     ) {
 
@@ -1662,35 +1561,65 @@ function createGameManager({ io, settings }) {
         gameStarted = false;
 
 
-        const nahroush =
+        /*
+         * حساب الناجين لحظة انتهاء الجولة
+         */
+
+        const survivors =
             Array.from(
                 players.values()
-            ).find(
+            )
+            .filter(
                 player =>
-                    player.isNahroush
+                    player.alive !== false
+            )
+            .map(
+                player => ({
+
+                    uniqueId:
+                        player.uniqueId,
+
+                    nickname:
+                        player.nickname,
+
+                    profilePictureUrl:
+                        player.profilePictureUrl ||
+                        ""
+                })
             );
 
 
-        const nahroushData =
-            nahroush
-                ? {
-
-                    uniqueId:
-                        nahroush.uniqueId,
-
-                    nickname:
-                        nahroush.nickname,
-
-                    profilePictureUrl:
-                        nahroush.profilePictureUrl
-
-                }
-                : null;
-
+        /*
+         * الوحوش تفوز
+         */
 
         if (
-            winner === "players"
+            winner === "monsters" ||
+            survivors.length === 0
         ) {
+
+            gameResult = {
+
+                winner:
+                    "monsters",
+
+                title:
+                    "👹 الوحوش تفوز",
+
+                message:
+                    "تم إقصاء جميع اللاعبين",
+
+                survivors: []
+            };
+
+        }
+
+
+        /*
+         * اللاعبون يفوزون
+         */
+
+        else {
 
             gameResult = {
 
@@ -1701,36 +1630,27 @@ function createGameManager({ io, settings }) {
                     "🏆 اللاعبون يفوزون",
 
                 message:
-                    "تم القبض على نهروش",
+                    "انتهى الوقت وبقي لاعب واحد على الأقل",
 
-                nahroush:
-                    nahroushData
-            };
-
-        } else {
-
-            gameResult = {
-
-                winner:
-                    "nahroush",
-
-                title:
-                    "👑 نهروش والوحش يفوزان",
-
-                message:
-                    "تم إقصاء جميع اللاعبين",
-
-                nahroush:
-                    nahroushData
+                survivors
             };
         }
 
+
+        /*
+         * إرسال النتيجة كحدث مباشر
+         */
 
         io.emit(
             "game_result",
             gameResult
         );
 
+
+        /*
+         * والأهم:
+         * إرسال الحالة النهائية أيضًا
+         */
 
         broadcastState();
     }
@@ -1740,46 +1660,68 @@ function createGameManager({ io, settings }) {
        MOVE PLAYER
     ===================================================== */
 
-   function movePlayer(uniqueId, direction) {
-
-    movePlayerModule(
+    function movePlayer(
         uniqueId,
-        direction,
-        {
-            players,
-            maze,
-            mazeSize: MAZE_SIZE,
-            gameStarted,
-            broadcastState,
+        direction
+    ) {
 
-            onTreasureReached: player => {
+        movePlayerModule(
+            uniqueId,
+            direction,
+            {
+                players,
 
-                if (
-                    gameMode === "treasure" &&
-                    treasure &&
-                    player.x === treasure.x &&
-                    player.y === treasure.y
-                ) {
-                    finishTreasureGame(player);
-                }
-            },
+                maze,
 
-            onMonsterCollision: player => {
+                mazeSize:
+                    MAZE_SIZE,
 
-                for (const monster of monsters) {
+                gameStarted,
 
-                    if (
-                        monster.x === player.x &&
-                        monster.y === player.y
-                    ) {
-                        catchPlayersOnMonsterCell(monster);
-                        break;
+                broadcastState,
+
+
+                onTreasureReached:
+                    player => {
+
+                        if (
+                            gameMode === "treasure" &&
+                            treasure &&
+                            player.x === treasure.x &&
+                            player.y === treasure.y
+                        ) {
+
+                            finishTreasureGame(
+                                player
+                            );
+                        }
+                    },
+
+
+                onMonsterCollision:
+                    player => {
+
+                        for (
+                            const monster of monsters
+                        ) {
+
+                            if (
+                                monster.x === player.x &&
+                                monster.y === player.y
+                            ) {
+
+                                catchPlayersOnMonsterCell(
+                                    monster
+                                );
+
+                                break;
+                            }
+                        }
                     }
-                }
             }
-        }
-    );
-       }
+        );
+    }
+
 
     /* =====================================================
        REMOVE PLAYER
@@ -1823,8 +1765,6 @@ function createGameManager({ io, settings }) {
         treasure = null;
 
         monsters = [];
-
-        nahroushCaught = false;
 
 
         roundTimeLeft =
@@ -1960,10 +1900,15 @@ function createGameManager({ io, settings }) {
         }
 
 
+        /*
+         * المودات المسموحة فقط:
+         * treasure
+         * chase
+         */
+
         if (
             mode !== "treasure" &&
-            mode !== "chase" &&
-            mode !== "nahroush"
+            mode !== "chase"
         ) {
             return;
         }
@@ -2161,56 +2106,6 @@ function createGameManager({ io, settings }) {
 
 
     /* =====================================================
-       NAHROUSH USERNAME
-    ===================================================== */
-
-    function setNahroushUsername(
-        value
-    ) {
-
-        if (gameStarted) {
-            return;
-        }
-
-
-        const username =
-            String(value || "")
-                .trim()
-                .replace(/^@/, "");
-
-
-        if (!username) {
-            return;
-        }
-
-
-        nahroushUsername =
-            username;
-
-
-        for (
-            const player of players.values()
-        ) {
-
-            const same =
-                String(
-                    player.uniqueId
-                )
-                    .trim()
-                    .toLowerCase() ===
-                username.toLowerCase();
-
-
-            player.isNahroush =
-                same;
-        }
-
-
-        broadcastState();
-    }
-
-
-    /* =====================================================
        TIKTOK CHAT
     ===================================================== */
 
@@ -2313,8 +2208,6 @@ function createGameManager({ io, settings }) {
                     registrationOpen,
 
                     maxPlayers,
-
-                    nahroushUsername,
 
                     avatarCache,
 
@@ -2566,12 +2459,6 @@ function createGameManager({ io, settings }) {
 
 
                 socket.on(
-                    "set_nahroush_username",
-                    setNahroushUsername
-                );
-
-
-                socket.on(
                     "connect_tiktok",
                     username => {
 
@@ -2730,8 +2617,6 @@ function createGameManager({ io, settings }) {
         setMonsterSpeed,
 
         setTreasureDuration,
-
-        setNahroushUsername,
 
         handleTikTokChat,
 
