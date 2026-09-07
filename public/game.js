@@ -2282,24 +2282,14 @@ function hideWinnerOverlay() {
    ========================================================= */
 
 if (resetButton) {
+if (resetButton) {
 
     resetButton.addEventListener(
         "click",
         () => {
 
-            roundFinished = false;
+            window.location.href = "registration.html";
 
-            pendingGameResult = null;
-
-            hideWinnerOverlay();
-
-            hideElimination();
-
-            clearIntroductionTimers();
-
-            socket.emit(
-                "reset_game"
-            );
         }
     );
 }
