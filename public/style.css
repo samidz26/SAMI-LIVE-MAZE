@@ -2728,3 +2728,38 @@ body {
     }
 
 }
+/* =====================================================
+   CLEAN GAME HEADER
+===================================================== */
+
+.game-header {
+    display: none !important;
+}
+
+.game-brand,
+.game-mode-label {
+    display: none !important;
+}
+/* =====================================================
+   REMOVE PLAYER GLOW
+===================================================== */
+
+.player-glow {
+    display: none !important;
+}
+
+.maze-player {
+    filter: drop-shadow(0 0 3px rgba(255, 215, 80, 0.45));
+}
+/* =====================================================
+   REMOVE MONSTER GLOW
+===================================================== */
+
+.monster-glow {
+    display: none !important;
+}
+
+.maze-monster {
+    filter:
+        drop-shadow(0 0 5px rgba(255, 70, 70, 0.65));
+}
