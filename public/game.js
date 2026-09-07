@@ -134,6 +134,24 @@ socket.on(
 
         updateTimer(state);
 
+
+        /*
+         * إذا انتهت الجولة في مود النجاة
+         * وكانت النتيجة موجودة في الحالة،
+         * اعرض شاشة النتيجة.
+         */
+        if (
+            state.gameMode === "chase" &&
+            state.gameStarted === false &&
+            state.gameResult
+        ) {
+
+            showChaseResult(
+                state.gameResult
+            );
+
+        }
+
     }
 );
 
