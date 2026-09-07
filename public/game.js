@@ -2282,7 +2282,6 @@ function hideWinnerOverlay() {
    ========================================================= */
 
 if (resetButton) {
-if (resetButton) {
 
     resetButton.addEventListener(
         "click",
