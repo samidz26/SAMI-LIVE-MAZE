@@ -1861,60 +1861,92 @@ function createGameManager({ io, settings }) {
        END CHASE
     ===================================================== */
 
-    function endChaseGame(
-        winner
+    function endChaseGame(winner) {
+
+    if (!gameStarted) {
+        return;
+    }
+
+    clearGameTimers();
+
+    gameStarted = false;
+
+    /*
+     * حساب الناجين لحظة انتهاء الجولة
+     */
+    const survivors =
+        Array.from(players.values())
+            .filter(
+                player =>
+                    player.alive !== false &&
+                    player.isNahroush !== true
+            )
+            .map(player => ({
+                uniqueId: player.uniqueId,
+                nickname: player.nickname,
+                profilePictureUrl:
+                    player.profilePictureUrl || ""
+            }));
+
+
+    /*
+     * الوحوش تفوز
+     */
+    if (
+        winner === "monsters" ||
+        survivors.length === 0
     ) {
 
-        if (!gameStarted) {
-            return;
-        }
+        gameResult = {
 
+            winner: "monsters",
 
-        clearGameTimers();
+            title:
+                "👹 الوحوش تفوز",
 
-        gameStarted = false;
+            message:
+                "تم إقصاء جميع اللاعبين",
 
+            survivors: []
+        };
 
-        if (
-            winner === "monsters"
-        ) {
-
-            gameResult = {
-
-                winner:
-                    "monsters",
-
-                title:
-                    "👹 الوحوش تفوز",
-
-                message:
-                    "تم الإمساك بجميع اللاعبين"
-            };
-
-        } else {
-
-            gameResult = {
-
-                winner:
-                    "players",
-
-                title:
-                    "🏆 اللاعبون يفوزون",
-
-                message:
-                    "انتهى الوقت وبقي لاعب واحد على الأقل"
-            };
-        }
-
-
-        io.emit(
-            "game_result",
-            gameResult
-        );
-
-
-        broadcastState();
     }
+
+    /*
+     * اللاعبون يفوزون
+     */
+    else {
+
+        gameResult = {
+
+            winner: "players",
+
+            title:
+                "🏆 اللاعبون يفوزون",
+
+            message:
+                "انتهى الوقت وبقي لاعب واحد على الأقل",
+
+            survivors
+        };
+    }
+
+
+    /*
+     * إرسال النتيجة كحدث مباشر
+     */
+    io.emit(
+        "game_result",
+        gameResult
+    );
+
+
+    /*
+     * والأهم:
+     * إرسال الحالة النهائية أيضًا
+     */
+    broadcastState();
+}
 
 
     /* =====================================================
