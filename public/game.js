@@ -1585,7 +1585,115 @@ function showTreasureWinner(
 /* =====================================================
    GAME RESULT
 ===================================================== */
+function showChaseResult(result) {
 
+    if (!winnerOverlay) {
+        return;
+    }
+
+
+    /*
+     * إيقاف أي رسالة إقصاء ما زالت ظاهرة
+     */
+    clearTimeout(
+        eliminationTimer
+    );
+
+    eliminationTimer = null;
+
+    eliminationOverlay.classList.add(
+        "hidden"
+    );
+
+
+    /*
+     * إيقاف التعليمات والعد التنازلي
+     */
+    clearIntroductionTimers();
+
+
+    /*
+     * إعادة صورة الفائز للوضع الطبيعي
+     */
+    resetWinnerAvatarStyle();
+
+
+    /*
+     * الوحوش فازت
+     */
+    if (
+        result.winner === "monsters"
+    ) {
+
+        playSound(
+            "monsterWin"
+        );
+
+
+        winnerIcon.textContent =
+            "👹";
+
+        winnerSubtitle.textContent =
+            "انتهت الجولة";
+
+        winnerName.textContent =
+            "الوحش يفوز";
+
+        winnerMessage.textContent =
+            "تم إقصاء جميع اللاعبين";
+
+
+        setWinnerAvatar("");
+
+
+        survivorsContainer.classList.add(
+            "hidden"
+        );
+
+    }
+
+
+    /*
+     * اللاعبون فازوا
+     */
+    else {
+
+        playSound(
+            "win"
+        );
+
+
+        winnerIcon.textContent =
+            "🏆";
+
+        winnerSubtitle.textContent =
+            "انتهت الجولة";
+
+        winnerName.textContent =
+            "اللاعبون يفوزون";
+
+        winnerMessage.textContent =
+            "انتهى الوقت وبقي لاعب واحد على الأقل";
+
+
+        setWinnerAvatar("");
+
+
+        showSurvivors(
+            result.survivors || []
+        );
+
+    }
+
+
+    /*
+     * إظهار شاشة النتيجة
+     */
+    winnerOverlay.classList.remove(
+        "hidden"
+    );
+
+}
 socket.on(
     "game_result",
     result => {
