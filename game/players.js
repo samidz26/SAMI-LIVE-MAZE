@@ -1,41 +1,64 @@
 const players = new Map();
 
+
 function getPlayers() {
     return players;
 }
 
+
 function getPlayersArray() {
     return Array.from(players.values()).map(player => ({
-        uniqueId: player.uniqueId,
-        nickname: player.nickname,
-        profilePictureUrl: player.profilePictureUrl,
-        x: player.x,
-        y: player.y,
-        alive: player.alive !== false,
-        caught: player.caught === true,
-        isNahroush: player.isNahroush === true
+        uniqueId:
+            player.uniqueId,
+
+        nickname:
+            player.nickname,
+
+        profilePictureUrl:
+            player.profilePictureUrl,
+
+        x:
+            player.x,
+
+        y:
+            player.y,
+
+        alive:
+            player.alive !== false,
+
+        caught:
+            player.caught === true
     }));
 }
+
 
 function hasPlayer(uniqueId) {
     return players.has(uniqueId);
 }
 
+
 function getPlayer(uniqueId) {
     return players.get(uniqueId);
 }
 
+
 function addPlayer(uniqueId, playerData) {
-    players.set(uniqueId, playerData);
+    players.set(
+        uniqueId,
+        playerData
+    );
 }
+
 
 function removePlayer(uniqueId) {
     players.delete(uniqueId);
 }
 
+
 function clearPlayers() {
     players.clear();
 }
+
 
 function getPlayerCount() {
     return players.size;
@@ -52,20 +75,33 @@ function registerPlayer(user, options) {
         gameStarted,
         registrationOpen,
         maxPlayers,
-        nahroushUsername,
         avatarCache,
         io,
         broadcastState
     } = options;
 
 
+    /* ================================================
+       GAME ALREADY STARTED
+    ================================================ */
+
     if (gameStarted) {
         return;
     }
 
+
+    /* ================================================
+       REGISTRATION CLOSED
+    ================================================ */
+
     if (!registrationOpen) {
         return;
     }
+
+
+    /* ================================================
+       INVALID USER
+    ================================================ */
 
     if (
         !user ||
@@ -73,6 +109,11 @@ function registerPlayer(user, options) {
     ) {
         return;
     }
+
+
+    /* ================================================
+       PLAYER ALREADY REGISTERED
+    ================================================ */
 
     if (
         players.has(
@@ -82,9 +123,15 @@ function registerPlayer(user, options) {
         return;
     }
 
+
+    /* ================================================
+       MAX PLAYERS
+    ================================================ */
+
     if (
         players.size >= maxPlayers
     ) {
+
         io.emit(
             "registration_full",
             {
@@ -97,27 +144,9 @@ function registerPlayer(user, options) {
     }
 
 
-    const normalizedUser =
-        String(
-            user.uniqueId
-        )
-        .trim()
-        .toLowerCase();
-
-
-    const normalizedNahroush =
-        String(
-            nahroushUsername || ""
-        )
-        .trim()
-        .replace(/^@/, "")
-        .toLowerCase();
-
-
-    const isNahroush =
-        normalizedUser ===
-        normalizedNahroush;
-
+    /* ================================================
+       ADD PLAYER
+    ================================================ */
 
     players.set(
         user.uniqueId,
@@ -137,26 +166,28 @@ function registerPlayer(user, options) {
                 "",
 
             x: null,
+
             y: null,
 
             alive: true,
 
-            caught: false,
-
-            isNahroush
+            caught: false
         }
     );
 
 
+    /* ================================================
+       LOG
+    ================================================ */
+
     console.log(
-        `[JOIN] ${user.uniqueId}` +
-        (
-            isNahroush
-                ? " -> NAHROUSH"
-                : ""
-        )
+        `[JOIN] ${user.uniqueId}`
     );
 
+
+    /* ================================================
+       NOTIFY CLIENTS
+    ================================================ */
 
     io.emit(
         "player_joined",
@@ -168,25 +199,40 @@ function registerPlayer(user, options) {
                 user.nickname,
 
             profilePictureUrl:
-                user.profilePictureUrl,
-
-            isNahroush
+                user.profilePictureUrl
         }
     );
 
+
+    /* ================================================
+       UPDATE GAME STATE
+    ================================================ */
 
     broadcastState();
 }
 
 
+/* =====================================================
+   EXPORTS
+===================================================== */
+
 module.exports = {
+
     getPlayers,
+
     getPlayersArray,
+
     hasPlayer,
+
     getPlayer,
+
     addPlayer,
+
     removePlayer,
+
     clearPlayers,
+
     getPlayerCount,
+
     registerPlayer
 };
