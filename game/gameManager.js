@@ -47,8 +47,7 @@ function createGameManager({ io, settings }) {
     const DEFAULT_MONSTER_SPEED =
         settings.monsters.speed;
 
-    const DEFAULT_NAHROUSH_USERNAME =
-        settings.nahroush.username;
+
 
 
     /* =====================================================
@@ -103,14 +102,7 @@ function createGameManager({ io, settings }) {
     let monsters = [];
 
 
-    /* =====================================================
-       NAHROUSH
-    ===================================================== */
-
-    let nahroushUsername =
-        DEFAULT_NAHROUSH_USERNAME;
-
-    let nahroushCaught = false;
+   
 
 
     /* =====================================================
@@ -263,11 +255,9 @@ function createGameManager({ io, settings }) {
 
             treasureSettings,
 
-            chaseSettings,
+            chaseSettings
 
-            nahroushUsername,
-
-            nahroushCaught
+           
         };
     }
 
@@ -609,29 +599,10 @@ function createGameManager({ io, settings }) {
 
         gameResult = null;
 
-        nahroushCaught = false;
-
         gameStarted = true;
 
         registrationOpen = false;
 
-
-        const normalPlayers =
-            Array.from(
-                players.values()
-            ).filter(
-                player =>
-                    !player.isNahroush
-            );
-
-
-        const nahroush =
-            Array.from(
-                players.values()
-            ).find(
-                player =>
-                    player.isNahroush
-            );
 
 
         for (
@@ -648,80 +619,7 @@ function createGameManager({ io, settings }) {
         }
 
 
-        /* =================================================
-           NAHROUSH
-        ================================================= */
-
-        if (
-            gameMode === "nahroush"
-        ) {
-
-            if (nahroush) {
-
-                const center =
-                    getCenterCell();
-
-
-                nahroush.x =
-                    center.x;
-
-                nahroush.y =
-                    center.y;
-
-                nahroush.alive = true;
-            }
-
-
-            for (
-                const player of normalPlayers
-            ) {
-
-                const position =
-                    getRandomEdgeCell();
-
-
-                player.x =
-                    position.x;
-
-                player.y =
-                    position.y;
-            }
-
-
-            spawnNahroushMonster();
-
-
-            /*
-             * إرسال game_started
-             * بعد اكتمال كل شيء.
-             */
-
-            io.emit(
-                "game_started",
-                getGameState()
-            );
-
-
-            broadcastState();
-
-
-            if (!nahroush) {
-
-                endNahroushGame(
-                    "monsters"
-                );
-
-            } else {
-
-                startMonsterAI();
-            }
-
-
-            return {
-                success: true
-            };
-        }
-
+       
 
         /* =================================================
            NORMAL MODES
@@ -1102,30 +1000,7 @@ function createGameManager({ io, settings }) {
     }
 
 
-    function spawnNahroushMonster() {
-
-        monsters = [];
-
-
-        const center =
-            getCenterCell();
-
-
-        monsters.push({
-
-            id:
-                `nahroush_monster_${Date.now()}`,
-
-            x:
-                center.x,
-
-            y:
-                center.y,
-
-            targetId:
-                null
-        });
-    }
+   
 
 
     function getMonsterSpawnCell() {
@@ -1216,8 +1091,8 @@ function createGameManager({ io, settings }) {
 
 
                     if (
-                        gameMode !== "chase" &&
-                        gameMode !== "nahroush"
+                        gameMode !== "chase" 
+                        
                     ) {
 
                         clearInterval(
@@ -1506,14 +1381,6 @@ function createGameManager({ io, settings }) {
 
     function moveMonsters() {
 
-        if (
-            gameMode === "nahroush"
-        ) {
-
-            moveNahroushMonsters();
-
-            return;
-        }
 
 
         for (
@@ -1599,118 +1466,7 @@ function createGameManager({ io, settings }) {
     }
 
 
-    /* =====================================================
-       NAHROUSH MOVEMENT
-    ===================================================== */
-
-    function moveNahroushMonsters() {
-
-        const normalPlayers =
-            Array.from(
-                players.values()
-            ).filter(
-                player =>
-                    player.alive !== false &&
-                    player.isNahroush !== true
-            );
-
-
-        if (
-            normalPlayers.length === 0
-        ) {
-
-            endNahroushGame(
-                "monsters"
-            );
-
-            return;
-        }
-
-
-        for (
-            const monster of monsters
-        ) {
-
-            const target =
-                findNearestPlayer(
-                    monster
-                );
-
-
-            if (target) {
-
-                monster.targetId =
-                    target.uniqueId;
-
-
-                const path =
-                    findPath(
-                        monster.x,
-                        monster.y,
-                        target.x,
-                        target.y
-                    );
-
-
-                if (
-                    path &&
-                    path.length > 0
-                ) {
-
-                    const next =
-                        path[0];
-
-
-                    monster.x =
-                        next.x;
-
-                    monster.y =
-                        next.y;
-                }
-            }
-
-
-            catchPlayersOnMonsterCell(
-                monster
-            );
-
-
-            catchNahroushOnMonsterCell(
-                monster
-            );
-
-
-            if (!gameStarted) {
-                return;
-            }
-        }
-
-
-        const remainingPlayers =
-            Array.from(
-                players.values()
-            ).filter(
-                player =>
-                    player.alive !== false &&
-                    player.isNahroush !== true
-            );
-
-
-        if (
-            remainingPlayers.length === 0
-        ) {
-
-            endNahroushGame(
-                "monsters"
-            );
-
-            return;
-        }
-
-
-        broadcastState();
-    }
-
+   
 
     /* =====================================================
        CATCH PLAYER
@@ -1730,9 +1486,7 @@ function createGameManager({ io, settings }) {
             continue;
         }
 
-        if (player.isNahroush) {
-            continue;
-        }
+       
 
         if (
             player.x === monster.x &&
@@ -1796,66 +1550,7 @@ function createGameManager({ io, settings }) {
 
 
 
-    /* =====================================================
-       CATCH NAHROUSH
-    ===================================================== */
-
-    function catchNahroushOnMonsterCell(
-        monster
-    ) {
-
-        const nahroush =
-            Array.from(
-                players.values()
-            ).find(
-                player =>
-                    player.isNahroush
-            );
-
-
-        if (!nahroush) {
-            return;
-        }
-
-
-        if (
-            nahroush.alive === false
-        ) {
-            return;
-        }
-
-
-        if (
-            nahroush.x === monster.x &&
-            nahroush.y === monster.y
-        ) {
-
-            nahroush.alive = false;
-
-            nahroushCaught = true;
-
-
-            io.emit(
-                "nahroush_caught",
-                {
-                    uniqueId:
-                        nahroush.uniqueId,
-
-                    nickname:
-                        nahroush.nickname,
-
-                    profilePictureUrl:
-                        nahroush.profilePictureUrl
-                }
-            );
-
-
-            endNahroushGame(
-                "players"
-            );
-        }
-    }
-
+   
 
     /* =====================================================
        END CHASE
