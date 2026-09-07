@@ -1716,27 +1716,23 @@ function createGameManager({ io, settings }) {
        CATCH PLAYER
     ===================================================== */
 
-    function catchPlayersOnMonsterCell(
-    monster
-) {
+    function catchPlayersOnMonsterCell(monster) {
 
-    for (
-        const player of players.values()
-    ) {
+    if (!gameStarted || gameMode !== "chase") {
+        return;
+    }
 
-        if (
-            player.alive === false
-        ) {
+    let eliminatedPlayer = null;
+
+    for (const player of players.values()) {
+
+        if (player.alive === false) {
             continue;
         }
 
-
-        if (
-            player.isNahroush
-        ) {
+        if (player.isNahroush) {
             continue;
         }
-
 
         if (
             player.x === monster.x &&
@@ -1744,54 +1740,58 @@ function createGameManager({ io, settings }) {
         ) {
 
             player.alive = false;
-
             player.caught = true;
 
+            eliminatedPlayer = {
+                uniqueId: player.uniqueId,
+                nickname: player.nickname,
+                profilePictureUrl:
+                    player.profilePictureUrl || ""
+            };
 
-            io.emit(
-    "player_eliminated",
-    {
-        uniqueId: player.uniqueId,
-        nickname: player.nickname,
-        profilePictureUrl: player.profilePictureUrl
-    }
-);
-
-
-            /*
-             * التحقق فورًا:
-             * هل بقي لاعب حي؟
-             */
-
-            const remainingPlayers =
-                Array.from(
-                    players.values()
-                ).filter(
-                    player =>
-                        player.alive !== false &&
-                        player.isNahroush !== true
-                );
-
-
-            /*
-             * إذا لم يبق أي لاعب،
-             * الوحوش تفوز فورًا.
-             */
-
-            if (
-                remainingPlayers.length === 0
-            ) {
-
-                endChaseGame(
-                    "monsters"
-                );
-
-                return;
-            }
-
-
-            broadcastState();
+            break;
         }
+    }
+
+    if (!eliminatedPlayer) {
+        return;
+    }
+
+    /*
+     * إعلام الواجهة بإقصاء اللاعب
+     */
+    io.emit(
+        "player_eliminated",
+        eliminatedPlayer
+    );
+
+    /*
+     * حساب اللاعبين الذين ما زالوا أحياء
+     */
+    const survivors =
+        Array.from(players.values()).filter(
+            player =>
+                player.alive !== false &&
+                player.isNahroush !== true
+        );
+
+    /*
+     * لا يوجد أي لاعب حي
+     * الوحوش تفوز فورًا
+     */
+    if (survivors.length === 0) {
+
+        endChaseGame("monsters");
+
+        return;
+    }
+
+    /*
+     * ما زال هناك لاعبون أحياء
+     * الجولة مستمرة
+     */
+    broadcastState();
+}
     }
 }
 
